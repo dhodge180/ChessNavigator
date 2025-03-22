@@ -1,0 +1,28 @@
+# Syntax is each line should start with either Title: or FEN: or Subtext:
+# Blank lines can be used to separate problems (but might not be totally necessary)
+# As long as a FEN is present a diagram will be created titles and subtext are optional
+# If you mess up, unused titles and subtexts may get overwritten
+
+FEN: 8/8/8/8/8/8/8/8
+
+Title: "Silly Test Position 1"
+FEN: "8/8/8/8/8/k6K/8/RRRRrrrr"
+Subtext: "Mate in 3"
+
+FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+Subtext: "Mate in 2"
+
+Title: "Pawn Structure Test"
+FEN: "8/8/8/8/8/5p2/4p3/8 w - - 0 1"
+
+Title: Silly title
+FEN: 8/8/8/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/k6K b KQkq - 0 3
+Subtext: "Retro"
+
+FEN: "8/p7/8/8/8/5p2/4p3/8 w - - 0 1"
+
+FEN: "8/p7/4k3/8/4QK2/5p2/4p3/8 w - - 0 1"
+Subtext: "Similar with no title"
+
+FEN: "8/p7/8/8/8/5p2/4R3/8 w - - 0 1"
+Title: "Just a title this time"
