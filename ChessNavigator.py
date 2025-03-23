@@ -88,9 +88,14 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
     print(f"Loaded {len(FEN_LIST)} FENs from {filename}.")
 
     # Detail the loaded list of FENS
+    print("Loaded positions:")
     for fen_data in FEN_LIST:
-        print(fen_data)
-        print(f"Title: {fen_data['title']}, FEN: {fen_data['fen']}", "Stip: {fen_data['stip']}")
+        print("------------------------------------------------------------------------------------------------------")
+        #print(fen_data)
+        print(f"Title: {fen_data['title']}")
+        print(f"FEN: {fen_data['fen']}")
+        print(f"Stip: {fen_data['stip']}")
+    print("------------------------------------------------------------------------------------------------------")
 
     if FEN_LIST:
         print("Successful load from FEN_LIST file")
@@ -116,8 +121,8 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Example usage
-image_path = get_resource_path("images/p.png")
-print("Image path:", image_path)
+image_path = get_resource_path("images/wK.png")
+print("Sample Image path to white king:", image_path)
 
 # Constants
 BOARD_SIZE = 8
@@ -200,7 +205,7 @@ class ChessGame:
             self.board.set_fen(new_fen)
             self.start_pos = new_fen
             self._initialize_game_state()  # Reset game state
-            print(f"New FEN set: {new_fen}")
+            print(f"New diagram set: {new_fen}")
         except ValueError:
             print("Invalid FEN! Keeping the current position.")
 
@@ -383,12 +388,90 @@ class ChessGUI:
         if fen is None and self.fenlist:
             self.cycle_fen()
 
-        self.draw_custom_title()
-        self.draw_custom_stip()
+        # Draw static items that are not part of the run loop
+        # These are all in the run loop
+        # self.draw_custom_title()
+        # self.draw_custom_stip()
+        # self.draw_panel()
 
     #@staticmethod
     #def set_window_title(title):
     #    pygame.display.set_caption(title)
+
+    def run(self):
+        """Main loop of the GUI."""
+        low_fps = 25
+        high_fps = 60
+        self.target_fps = high_fps
+        self.redraw = True # should we draw the next frame?
+
+        while self.running:
+            if self.dragging_piece or self.redraw: # Removing this condition increases CPU usage
+                self.screen.fill((0, 0, 0))
+                self.draw_board()
+                self.draw_pieces()
+                self.draw_panel()
+                self.draw_legality_mode()  # Show legality mode status
+                self.draw_turn_indicator()
+                self.draw_pgn_panel()
+                self.draw_custom_title()
+                self.draw_custom_stip()
+
+            self.redraw = False # Turn off default drawing of next frame, unless we're dragging
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.adjust_fps(high_fps)
+                    self.handle_mouse_down(event.pos)
+                elif event.type == pygame.MOUSEMOTION:
+                    self.handle_mouse_motion(event.pos)
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    self.adjust_fps(low_fps)
+                    self.handle_mouse_up(event.pos)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_l:
+                        self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
+                    elif event.key == pygame.K_u:
+                        self.game.undo_move() # Press u to undo last move
+                    elif event.key == pygame.K_z:
+                        self.game.clear_board() # Press z to zero/clear the board
+                    elif event.key == pygame.K_INSERT:
+                        self.game.redefine_start() # Press INSERT to redefine root position
+                    elif event.key == pygame.K_HOME:
+                        self.game.reset_board() # Press HOME to return to root position
+                    elif event.key == pygame.K_t:
+                        self.game.toggle_turn()  # Toggle the turn on pressing 'T'
+                    elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
+                        if self.fenlist:
+                            self.cycle_fen()
+                    # Square highlighting
+                    elif event.key in KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
+                        pos = pygame.mouse.get_pos()
+                        square = self.get_square_under_mouse(pos)
+                        #print(f"Square is {square}")
+                        if square is not None:
+                            self.change_square_color(square, KEY_COLOR_MAP[event.key])
+                    elif event.key == pygame.K_DELETE: # Pressed 0 to clean all highlights
+                        # Reset all colours, recopy from TRUE_COLORS
+                        self.square_colors = [row [:] for row in self.TRUE_COLORS]
+                    # Copy FEN to clipboard
+                    if event.key == pygame.K_c and (
+                            pygame.key.get_pressed()[pygame.K_LCTRL] or pygame.key.get_pressed()[pygame.K_RCTRL]):
+                        # Get FEN from the board and copy it to clipboard
+                        try:
+                            fen = self.game.board.fen()  # Call the board.fen() method from the ChessGame instance
+                            copy(fen)  # Copy the FEN to clipboard
+                            print("FEN copied to clipboard:", fen)  # Optional: print to console for confirmation
+                        except Exception as e:
+                            print(f"Error copying FEN to clipboard: {e}")
+
+                self.redraw = True # Some event occurred. Turn on drawing of next frame.
+
+            pygame.display.flip()
+
+            self.clock.tick(self.target_fps)
 
     def draw_custom_title(self):
         """Draw the custom title at the top of the window."""
@@ -503,6 +586,7 @@ class ChessGUI:
         if self.dragging_piece:
             self.screen.blit(self.dragging_piece, self.dragging_pos)
 
+
     def setup_spare_pieces(self):
         """Defines positions for the spare pieces on the panel."""
         self.spare_pieces = []
@@ -512,7 +596,6 @@ class ChessGUI:
             self.spare_pieces.append((piece, (PANEL_WIDTH*0.1, 50 + i * (SQUARE_SIZE+20))))  # White pieces (x offset is 10% of panel)
             # Place black pieces on the right side of the panel
             self.spare_pieces.append((piece.lower(), (PANEL_WIDTH*0.1+SQUARE_SIZE, 50 + i * (SQUARE_SIZE+20))))  # Black pieces (x offset is 10% of panel)
-
 
     def draw_panel(self):
         # Move the panel to the right to avoid overlapping with the board
@@ -610,78 +693,9 @@ class ChessGUI:
             self.dragging_square = None
             self.piece_source = None
 
-    def run(self):
-        """Main loop of the GUI."""
-        low_fps = 25
-        high_fps = 60
-        self.target_fps = low_fps
-
-        while self.running:
-            self.screen.fill((0, 0, 0))
-            self.draw_board()
-            self.draw_pieces()
-            self.draw_panel()
-            self.draw_legality_mode()  # Show legality mode status
-            self.draw_turn_indicator()
-            self.draw_pgn_panel()
-            self.draw_custom_title()
-            self.draw_custom_stip()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.adjust_fps(high_fps)
-                    self.handle_mouse_down(event.pos)
-                elif event.type == pygame.MOUSEMOTION:
-                    self.handle_mouse_motion(event.pos)
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    self.adjust_fps(low_fps)
-                    self.handle_mouse_up(event.pos)
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_l:
-                        self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
-                    elif event.key == pygame.K_u:
-                        self.game.undo_move() # Press u to undo last move
-                    elif event.key == pygame.K_z:
-                        self.game.clear_board() # Press z to zero/clear the board
-                    elif event.key == pygame.K_INSERT:
-                        self.game.redefine_start() # Press INSERT to redefine root position
-                    elif event.key == pygame.K_HOME:
-                        self.game.reset_board() # Press HOME to return to root position
-                    elif event.key == pygame.K_t:
-                        self.game.toggle_turn()  # Toggle the turn on pressing 'T'
-                    elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
-                        if self.fenlist:
-                            self.cycle_fen()
-                    # Square highlighting
-                    elif event.key in KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
-                        pos = pygame.mouse.get_pos()
-                        square = self.get_square_under_mouse(pos)
-                        #print(f"Square is {square}")
-                        if square is not None:
-                            self.change_square_color(square, KEY_COLOR_MAP[event.key])
-                    elif event.key == pygame.K_DELETE: # Pressed 0 to clean all highlights
-                        # Reset all colours, recopy from TRUE_COLORS
-                        self.square_colors = [row [:] for row in self.TRUE_COLORS]
-                    # Copy FEN to clipboard
-                    if event.key == pygame.K_c and (
-                            pygame.key.get_pressed()[pygame.K_LCTRL] or pygame.key.get_pressed()[pygame.K_RCTRL]):
-                        # Get FEN from the board and copy it to clipboard
-                        try:
-                            fen = self.game.board.fen()  # Call the board.fen() method from the ChessGame instance
-                            copy(fen)  # Copy the FEN to clipboard
-                            print("FEN copied to clipboard:", fen)  # Optional: print to console for confirmation
-                        except Exception as e:
-                            print(f"Error copying FEN to clipboard: {e}")
-
-            pygame.display.flip()
-            # print(f"Starting clock at {target_fps}")
-            self.clock.tick(self.target_fps)
-
     def cycle_fen(self):
         """Cycle through the FEN list and update the game and window title."""
-
+        print("Loading next diagram from file")
         # Get the current FEN and title
         current_fen_data = FEN_LIST.pop(0)  # Get first element
         FEN_LIST.append(current_fen_data)  # Move it to the end for the next cycle

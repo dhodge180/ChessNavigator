@@ -3,7 +3,9 @@
 # As long as a FEN is present a diagram will be created titles and subtext are optional
 # If you mess up, unused titles and subtexts may get overwritten
 
-FEN: 8/8/8/8/8/8/8/8
+Title: Some famous problem
+FEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
+Subtext: S#5
 
 Title: "Silly Test Position 1"
 FEN: "8/8/8/8/8/k6K/8/RRRRrrrr"
