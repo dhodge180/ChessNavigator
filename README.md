@@ -6,7 +6,7 @@ Various shortcuts are currently implemented but not documented.
 
 | Key | Action |
 | --- | ------ |
-| HOME | Return to home position |
+| HOME or R | Return to home position |
 | INSERT| Save current position as home position |
 | Z| Zero the board|
 | F1| Cycle to next FEN in the loaded file |
@@ -14,7 +14,7 @@ Various shortcuts are currently implemented but not documented.
 | L| Toggle Legality |
 | T| Toggle whose turn it is|
 | (1,2,3,0)| Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT|
-| Ctrl + A | Copy current position to clipboard as FEN|
+| Ctrl + C | Copy current position to clipboard as FEN|
 | DELETE| Clear all highlighting |
 
 
