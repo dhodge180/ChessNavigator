@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 # Define file names in correct order (2 rows, 6 columns)
 names=("wK" "wQ" "wB" "wN" "wR" "wP" "bK" "bQ" "bB" "bN" "bR" "bP")
 
@@ -19,7 +19,7 @@ for row in {0..1}; do
         output="${names[$index]}.png"
         
         # Crop the specific piece and save it
-        magick -density $density chess_pieces.svg -crop ${width}x${height}+$x+$y +repage "$output"
+        magick -density $density Chess_Pieces.svg -crop ${width}x${height}+$x+$y +repage "$output"
 
         ((index++))  # Move to next piece
     done
