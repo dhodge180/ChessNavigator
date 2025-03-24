@@ -136,6 +136,8 @@ HEIGHT_PADDING = 5
 
 WIDTH = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
 HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING # Extra for border
+MAIN_WIDTH = BOARD_WIDTH + 2*BORDER_SIZE
+MAIN_HEIGHT = BOARD_WIDTH + 2*BORDER_SIZE + 2*HEIGHT_PADDING
 WHITE = (238, 238, 210)
 BLACK = (118, 150, 86)
 TRUE_BLACK = (0, 0, 0)
@@ -439,10 +441,12 @@ class ChessGUI:
                         self.game.clear_board() # Press z to zero/clear the board
                     elif event.key == pygame.K_INSERT:
                         self.game.redefine_start() # Press INSERT to redefine root position
-                    elif event.key == pygame.K_HOME:
+                    elif event.key in (pygame.K_HOME, pygame.K_r):
                         self.game.reset_board() # Press HOME to return to root position
                     elif event.key == pygame.K_t:
                         self.game.toggle_turn()  # Toggle the turn on pressing 'T'
+                    elif event.key == pygame.K_h:
+                        self.show_help_popup() # Press H to pop-up shortcuts
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
                         if self.fenlist:
                             self.cycle_fen()
@@ -713,6 +717,74 @@ class ChessGUI:
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
+
+    def show_help_popup(self):
+        """Displays a popup with keyboard shortcuts."""
+        popup_width = 600
+        popup_height = 620
+        popup_x = (MAIN_WIDTH - popup_width) // 2
+        popup_y = (MAIN_HEIGHT - popup_height) // 2
+        popup_color = (50, 50, 50)  # Dark gray background
+        text_color = (255, 255, 255)  # White text
+
+        font = pygame.font.Font(None, 28)
+        key_font = pygame.font.Font(None, 32)  # Slightly larger font for keys
+        header_font = pygame.font.Font(None, 32)  # Slightly larger font for keys
+
+        # Shortcuts with key and action paired
+        shortcuts = [
+            ("Key Press", "Action"),
+            ("----------------", "------------------------------------------------------------"),
+            ("HOME or R", "Return to home position"),
+            ("INSERT", "Save current position as home position"),
+            ("Z", "Zero the board (clear all pieces)"),
+            ("F1", "Cycle to next FEN in the loaded file"),
+            ("U", "Undo last move (cannot currently undo beyond additions)"),
+            ("L", "Toggle Legality"),
+            ("T", "Toggle whose turn it is"),
+            ("1", "Highlight hovered square RED"),
+            ("2", "Highlight hovered square YELLOW"),
+            ("3", "Highlight hovered square GREEN"),
+            ("0", "Remove hovered square's highlighting"),
+            ("DELETE", "Clear all highlighting"),
+            ("Ctrl + C", "Copies current position to clipboard as FEN"),
+            ("H", "Show this help window"),
+            ("ESC", "Close help window"),
+        ]
+
+        # Draw the popup background
+        pygame.draw.rect(self.screen, popup_color, (popup_x, popup_y, popup_width, popup_height), border_radius=10)
+
+        # Draw text
+        y_offset = popup_y + 20
+        key_x = popup_x + 20  # Starting X position for keys
+        action_x = key_x + 140  # Starting X position for actions (enough space for the key column)
+        
+        for i, (key, action) in enumerate(shortcuts):
+            if i==0 or i==1:
+                key_surface = header_font.render(key, True, text_color)  # Use the header_font for the top row
+                action_surface = header_font.render(action, True, text_color)  # Use the header_font for the top two rows
+            else:
+                key_surface = key_font.render(key, True, text_color)  # Render the key with the larger font
+                action_surface = font.render(action, True, text_color)  # Render the action description with standard font
+            # Draw the key and action in two columns
+            self.screen.blit(key_surface, (key_x, y_offset))  # Draw the key
+            self.screen.blit(action_surface, (action_x, y_offset))  # Draw the action
+            
+            y_offset += 35  # Move down for the next line
+
+        pygame.display.flip()
+
+        # Pause and wait for user to close the popup
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # Close window (click corner)
+                    self.running = False  # Close the game
+                    waiting = False  # Exit popup waiting loop
+                if event.type == pygame.KEYDOWN and event.key in (pygame.K_h, pygame.K_ESCAPE):  # Press H or Escape to close
+                    waiting = False
+
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line

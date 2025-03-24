@@ -14,4 +14,7 @@ Various shortcuts are currently implemented but not documented.
 | L| Toggle Legality |
 | T| Toggle whose turn it is|
 | (1,2,3,0)| Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT|
+| Ctrl + A | Copy current position to clipboard as FEN|
 | DELETE| Clear all highlighting |
+
+

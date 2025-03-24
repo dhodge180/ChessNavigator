@@ -1,0 +1,12 @@
+Fix the undo function to propogate through adding pieces.
+
+Ability to set title and subtext?
+
+Ability to remove a piece from the board by dragging it off the board
+
+Ability to resize the window? Maybe just a few default sizes, or do global rescaling.
+Yes, script ready to make pieces of size from 40 to 100 pixels.
+Need to package up a function to (re)define all the game CONSTANT_SIZES in terms of the piece size.
+All such other variables should have values based on piece size from (40,50,...,100)
+This function can actual replace the original global settings.
+Then in the code when the user decreases the size it loads the other images, decreases the SQUARE_SIZE, re-runs the global size definitions, then redraws the board and window. May need to think about minimal values for BORDER_SIZE and PANEL_PADDING and +10 here and there for titles and stipulations. Likely the FONT sizes need to change too if it gets small enough.
