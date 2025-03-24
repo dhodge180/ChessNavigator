@@ -232,6 +232,13 @@ class ChessGame:
         #Re join remaining lines
         return '\n'.join(pgn_lines)
 
+    def delete_piece_at(self, start):
+        # Only allow removing a piece from board when legality is turned off
+        if not self.legal_moves_enabled:
+            self.board.remove_piece_at(start)
+        else:
+            print("Dropped piece off board, but it was illegal so not executed")
+
     def move_piece(self, start, end):
         move = chess.Move.from_uci(start + end)
         print("Trying to move", move)
@@ -260,7 +267,7 @@ class ChessGame:
                 print("Move not legal!")
 
         else:
-            print("Not a legal move!")
+            print("Legality check disabled...")
             # Handle non-legal moves (when legal moves are disabled)
             # This can be a custom behavior or just a bypass depending on your needs
             piece = self.board.piece_at(chess.parse_square(start))
@@ -274,6 +281,7 @@ class ChessGame:
             if piece_color != original_turn:
                 self.board.turn = piece_color
 
+            # All other end values will be squares
             self.board.push(move)  # Perform the move
             self.add_real_move(move)
             #self.move_history.append(("move", move))
@@ -687,7 +695,7 @@ class ChessGUI:
         """Handles dropping a piece, ensuring its color is preserved."""
         if self.dragging_piece:
             new_square = self.get_square_under_mouse(pos)
-
+            # print(f"Dragged piece from {self.piece_source} to {new_square}")
             if self.piece_source == "board" and new_square is not None:
                 if new_square != self.dragging_square:  # Move only if dropped in a new square
                     self.game.move_piece(chess.square_name(self.dragging_square), chess.square_name(new_square))
@@ -697,6 +705,10 @@ class ChessGUI:
                 # Add the piece to the board and record the action for undo
                 piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
                 self.game.add_piece(piece_symbol, new_square)
+
+            elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
+                # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
+                self.game.delete_piece_at(self.dragging_square)
 
             # Reset dragging state
             self.dragging_piece = None
