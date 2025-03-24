@@ -1,8 +1,8 @@
-Fix the undo function to propogate through adding pieces.
+Fix the undo function to propogate through adding pieces. chess-python clears the move stack if you overwrite a square. it does support "drop" moves like in Crazyhouse, but I want to support changing a piece too. So let's not try and use the official stack?
 
 Ability to set title and subtext?
 
-Ability to remove a piece from the board by dragging it off the board
+Ability to remove a piece from the board by dragging it off the board. should be easy, look at the handle_mouse_up if location is off the board then handle "remove piece" move.
 
 Ability to resize the window? Maybe just a few default sizes, or do global rescaling.
 Yes, script ready to make pieces of size from 40 to 100 pixels.
@@ -10,3 +10,112 @@ Need to package up a function to (re)define all the game CONSTANT_SIZES in terms
 All such other variables should have values based on piece size from (40,50,...,100)
 This function can actual replace the original global settings.
 Then in the code when the user decreases the size it loads the other images, decreases the SQUARE_SIZE, re-runs the global size definitions, then redraws the board and window. May need to think about minimal values for BORDER_SIZE and PANEL_PADDING and +10 here and there for titles and stipulations. Likely the FONT sizes need to change too if it gets small enough.
+
+new moves field for Fenlist. a1e5 UCi format with additional 'reset' and 'checkpoint' setting and returning keywords. then use arrow keys to navigate. could preparse into a tree of fens
+1) Add Moves: field to FEN_LIST loader.
+2) Allowed syntax are:
+    + a1b2 style moves, including a7a8Q, already in UCI format;
+    + add checkpoint, to return here later
+    + return to home
+    + return to (saved) checkpoint
+    + "add a piece" to a particular square;
+    + "remove a piece" from a particular square
+    + "changing a piece" on a particular square # not needed, can just add over the top
+3) Allow navigation along the path using --> arrow key and <-- key.
+4) Code:
+
+Pre-process the whole sequence of moves into a load of FENs! Then we don't have to do logic on the fly.
+Also don't need to worry about checking for checkpoints later. All already implemented.
+
+If --> pressed.
+  If not at end of moves:
+    Move to next FEN.
+  Else:
+    Do nothing
+If <-- pressed.
+  If not a start of moves:
+    Move to previous FEN
+  Else:
+    Do Nothing
+
+generate_fen_path()
+  """Create a sequence of FENs from a "Moves:" list"""
+  # We will include in the FEN sequence non-FENs called "GoToHome", "GoToCheckpoint" and "SaveCheckpoint" for debugging and later flexibility
+  # But they will be skipped when loading the next FEN
+  
+  # Read all the moves into a list
+  # Load the starting FEN into a chess object, ie. create a temporary game e.g. via a chess.board(START)
+
+  Create a blank list ready to accept FENs and words.
+
+  # Step into the moves
+  If the move is a uci-format then:
+    perform it, and update the game
+    save the current FEN into the list**
+  elif the move is to add a checkpoint then:
+    add locally save the checkpoint FEN (and keep previous checkpoint)
+    save "SaveCheckpoint" into the list
+    also save current FEN into the list**
+  elif the move is to return home:
+    reset to STARTFEN
+    save "GoToHome" into the list
+    also save the current FEN into list**
+  elif the move is to return to checkpoint:
+    reset to CHECKPOINT
+    save "GoToCheckpoint"
+    save the current FEN into list**
+  elif the move is to add a piece:
+    add the piece to the square
+    save current FEN into the list**
+  elif the move is to blank a square:
+    blank the square
+    save the current FEN into list**
+  Since all commands end with save the current FEN into list this could be moved to here
+  Just some also add a word first
+
+At this point our FENs will be created and in something like seen below.
+
+return (list of FENs and words)
+
+END OF generate_
+
+# Example usage:
+positions = [
+    "8/8/4/R4r/8/8/8/8 w",
+    "8/8/8/4r3/8/8/8/8 b",
+    "Home",
+    "8/8/8/8/8/8/R7/8 w"
+]
+
+class PositionNavigator:
+    def __init__(self, positions):
+        self.positions = list(positions)  
+        self.index = 0  # Track position
+
+    def next(self):
+        """Move forward but stop at the last element."""
+        if self.index < len(self.positions) - 1:
+            self.index += 1
+        return self.positions[self.index]
+
+    def previous(self):
+        """Move backward but stop at the first element."""
+        if self.index > 0:
+            self.index -= 1
+        return self.positions[self.index]
+
+    def current(self):
+        """Get the current position."""
+        return self.positions[self.index]
+
+
+navigator = PositionNavigator(positions) # Create the navigator for this FEN_LIST element, load it as a member of the Game.
+
+print(navigator.current())   # "8/8/4/R4r/8/8/8/8 w"
+print(navigator.next())      # "8/8/8/4r3/8/8/8/8 b"
+print(navigator.next())      # "Home"
+print(navigator.next())      # "8/8/8/8/8/8/R7/8 w"
+print(navigator.next())      # Stays on last item
+print(navigator.previous())  # Moves back to "Home"
+print(navigator.previous())  # Moves back again
+print(navigator.previous())  # Stays at first item
