@@ -1,5 +1,5 @@
-#!/bin/bash
-set -x
+#!/usr/bin/env bash
+
 # Define file names in correct order (2 rows, 6 columns)
 names=("wK" "wQ" "wB" "wN" "wR" "wP" "bK" "bQ" "bB" "bN" "bR" "bP")
 
