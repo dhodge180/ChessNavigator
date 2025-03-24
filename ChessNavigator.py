@@ -192,6 +192,7 @@ class ChessGame:
                 print("Loaded custom FEN position.")
             except ValueError:
                 print("Invalid FEN! Using default starting position.")
+        self.move_history = None
         self._initialize_game_state()
 
     def _initialize_game_state(self):
@@ -335,9 +336,12 @@ class ChessGame:
             else:
                 raise ValueError("Unknown move type in history")
 
+    def reset_move_history(self):
+        self.move_history = []
+
     def reset_board(self):
         self.board.set_fen(self.start_pos)
-        self.move_history = []
+        self.reset_move_history()
 
     def add_piece(self, piece_symbol, square):
         """Add a piece from the panel to the board and record the action for undo."""
@@ -375,6 +379,8 @@ class ChessGUI:
         self.piece_source = None  # Track if dragging from board or panel
         self.setup_spare_pieces()
         self.clock = pygame.time.Clock()
+        self.target_fps = None
+        self.redraw = None
         #self.set_window_title('Chess Navigator')
 
         # Calculate board colours initially
