@@ -1,8 +1,8 @@
-Fix the undo function to propogate through adding pieces.
+Fix the undo function to propogate through adding pieces. chess-python clears the move stack if you overwrite a square. it does support "drop" moves like in Crazyhouse, but I want to support changing a piece too. So let's not try and use the official stack?
 
 Ability to set title and subtext?
 
-Ability to remove a piece from the board by dragging it off the board
+Ability to remove a piece from the board by dragging it off the board. should be easy, look at the handle_mouse_up if location is off the board then handle "remove piece" move.
 
 Ability to resize the window? Maybe just a few default sizes, or do global rescaling.
 Yes, script ready to make pieces of size from 40 to 100 pixels.
