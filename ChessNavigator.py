@@ -126,7 +126,7 @@ print("Sample Image path to white king:", image_path)
 
 # Constants
 BOARD_SIZE = 8
-SQUARE_SIZE = 107  # 107 is exact png sizes, scaling can cause artifacts
+SQUARE_SIZE = 50  # 107 is exact png sizes, scaling can cause artifacts
 BOARD_WIDTH = SQUARE_SIZE * BOARD_SIZE
 BORDER_SIZE = 60
 PANEL_WIDTH = 250
@@ -162,11 +162,11 @@ START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
 def load_images():
     pieces = {}
     for piece in ['p', 'n', 'b', 'r', 'q', 'k']:
-        img_path = get_resource_path(f'images/b{piece.upper()}.png')
+        img_path = get_resource_path(f'images/b{piece.upper()}_{SQUARE_SIZE}px.png')
         img_black = pygame.image.load(img_path)
         pieces[piece] = pygame.transform.scale(img_black, (SQUARE_SIZE, SQUARE_SIZE))  # Scale to fit squares
 
-        img_path = get_resource_path(f'images/w{piece.upper()}.png')
+        img_path = get_resource_path(f'images/w{piece.upper()}_{SQUARE_SIZE}px.png')
         img_white =  pygame.image.load(img_path)
         pieces[piece.upper()] = pygame.transform.scale(img_white, (SQUARE_SIZE, SQUARE_SIZE))  # Scale for white pieces
     return pieces
