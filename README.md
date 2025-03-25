@@ -15,6 +15,8 @@ Various shortcuts are currently implemented but not documented.
 | T| Toggle whose turn it is|
 | (1,2,3,0)| Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT|
 | Ctrl + C | Copy current position to clipboard as FEN|
+| NUMPAD + | Increase window size |
+| NUMPAD - | Decrease window size |
 | DELETE| Clear all highlighting |
 
 

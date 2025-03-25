@@ -126,12 +126,12 @@ print("Sample Image path to white king:", image_path)
 
 # Constants
 BOARD_SIZE = 8
-SQUARE_SIZE = 50  # 107 is exact png sizes, scaling can cause artifacts
+SQUARE_SIZE = 100  # 107 is exact png sizes, scaling can cause artifacts
 BOARD_WIDTH = SQUARE_SIZE * BOARD_SIZE
 BORDER_SIZE = 60
-PANEL_WIDTH = 250
+PANEL_WIDTH = 3 * SQUARE_SIZE
 PANEL_GAP = 0
-MOVES_WIDTH = 50
+MOVES_WIDTH = 0
 HEIGHT_PADDING = 5
 
 WIDTH = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
@@ -142,6 +142,16 @@ WHITE = (238, 238, 210)
 BLACK = (118, 150, 86)
 TRUE_BLACK = (0, 0, 0)
 PANEL_COLOR = (20, 60, 60)
+
+def update_all_sizes(square_size):
+    global BOARD_WIDTH, PANEL_WIDTH, WIDTH, HEIGHT, MAIN_WIDTH, MAIN_HEIGHT
+    BOARD_WIDTH = square_size * BOARD_SIZE
+    PANEL_WIDTH = 4 * square_size
+    WIDTH = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
+    HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING  # Extra for border
+    MAIN_WIDTH = BOARD_WIDTH + 2 * BORDER_SIZE
+    MAIN_HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING
+
 
 # Highlighting colours
 RED_HIGHLIGHT = (240, 128, 128)    # Light Coral (soft red)
@@ -383,9 +393,9 @@ class ChessGUI:
         self.running = True
         self.dragging_piece = None
         self.dragging_pos = (0, 0)
+        self.setup_spare_pieces()
         self.dragging_square = None
         self.piece_source = None  # Track if dragging from board or panel
-        self.setup_spare_pieces()
         self.clock = pygame.time.Clock()
         self.target_fps = None
         self.redraw = None
@@ -416,6 +426,7 @@ class ChessGUI:
 
     def run(self):
         """Main loop of the GUI."""
+        global SQUARE_SIZE
         low_fps = 25
         high_fps = 60
         self.target_fps = high_fps
@@ -427,6 +438,7 @@ class ChessGUI:
                 self.draw_board()
                 self.draw_pieces()
                 self.draw_panel()
+                self.setup_spare_pieces()
                 self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
                 self.draw_pgn_panel()
@@ -464,6 +476,18 @@ class ChessGUI:
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
                         if self.fenlist:
                             self.cycle_fen()
+                    elif event.key == pygame.K_KP_MINUS:
+                        if SQUARE_SIZE > 40:
+                            SQUARE_SIZE = SQUARE_SIZE - 10
+                            update_all_sizes(SQUARE_SIZE)
+                            self.pieces = load_images()
+                            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+                    elif event.key == pygame.K_KP_PLUS:
+                        if SQUARE_SIZE < 100:
+                            SQUARE_SIZE = SQUARE_SIZE + 10
+                            update_all_sizes(SQUARE_SIZE)
+                            self.pieces = load_images()
+                            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
                     # Square highlighting
                     elif event.key in KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
                         pos = pygame.mouse.get_pos()
@@ -556,9 +580,9 @@ class ChessGUI:
         turn_color = WHITE if self.game.board.turn else TRUE_BLACK  # True = White's turn, False = Black's turn
 
         # Coordinates for the bottom-right corner
-        circle_radius = 20
+        circle_radius = 2 * SQUARE_SIZE / 10
         circle_x = BOARD_WIDTH + 2 * BORDER_SIZE + PANEL_WIDTH / 2  #- circle_radius # Half-way through panel
-        circle_y = HEIGHT - BORDER_SIZE/2 - circle_radius - 10  # 10px margin from the border
+        circle_y = HEIGHT - BORDER_SIZE/2 - circle_radius - SQUARE_SIZE / 10  # 10px margin from the border
 
         # Draw the circle representing the current turn
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
@@ -739,7 +763,7 @@ class ChessGUI:
     def show_help_popup(self):
         """Displays a popup with keyboard shortcuts."""
         popup_width = 600
-        popup_height = 620
+        popup_height = 680
         popup_x = (MAIN_WIDTH - popup_width) // 2
         popup_y = (MAIN_HEIGHT - popup_height) // 2
         popup_color = (50, 50, 50)  # Dark gray background
@@ -766,6 +790,8 @@ class ChessGUI:
             ("0", "Remove hovered square's highlighting"),
             ("DELETE", "Clear all highlighting"),
             ("Ctrl + C", "Copies current position to clipboard as FEN"),
+            ("NUMPAD +",  "Increase board size"),
+            ("NUMPAD -", "Decrease board size"),
             ("H", "Show this help window"),
             ("ESC", "Close help window"),
         ]
