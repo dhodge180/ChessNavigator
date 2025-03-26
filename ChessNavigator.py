@@ -97,13 +97,13 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
 
     # Detail the loaded list of FENS
     print("Loaded positions:")
-    for fen_data in FEN_LIST:
+    for each_fen_data in FEN_LIST:
         print("------------------------------------------------------------------------------------------------------")
         #print(fen_data)
-        print(f"Title: {fen_data['title']}")
-        print(f"FEN: {fen_data['fen']}")
-        print(f"Stip: {fen_data['stip']}")
-        print(f"Moves: {fen_data['moves']}")
+        print(f"Title: {each_fen_data['title']}")
+        print(f"FEN: {each_fen_data['fen']}")
+        print(f"Stip: {each_fen_data['stip']}")
+        print(f"Moves: {each_fen_data['moves']}")
     print("------------------------------------------------------------------------------------------------------")
 
     if FEN_LIST:
@@ -212,14 +212,29 @@ class ChessGame:
             except ValueError:
                 print("Invalid FEN! Using default starting position.")
         self.move_history = None
+        self.tree_position = 0  # Which element of the fen_tree are we at
         self._initialize_game_state()
 
     def _initialize_game_state(self):
         """Common setup method for initializing or resetting the game state."""
         self.legal_moves_enabled = True
         self.move_history = []  # Reset move history
+        self.tree_position = 0  # Reset to start the element of the fen_tree are we at
         self.moves = chess.pgn.Game()  # Reset PGN game
         self.node = self.moves  # Reset PGN node pointer
+
+    def advance_tree_step(self, dir):
+        current_fen_tree = FEN_LIST[-1]['fen_tree']
+        # If there's another move to play
+        if dir == 1: # Request to step forwards
+            if self.tree_position + 1 < len(current_fen_tree):
+                self.tree_position += 1
+        elif dir == -1:
+            if self.tree_position > 0:
+                self.tree_position -= 1
+
+        # Move to next position (might be same position if at an end already)
+        self.board.set_fen(current_fen_tree[self.tree_position])
 
     def set_new_fen(self, new_fen):
         """Updates the board with a new FEN and resets move history & PGN tracking."""
@@ -369,6 +384,7 @@ class ChessGame:
     def reset_board(self):
         self.board.set_fen(self.start_pos)
         self.reset_move_history()
+        self.tree_position = 0
 
     def add_piece(self, piece_symbol, square):
         """Add a piece from the panel to the board and record the action for undo."""
@@ -485,6 +501,11 @@ class ChessGUI:
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
                         if self.fenlist:
                             self.cycle_fen()
+                    elif event.key == pygame.K_RIGHT:
+                        # Recall that FEN_LIST[-1] is always the FEN we're working on
+                        self.game.advance_tree_step(+1)
+                    elif event.key == pygame.K_LEFT:
+                        self.game.advance_tree_step(-1)
                     elif event.key == pygame.K_KP_MINUS:
                         if SQUARE_SIZE > 40:
                             SQUARE_SIZE = SQUARE_SIZE - 10
@@ -752,7 +773,7 @@ class ChessGUI:
         """Cycle through the FEN list and update the game and window title."""
         print("Loading next diagram from file")
         # Get the current FEN and title
-        current_fen_data = FEN_LIST.pop(0)  # Get first element
+        current_fen_data = FEN_LIST.pop(0)  # Remove the first element
         FEN_LIST.append(current_fen_data)  # Move it to the end for the next cycle
 
         new_fen = current_fen_data["fen"]
@@ -765,6 +786,8 @@ class ChessGUI:
         self.custom_stip = subtext
         self.draw_custom_title()
         self.draw_custom_stip()
+        # FEN_LIST[-1] the, last element, is now the one we're working with
+        # FEN_LIST[0] will be loaded when we NEXT run the cycle
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
@@ -839,9 +862,9 @@ class ChessGUI:
                     waiting = False
 
 class TempGame:
-    def __init__(self, beginning):
+    def __init__(self, first_position):
         self.board = chess.Board()
-        self.board.set_fen(beginning)
+        self.board.set_fen(first_position)
         self.move_handlers = {
             'move': self.handle_move,
             'promotion': self.handle_promotion,
@@ -854,7 +877,8 @@ class TempGame:
         self.generated = [] # This will store the full fens and be returned at the end
         self.add_this_fen() # Start by adding the initial FEN. Will need to know this later with -> movements
         self.checkpoints = [] # Create checkpoints list
-        self.checkpoints.append(beginning) # Start with the home position (shouldn't be necessary)
+        self.current_checkpoint_index = 0
+        self.checkpoints.append(first_position) # Start with the home position (shouldn't be necessary)
 
     def add_this_fen(self):
         self.generated.append(self.board.fen())
@@ -884,30 +908,11 @@ class TempGame:
         self.board.push(mv)
         self.add_this_fen()
 
-    """
-    elif the move is to return home:
-    reset to STARTFEN
-    save "GoToHome" into the list
-    also save the current FEN into list**
-    elif the move is to return to checkpoint:
-    reset to CHECKPOINT
-    save "GoToCheckpoint"
-    save the current FEN into list**
-    elif the move is to add a piece:
-    add the piece to the square
-    save current FEN into the list**
-    elif the move is to blank a square:
-    blank the square
-    save the current FEN into list**
-    Since all commands end with save the current FEN into list this could be moved to here
-    Just some also add a word first
-    """
-
     def handle_promotion(self, move):
         """e.g. {'type': 'promotion', 'from': 'a7', 'to': 'a8', 'promotion_piece': 'Q'}
         If move is promotion do same as move but add all three parts
         """
-            
+
         from_square = move['from']
         to_square = move['to']
         promotion_piece = move['promotion_piece']
@@ -928,8 +933,18 @@ class TempGame:
 
         print("Saving current position")
         # Implement the logic for saving the current position
+
+        # Remove any future checkpoints if we are not at the end
+        self.checkpoints = self.checkpoints[:self.current_checkpoint_index + 1]
+
+        # Save the current position
         self.checkpoints.append(self.board.fen())
-        self.generated.append("SaveCheckPoint")
+
+        # Update the current checkpoint index
+        self.current_checkpoint_index = len(self.checkpoints) - 1
+
+        # Won't store facts about checkpoints into generated for now, just fens
+        # self.generated.append("SaveCheckPoint")
         # Don't need to add a FEN since we already added it? could revisit
 
     def handle_home(self, move):
@@ -937,24 +952,30 @@ class TempGame:
 
         print("Returning to home position")
         # Implement the logic for returning to the home position
-        self.board.set_fen(KEEP POPPING UNTIL WE HIT THE FIRST ONE)
-        UP TO HERE>>>>>
+        self.current_checkpoint_index = 0
+        self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
+        self.add_this_fen() # Save the fen to the generated list
 
     def handle_skipback(self, move):
         """ e.g. {'type': 'skipback', 'steps': n} """
 
+        distance = move['steps']
         print("Skipping back")
         # Implement the logic for skipping back
-        SOME POP THING REPEAT IT n TIMES (or n-1)
+        self.current_checkpoint_index = max(0, self.current_checkpoint_index - distance + 1)
+        self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
+        self.add_this_fen()  # Save the fen to the generated list
+        print(self.board)
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
-    
-        from_square = move['from']
-        to_square = move['to']
-        captured_piece = move['captured_piece']
-        print(f"Capture move from {from_square} to {to_square}, capturing {captured_piece}")
+
+        to_square = chess.parse_square(move['to'])
+        added_piece = move['piece']
+        print(f"Add piece to {to_square}")
         # Implement the logic for handling capture
+        self.board.set_piece_at(to_square, chess.Piece.from_symbol(added_piece))
+        self.add_this_fen()  # Save the fen to the generated list
 
     def handle_remove(self, move):
         """ {'type': 'remove', 'from': 'a1'} """
@@ -962,6 +983,8 @@ class TempGame:
         from_square = move['from']
         print(f"Removing piece from {from_square}")
         # Implement the logic for removing a piece
+        self.board.remove_piece_at(from_square)
+        self.add_this_fen()
 
     def result(self):
         return self.generated
@@ -972,35 +995,36 @@ class TempGame:
         Each case will be converted into an appropriate format (e.g., tuple or dict).
         """
         
-        # Case a: letter-number-letter-number (e.g. a1e5)
-        if re.match(r'^[a-h][1-8][a-h][1-8]$', move):
+        # Case a: letter-number-letter-number (e.g. a1e5) possibly ending +, ++ or #
+        if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1.2}|#)?$', move):
             # This matches a format like 'a1e5'
             return {'type': 'move', 'from': move[:2], 'to': move[2:]}
 
-        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbqPRNBQ
-        elif re.match(r'^[a-h][1-8][a-h][1-8][rnbqRNBQ]$', move):
+        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbQPRNBQ
+        # possibly ending +, ++ or #
+        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbnqkRBNQK](\+{1.2}|#)?$', move):
             # This matches a format like 'a7a8Q' with a valid promotion piece
-            return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4]}
+            return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
 
-        # Case c: the string "SAVE"
-        elif move == "SAVE":
+        # Case c: the string "*" means save checkpoint
+        elif move == "*":
             return {'type': 'save'}
 
-        # Case d: the string "HOME"
-        elif move == "HOME":
+        # Case d: the string "H" means return to home
+        elif move == "H":
             return {'type': 'home'}
 
-        # Case e: the string "SKIPBACK"
-        elif re.match(r"SKIPBACK\d+", move):
-            return {'type': 'skipback', 'steps': n}
+        # Case e: a string of consecutive < symbols, e.g. <<< or <
+        elif re.fullmatch(r'<+', move):  # any number of < symbols
+            return {'type': 'skipback', 'steps': len(move)}
 
         # Case f: string "+letter-letter-number" (e.g. +Rb2)
-        elif re.match(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
+        elif re.fullmatch(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
             # This matches a format like '+Rb2'
             return {'type': 'add', 'piece': move[1], 'to': move[2:]}
 
         # Case g: string "-letter-number" (e.g. -e4)
-        elif re.match(r'^\-[a-h][1-8]$', move):
+        elif re.fullmatch(r'^-[a-h][1-8]$', move):
             # This matches a format like '-e4'
             return {'type': 'remove', 'from': move[1:]}
 
@@ -1023,38 +1047,6 @@ def generate_fen_path(beginning, moves):
         temp_game.process_move(move)
 
     return temp_game.result()
-    """
-
-    # Step into the moves
-    
-
-    At this point our FENs will be created and in something like seen below.
-
-    return (list of FENs and words)
-
-    END OF generate_
-
-    
-        get_fen = temp_game.fen()
-        return get_fen
-    
-    # Example usage:
-    moves = [
-            "a1e5",      # case a
-            "a7a8Q",     # case b
-            "SAVE",      # case c
-            "HOME",      # case d
-            "SKIPBACK",  # case e
-            "+Rb2",      # case f
-            "-e4",       # case g
-    ]
-
-    for move in moves:
-        result = convert_move(move)
-        print(result)
-
-
-    """
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
@@ -1065,12 +1057,10 @@ if __name__ == "__main__":
     if fen_list_loaded:
         # Here we generate move trees from the moves
         for fen_data in FEN_LIST:
-            beginning = fen_data['fen']
+            given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
-            X = generate_fen_path(beginning, move_list)
-            print(X)
-
-
+            fen_tree = generate_fen_path(given_fen, move_list)
+            fen_data['fen_tree'] = fen_tree
 
     ChessGUI(passed_fen, title=args.title, stip=args.stip, fenlist=fen_list_loaded).run()  # Pass the FEN to the GUI and the Window title
 

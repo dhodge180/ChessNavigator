@@ -8,13 +8,10 @@ FEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
 Subtext: S#5
 Moves: a7a8Q
 
-Title: "Silly Test Position 1"
-FEN: "8/8/8/8/8/k6K/8/RRRRrrrr"
-Subtext: "Mate in 3"
-
+Title: Testing an opening
 FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 Subtext: "Mate in 2"
-Moves: e2e4 e7e5 g1f3 b8a6 f1b5
+Moves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5
 
 Title: "Pawn Structure Test"
 FEN: "8/8/8/8/8/5p2/4p3/8 w - - 0 1"
