@@ -6,6 +6,7 @@
 Title: Some famous problem
 FEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
 Subtext: S#5
+Moves: a7a8Q
 
 Title: "Silly Test Position 1"
 FEN: "8/8/8/8/8/k6K/8/RRRRrrrr"
@@ -13,6 +14,7 @@ Subtext: "Mate in 3"
 
 FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 Subtext: "Mate in 2"
+Moves: e2e4 e7e5 g1f3 b8a6 f1b5
 
 Title: "Pawn Structure Test"
 FEN: "8/8/8/8/8/5p2/4p3/8 w - - 0 1"

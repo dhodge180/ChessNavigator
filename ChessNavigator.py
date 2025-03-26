@@ -3,6 +3,7 @@ import chess
 import chess.pgn
 import argparse
 from pyperclip import copy
+import re
 
 import os
 import sys
@@ -21,7 +22,7 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
     with open(filename, "r") as file:
         lines = file.readlines()
 
-    temp_fen_data = {"stip": ""}
+    temp_fen_data = {"stip": "", "moves": ""}
     for line in lines:
         line = line.strip()  # Remove leading/trailing whitespaces
 
@@ -30,12 +31,12 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
             if "title" in temp_fen_data: # We already have a title!
                 if "fen" not in temp_fen_data: # Second title, no FEN yet. Stupid.
                     # Total reset and save new title
-                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": ""}
+                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
                 elif "fen" in temp_fen_data: # We have a FEN already
                     # Save entry immediately (possibly with Subtext)
                     FEN_LIST.append(temp_fen_data)
                     # Start next entry
-                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": ""}
+                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
             elif "title" not in temp_fen_data: # Currently no title
                 temp_fen_data["title"] = line[len("Title:"):].strip().strip('"')
 
@@ -47,12 +48,12 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                     temp_fen_data["title"] = "" # Insert blank title
                     FEN_LIST.append(temp_fen_data) # Save (possibly with subtext)
                     # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": ""}
+                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": "", "moves": ""}
                 elif "title" in temp_fen_data: # We have a title already
                     # Save entry immediately (possibly with Subtext)
                     FEN_LIST.append(temp_fen_data)
                     # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": ""}
+                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # We don't have a fen yet
                 temp_fen_data["fen"] = line[len("FEN:"):].strip().strip('"')
 
@@ -64,6 +65,13 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
             temp_fen_data["stip"] = line[len("Subtext:"):].strip().strip('"')
             # No need to save yet. If end of file we'll save later
 
+        elif line.startswith("Moves:"):
+            if temp_fen_data["moves"] != "": # We already have moves!
+                print("Error. We already have some moves, overwriting.")
+            # Storing moves (possible overwrite with above warning)
+            temp_fen_data["moves"] = line[len("Moves:"):].strip().strip('"')
+            # No need to save yet. If we of file we'll save later.
+
         # We encounter a blank line
         elif line == "": # a blank line
             # Assume this separates problems
@@ -73,11 +81,11 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                 # Save entry (possible with blank stip
                 FEN_LIST.append(temp_fen_data)
                 # Wipe it clean for next entry
-                temp_fen_data = {"stip": ""}
+                temp_fen_data = {"stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # not even a fen
                 print("Disregarding this entry without even a FEN")
                 # Wipe it clean for next entry
-                temp_fen_data = {"stip": ""}
+                temp_fen_data = {"stip": "", "moves": ""}
 
     # Finished reading all lines
     # Need to save final entry, assuming it has at least a fen
@@ -95,6 +103,7 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
         print(f"Title: {fen_data['title']}")
         print(f"FEN: {fen_data['fen']}")
         print(f"Stip: {fen_data['stip']}")
+        print(f"Moves: {fen_data['moves']}")
     print("------------------------------------------------------------------------------------------------------")
 
     if FEN_LIST:
@@ -829,6 +838,223 @@ class ChessGUI:
                 if event.type == pygame.KEYDOWN and event.key in (pygame.K_h, pygame.K_ESCAPE):  # Press H or Escape to close
                     waiting = False
 
+class TempGame:
+    def __init__(self, beginning):
+        self.board = chess.Board()
+        self.board.set_fen(beginning)
+        self.move_handlers = {
+            'move': self.handle_move,
+            'promotion': self.handle_promotion,
+            'save': self.handle_save,
+            'home': self.handle_home,
+            'skipback': self.handle_skipback,
+            'add': self.handle_add,
+            'remove': self.handle_remove
+        }
+        self.generated = [] # This will store the full fens and be returned at the end
+        self.add_this_fen() # Start by adding the initial FEN. Will need to know this later with -> movements
+        self.checkpoints = [] # Create checkpoints list
+        self.checkpoints.append(beginning) # Start with the home position (shouldn't be necessary)
+
+    def add_this_fen(self):
+        self.generated.append(self.board.fen())
+
+    def process_move(self, move_str):
+        # Convert the move string
+        converted_move = self.convert_move(move_str)
+        move_type = converted_move['type']
+        
+        # Call the corresponding handler function from the dictionary
+        if move_type in self.move_handlers:
+            self.move_handlers[move_type](converted_move)
+        else:
+            print(f"Unknown move type: {move_type}")
+
+    def handle_move(self, move):
+        """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
+        If the move is a uci-format then:
+        perform it, and update the game
+        save the current FEN into the list"""
+    
+        from_square = move['from']
+        to_square = move['to']
+        print(f"Regular move from {from_square} to {to_square}")
+        # Implement the logic for handling regular moves
+        mv = chess.Move.from_uci(from_square + to_square)
+        self.board.push(mv)
+        self.add_this_fen()
+
+    """
+    elif the move is to return home:
+    reset to STARTFEN
+    save "GoToHome" into the list
+    also save the current FEN into list**
+    elif the move is to return to checkpoint:
+    reset to CHECKPOINT
+    save "GoToCheckpoint"
+    save the current FEN into list**
+    elif the move is to add a piece:
+    add the piece to the square
+    save current FEN into the list**
+    elif the move is to blank a square:
+    blank the square
+    save the current FEN into list**
+    Since all commands end with save the current FEN into list this could be moved to here
+    Just some also add a word first
+    """
+
+    def handle_promotion(self, move):
+        """e.g. {'type': 'promotion', 'from': 'a7', 'to': 'a8', 'promotion_piece': 'Q'}
+        If move is promotion do same as move but add all three parts
+        """
+            
+        from_square = move['from']
+        to_square = move['to']
+        promotion_piece = move['promotion_piece']
+        print(f"Promotion move from {from_square} to {to_square} promoting to {promotion_piece}")
+        # Implement the logic for handling promotion
+
+        mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
+        self.board.push(mv)
+        self.add_this_fen()
+
+    def handle_save(self, move):
+        """ e.g. {'type': 'save'}
+        elif the move is to add a checkpoint then:
+            add locally save the checkpoint FEN (and keep previous checkpoint)
+            save "SaveCheckpoint" into the list
+            also save current FEN into the list
+        """
+
+        print("Saving current position")
+        # Implement the logic for saving the current position
+        self.checkpoints.append(self.board.fen())
+        self.generated.append("SaveCheckPoint")
+        # Don't need to add a FEN since we already added it? could revisit
+
+    def handle_home(self, move):
+        """ e.g. {'type': 'home'} """
+
+        print("Returning to home position")
+        # Implement the logic for returning to the home position
+        self.board.set_fen(KEEP POPPING UNTIL WE HIT THE FIRST ONE)
+        UP TO HERE>>>>>
+
+    def handle_skipback(self, move):
+        """ e.g. {'type': 'skipback', 'steps': n} """
+
+        print("Skipping back")
+        # Implement the logic for skipping back
+        SOME POP THING REPEAT IT n TIMES (or n-1)
+
+    def handle_add(self, move):
+        """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
+    
+        from_square = move['from']
+        to_square = move['to']
+        captured_piece = move['captured_piece']
+        print(f"Capture move from {from_square} to {to_square}, capturing {captured_piece}")
+        # Implement the logic for handling capture
+
+    def handle_remove(self, move):
+        """ {'type': 'remove', 'from': 'a1'} """
+
+        from_square = move['from']
+        print(f"Removing piece from {from_square}")
+        # Implement the logic for removing a piece
+
+    def result(self):
+        return self.generated
+    
+    def convert_move(self, move):
+        """
+        Function to convert different types of move strings to a structured representation.
+        Each case will be converted into an appropriate format (e.g., tuple or dict).
+        """
+        
+        # Case a: letter-number-letter-number (e.g. a1e5)
+        if re.match(r'^[a-h][1-8][a-h][1-8]$', move):
+            # This matches a format like 'a1e5'
+            return {'type': 'move', 'from': move[:2], 'to': move[2:]}
+
+        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbqPRNBQ
+        elif re.match(r'^[a-h][1-8][a-h][1-8][rnbqRNBQ]$', move):
+            # This matches a format like 'a7a8Q' with a valid promotion piece
+            return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4]}
+
+        # Case c: the string "SAVE"
+        elif move == "SAVE":
+            return {'type': 'save'}
+
+        # Case d: the string "HOME"
+        elif move == "HOME":
+            return {'type': 'home'}
+
+        # Case e: the string "SKIPBACK"
+        elif re.match(r"SKIPBACK\d+", move):
+            return {'type': 'skipback', 'steps': n}
+
+        # Case f: string "+letter-letter-number" (e.g. +Rb2)
+        elif re.match(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
+            # This matches a format like '+Rb2'
+            return {'type': 'add', 'piece': move[1], 'to': move[2:]}
+
+        # Case g: string "-letter-number" (e.g. -e4)
+        elif re.match(r'^\-[a-h][1-8]$', move):
+            # This matches a format like '-e4'
+            return {'type': 'remove', 'from': move[1:]}
+
+        else:
+            return {'type': 'invalid', 'move': move}
+
+def generate_fen_path(beginning, moves):
+    """Create a sequence of FENs from an initial fen and the list of moves already"""
+
+    # We will include in the FEN sequence non-FENs called "GoToHome", "GoToCheckpoint" and "SaveCheckpoint" for debugging and later flexibility
+    # But they will be skipped when loading the next FEN
+
+    # Read all the moves into a list
+    # Already done, in moves
+
+    # Load the starting FEN into a chess object, ie. create a temporary game e.g. via a chess.board(START)
+    temp_game = TempGame(beginning)
+
+    for move in moves:
+        temp_game.process_move(move)
+
+    return temp_game.result()
+    """
+
+    # Step into the moves
+    
+
+    At this point our FENs will be created and in something like seen below.
+
+    return (list of FENs and words)
+
+    END OF generate_
+
+    
+        get_fen = temp_game.fen()
+        return get_fen
+    
+    # Example usage:
+    moves = [
+            "a1e5",      # case a
+            "a7a8Q",     # case b
+            "SAVE",      # case c
+            "HOME",      # case d
+            "SKIPBACK",  # case e
+            "+Rb2",      # case f
+            "-e4",       # case g
+    ]
+
+    for move in moves:
+        result = convert_move(move)
+        print(result)
+
+
+    """
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
@@ -836,8 +1062,18 @@ if __name__ == "__main__":
     passed_fenlist = args.fenlist if args.fenlist else None
     fen_list_loaded = load_fen_list_from_file(passed_fenlist) # default is FEN_LIST.txt but user could customize
     # Return value is TRUE or FALSE based on success
+    if fen_list_loaded:
+        # Here we generate move trees from the moves
+        for fen_data in FEN_LIST:
+            beginning = fen_data['fen']
+            move_list = fen_data['moves'].split()
+            X = generate_fen_path(beginning, move_list)
+            print(X)
+
+
 
     ChessGUI(passed_fen, title=args.title, stip=args.stip, fenlist=fen_list_loaded).run()  # Pass the FEN to the GUI and the Window title
+
 
 
 
