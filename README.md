@@ -19,4 +19,28 @@ Various shortcuts are currently implemented but not documented.
 | NUMPAD - | Decrease window size |
 | DELETE| Clear all highlighting |
 
+## For pre-stored analysis
+
+If you wish to be able to navigate a pre-determined tree then the path can be written in FEN_LIST in advance.
+Sample syntax is as follows:
+
+e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5
+
+| Format | Result                                      |
+|--------|---------------------------------------------|
+| a1b3   | Move piece from a1 to b3                    |
+| a7b8N  | Promote a7b8 to a knight                    |
+| *      | Save the current position for future return |
+| <      | Go back to last saved position              |
+| <<     | Go back to second last saved position       |
+| <<<    | Go back to third last saved position        |
+| etc..  |                                             |
+| H      | Go back to Home position for this problem   |
+| +Ra7   | Add a white rook to a7 (capital = white)    |
+| -e4    | Remove whatever piece is on e4              |
+
+
+
+
+
 

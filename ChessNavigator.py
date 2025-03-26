@@ -824,6 +824,7 @@ class ChessGUI:
             ("Ctrl + C", "Copies current position to clipboard as FEN"),
             ("NUMPAD +",  "Increase board size"),
             ("NUMPAD -", "Decrease board size"),
+            ("LEFT/RIGHT", "Navigate through pre-loaded sequence"),
             ("H", "Show this help window"),
             ("ESC", "Close help window"),
         ]
@@ -834,7 +835,7 @@ class ChessGUI:
         # Draw text
         y_offset = popup_y + 20
         key_x = popup_x + 20  # Starting X position for keys
-        action_x = key_x + 140  # Starting X position for actions (enough space for the key column)
+        action_x = key_x + 150  # Starting X position for actions (enough space for the key column)
         
         for i, (key, action) in enumerate(shortcuts):
             if i==0 or i==1:
@@ -871,6 +872,7 @@ class TempGame:
             'save': self.handle_save,
             'home': self.handle_home,
             'skipback': self.handle_skipback,
+            'player_turn': self.handle_set_whos_turn,
             'add': self.handle_add,
             'remove': self.handle_remove
         }
@@ -903,6 +905,16 @@ class TempGame:
         from_square = move['from']
         to_square = move['to']
         print(f"Regular move from {from_square} to {to_square}")
+
+        piece = self.board.piece_at(chess.parse_square(from_square))
+        if piece is None:
+            print("Uhm, there was meant to be a piece here!")
+            return
+
+        if piece.color != self.board.turn:
+            print("You moved out of turn, but I'll allow it.")
+            self.board.turn = not self.board.turn # Swap player to move
+
         # Implement the logic for handling regular moves
         mv = chess.Move.from_uci(from_square + to_square)
         self.board.push(mv)
@@ -965,16 +977,15 @@ class TempGame:
         self.current_checkpoint_index = max(0, self.current_checkpoint_index - distance + 1)
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
         self.add_this_fen()  # Save the fen to the generated list
-        print(self.board)
+        #print(self.board)
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
-
-        to_square = chess.parse_square(move['to'])
+        to_square = move['to']
         added_piece = move['piece']
         print(f"Add piece to {to_square}")
         # Implement the logic for handling capture
-        self.board.set_piece_at(to_square, chess.Piece.from_symbol(added_piece))
+        self.board.set_piece_at(chess.parse_square(to_square), chess.Piece.from_symbol(added_piece))
         self.add_this_fen()  # Save the fen to the generated list
 
     def handle_remove(self, move):
@@ -983,8 +994,19 @@ class TempGame:
         from_square = move['from']
         print(f"Removing piece from {from_square}")
         # Implement the logic for removing a piece
-        self.board.remove_piece_at(from_square)
+        self.board.remove_piece_at(chess.parse_square(from_square))
         self.add_this_fen()
+
+    def handle_set_whos_turn(self, move):
+        """e.g. {'type': 'player_turn', 'player': 'B'}
+        Request to set whose turn it is
+        """
+        player_to_move = move['player']
+        current_turn = "W" if self.board.turn == chess.WHITE else "B" # Find whos turn it current is
+        if player_to_move != current_turn:
+            # Target player to move means we need to change
+            self.board.turn = not self.board.turn
+            self.add_this_fen()
 
     def result(self):
         return self.generated
@@ -996,13 +1018,15 @@ class TempGame:
         """
         
         # Case a: letter-number-letter-number (e.g. a1e5) possibly ending +, ++ or #
-        if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1.2}|#)?$', move):
+        if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1,2}|#)?$', move):
+            move = move.rstrip('+#') # Strips any + or # at the end
             # This matches a format like 'a1e5'
             return {'type': 'move', 'from': move[:2], 'to': move[2:]}
 
         # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbQPRNBQ
         # possibly ending +, ++ or #
-        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbnqkRBNQK](\+{1.2}|#)?$', move):
+        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbnqkRBNQK](\+{1,2}|#)?$', move):
+            move = move.rstrip('+#')  # Strips any + or # at the end
             # This matches a format like 'a7a8Q' with a valid promotion piece
             return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
 
@@ -1013,6 +1037,10 @@ class TempGame:
         # Case d: the string "H" means return to home
         elif move == "H":
             return {'type': 'home'}
+
+        # Case: setting whose turn it is to move
+        elif move in ("W", "B"):
+            return {'type': 'player_turn', 'player': move}
 
         # Case e: a string of consecutive < symbols, e.g. <<< or <
         elif re.fullmatch(r'<+', move):  # any number of < symbols
