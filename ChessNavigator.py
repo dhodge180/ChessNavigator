@@ -135,7 +135,7 @@ print("Sample Image path to white king:", image_path)
 
 # Constants
 BOARD_SIZE: int = 8
-SQUARE_SIZE: int = 80
+SQUARE_SIZE: int = 70
 BOARD_WIDTH: int = SQUARE_SIZE * BOARD_SIZE
 BORDER_SIZE: int = 60
 PANEL_WIDTH = 3 * SQUARE_SIZE
@@ -197,6 +197,7 @@ def parse_arguments():
     parser.add_argument("--title", type=str, default="", help="Set the problem title")
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
     parser.add_argument("--fenlist", type=str, help="Path to the FEN list file", default="FEN_LIST.txt")
+    parser.add_argument("--window", type=str, help="Window name")
     return parser.parse_args()
 
 class ChessGame:
@@ -409,12 +410,12 @@ class ChessGame:
         self.board.push(chess.Move.null())
 
 class ChessGUI:
-    def __init__(self, fen=None, title='Chess Navigator', stip = "", fenlist = False):
+    def __init__(self, fen=None, window_title_bar = "", title='Chess Navigator', stip = "", fenlist = False):
         self.spare_pieces = None
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption('Chess Navigator')
+        pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
         self.game = ChessGame(fen)
         self.running = True
@@ -1196,6 +1197,7 @@ def generate_fen_path(beginning, moves):
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
+    window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     fen_list_loaded = load_fen_list_from_file(passed_fenlist) # default is FEN_LIST.txt but user could customize
@@ -1208,7 +1210,7 @@ if __name__ == "__main__":
             fen_tree = generate_fen_path(given_fen, move_list)
             fen_data['fen_tree'] = fen_tree
 
-    ChessGUI(passed_fen, title=args.title, stip=args.stip, fenlist=fen_list_loaded).run()  # Pass the FEN to the GUI and the Window title
+    ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=fen_list_loaded).run()  # Pass the FEN to the GUI and the Window title
 
 
 
