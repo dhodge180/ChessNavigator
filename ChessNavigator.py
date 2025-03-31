@@ -134,18 +134,18 @@ image_path = get_resource_path("images/wK.png")
 print("Sample Image path to white king:", image_path)
 
 # Constants
-BOARD_SIZE = 8
-SQUARE_SIZE = 80
-BOARD_WIDTH = SQUARE_SIZE * BOARD_SIZE
-BORDER_SIZE = 60
+BOARD_SIZE: int = 8
+SQUARE_SIZE: int = 80
+BOARD_WIDTH: int = SQUARE_SIZE * BOARD_SIZE
+BORDER_SIZE: int = 60
 PANEL_WIDTH = 3 * SQUARE_SIZE
 PANEL_GAP = 0
 MOVES_WIDTH = 0
 HEIGHT_PADDING = 5
 
-WIDTH = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
-HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING # Extra for border
-MAIN_WIDTH = BOARD_WIDTH + 2*BORDER_SIZE
+WIDTH: int = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
+HEIGHT: int = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING # Extra for border
+MAIN_WIDTH: int = BOARD_WIDTH + 2 * BORDER_SIZE
 MAIN_HEIGHT = BOARD_WIDTH + 2*BORDER_SIZE + 2*HEIGHT_PADDING
 WHITE = (238, 238, 210)
 BLACK = (118, 150, 86)
@@ -223,15 +223,17 @@ class ChessGame:
         self.moves = chess.pgn.Game()  # Reset PGN game
         self.node = self.moves  # Reset PGN node pointer
 
-    def advance_tree_step(self, dir):
+    def advance_tree_step(self, direction):
         current_fen_tree = FEN_LIST[-1]['fen_tree']
         # If there's another move to play
-        if dir == 1: # Request to step forwards
+        if direction == 1: # Request to step forwards
             if self.tree_position + 1 < len(current_fen_tree):
                 self.tree_position += 1
-        elif dir == -1:
+        elif direction == -1:
             if self.tree_position > 0:
                 self.tree_position -= 1
+        elif direction is None: # This means jump to the end
+            self.tree_position = len(current_fen_tree)-1
 
         # Move to next position (might be same position if at an end already)
         self.board.set_fen(current_fen_tree[self.tree_position])
@@ -508,6 +510,9 @@ class ChessGUI:
                     elif event.key == pygame.K_LEFT:
                         if fen_list_loaded:
                             self.game.advance_tree_step(-1)
+                    elif event.key == pygame.K_END:
+                        if fen_list_loaded:
+                            self.game.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if SQUARE_SIZE > 40:
                             SQUARE_SIZE = SQUARE_SIZE - 10
@@ -811,10 +816,10 @@ class ChessGUI:
     def show_help_popup(self):
         """Displays a scalable help popup without cutting any lines, even for small board sizes."""
 
-        popup_width = int(min(600, MAIN_WIDTH * 0.8))  # Max 600px or 80% of screen width
+        popup_width = min(600, int(MAIN_WIDTH * 0.8))  # Max 600px or 80% of screen width
         max_popup_height = int(HEIGHT * 0.9)  # 90% of screen height
         popup_x = int((MAIN_WIDTH - popup_width) // 2)
-        popup_y = int((MAIN_HEIGHT - max_popup_height) // 2)
+        #popup_y = int((MAIN_HEIGHT - max_popup_height) // 2)
         popup_color = (50, 50, 50)  # Dark gray background
         text_color = (255, 255, 255)  # White text
 
@@ -845,8 +850,8 @@ class ChessGUI:
         total_lines = len(shortcuts)
 
         # Dynamically calculate font size and spacing
-        available_space = max_popup_height - 40  # 20px padding at top and bottom
-        max_line_gap = available_space / total_lines  # Max height per line
+        available_space: int = max_popup_height - 40  # 20px padding at top and bottom
+        max_line_gap = int(available_space / total_lines)  # Max height per line
         font_size = int(max(12, min(24, max_line_gap - 4)))  # Keep font readable (12-24px)
         line_gap = int(max(font_size + 2, max_line_gap, 16))  # Ensure spacing is at least 16px
 
@@ -907,7 +912,7 @@ class ChessGUI:
         big_fonts = [28, 32, 32]
         line_gap = 35
         
-        if(SQUARE_SIZE < 75):
+        if SQUARE_SIZE < 75:
             font_sizes = small_fonts
             line_gap = 10
             popup_height = BOARD_WIDTH
