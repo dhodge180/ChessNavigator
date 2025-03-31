@@ -135,7 +135,7 @@ print("Sample Image path to white king:", image_path)
 
 # Constants
 BOARD_SIZE = 8
-SQUARE_SIZE = 100  # 107 is exact png sizes, scaling can cause artifacts
+SQUARE_SIZE = 80
 BOARD_WIDTH = SQUARE_SIZE * BOARD_SIZE
 BORDER_SIZE = 60
 PANEL_WIDTH = 3 * SQUARE_SIZE
@@ -503,16 +503,18 @@ class ChessGUI:
                             self.cycle_fen()
                     elif event.key == pygame.K_RIGHT:
                         # Recall that FEN_LIST[-1] is always the FEN we're working on
-                        self.game.advance_tree_step(+1)
+                        if fen_list_loaded: # Don't try if no fenlist
+                            self.game.advance_tree_step(+1)
                     elif event.key == pygame.K_LEFT:
-                        self.game.advance_tree_step(-1)
-                    elif event.key == pygame.K_KP_MINUS:
+                        if fen_list_loaded:
+                            self.game.advance_tree_step(-1)
+                    elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if SQUARE_SIZE > 40:
                             SQUARE_SIZE = SQUARE_SIZE - 10
                             update_all_sizes(SQUARE_SIZE)
                             self.pieces = load_images()
                             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-                    elif event.key == pygame.K_KP_PLUS:
+                    elif event.key in (pygame.K_KP_PLUS, pygame.K_EQUALS):
                         if SQUARE_SIZE < 100:
                             SQUARE_SIZE = SQUARE_SIZE + 10
                             update_all_sizes(SQUARE_SIZE)
@@ -616,6 +618,19 @@ class ChessGUI:
 
         # Draw the circle representing the current turn
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
+
+    def check_turn_toggle_click(self, pos):
+        # Code copied from draw_turn_indicator
+        circle_radius = 2 * SQUARE_SIZE / 10
+        circle_x = BOARD_WIDTH + 2 * BORDER_SIZE + PANEL_WIDTH / 2  #- circle_radius # Half-way through panel
+        circle_y = HEIGHT - BORDER_SIZE/2 - circle_radius - SQUARE_SIZE / 10  # 10px margin from the border
+
+        # Calculate distance from click position to the center of the turn indicator
+        distance = ((pos[0] - circle_x) ** 2 + (pos[1] - circle_y) ** 2) ** 0.5
+
+        # Check if the click is within the circle
+        if distance <= circle_radius:
+            self.game.toggle_turn()
 
     def precalculate_square_colors(self):
         """Perform start of program board colour calculations"""
@@ -724,6 +739,7 @@ class ChessGUI:
     def handle_mouse_down(self, pos):
 
         self.check_legal_toggle_click(pos)
+        self.check_turn_toggle_click(pos)
 
         square = self.get_square_under_mouse(pos)
         panel_piece = self.get_piece_from_panel(pos)
@@ -793,17 +809,114 @@ class ChessGUI:
         self.target_fps = new_fps
 
     def show_help_popup(self):
+        """Displays a scalable help popup without cutting any lines, even for small board sizes."""
+
+        popup_width = int(min(600, MAIN_WIDTH * 0.8))  # Max 600px or 80% of screen width
+        max_popup_height = int(HEIGHT * 0.9)  # 90% of screen height
+        popup_x = int((MAIN_WIDTH - popup_width) // 2)
+        popup_y = int((MAIN_HEIGHT - max_popup_height) // 2)
+        popup_color = (50, 50, 50)  # Dark gray background
+        text_color = (255, 255, 255)  # White text
+
+        # List of shortcut keys and actions
+        shortcuts = [
+            ("Key Press", "Action"),
+            ("----------------", "------------------------------------------------------------"),
+            ("HOME or R", "Return to home position"),
+            ("INSERT", "Save current position as home position"),
+            ("Z", "Zero the board (clear all pieces)"),
+            ("F1", "Cycle to next FEN in the loaded file"),
+            ("U", "Undo last move (not fully functional)"),
+            ("L", "Toggle Legality"),
+            ("T", "Toggle whose turn it is"),
+            ("1", "Highlight hovered square RED"),
+            ("2", "Highlight hovered square YELLOW"),
+            ("3", "Highlight hovered square GREEN"),
+            ("0", "Remove hovered square's highlighting"),
+            ("DELETE", "Clear all highlighting"),
+            ("Ctrl + C", "Copies current position to clipboard as FEN"),
+            ("NUMPAD +", "Increase board size"),
+            ("NUMPAD -", "Decrease board size"),
+            ("LEFT/RIGHT", "Navigate through pre-loaded sequence"),
+            ("H", "Show this help window"),
+            ("ESC", "Close help window"),
+        ]
+
+        total_lines = len(shortcuts)
+
+        # Dynamically calculate font size and spacing
+        available_space = max_popup_height - 40  # 20px padding at top and bottom
+        max_line_gap = available_space / total_lines  # Max height per line
+        font_size = int(max(12, min(24, max_line_gap - 4)))  # Keep font readable (12-24px)
+        line_gap = int(max(font_size + 2, max_line_gap, 16))  # Ensure spacing is at least 16px
+
+        # Prevent the popup from becoming too small
+        popup_height = int(max(total_lines * line_gap + 40, 250))  # Minimum 250px
+        popup_y = int((MAIN_HEIGHT - popup_height) // 2)  # Adjust center
+
+        # Set up fonts
+        font = pygame.font.Font(None, font_size)
+        key_font = pygame.font.Font(None, font_size + 2)
+        header_font = pygame.font.Font(None, font_size + 4)
+
+        # Draw the popup background
+        pygame.draw.rect(self.screen, popup_color, (popup_x, popup_y, popup_width, popup_height), border_radius=10)
+
+        # Draw text
+        y_offset = popup_y + 20
+        key_x = popup_x + 20
+        action_x = key_x + popup_width * 0.35  # Adjust dynamically for spacing
+
+        for i, (key, action) in enumerate(shortcuts):
+            # Use header font for the first two rows
+            if i in (0, 1):
+                key_surface = header_font.render(key, True, text_color)
+                action_surface = header_font.render(action, True, text_color)
+            else:
+                key_surface = key_font.render(key, True, text_color)
+                action_surface = font.render(action, True, text_color)
+
+            self.screen.blit(key_surface, (key_x, y_offset))
+            self.screen.blit(action_surface, (action_x, y_offset))
+
+            y_offset += line_gap  # Move down by calculated spacing
+
+        pygame.display.flip()
+
+        # Pause and wait for user to close the popup
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # Close window (click corner)
+                    self.running = False  # Close the game
+                    waiting = False  # Exit popup waiting loop
+                if event.type == pygame.KEYDOWN and event.key in (pygame.K_h, pygame.K_ESCAPE):  # Press H or Escape to close
+                    waiting = False
+
+
+    def zshow_help_popup(self):
         """Displays a popup with keyboard shortcuts."""
         popup_width = 600
-        popup_height = 680
+        popup_height = min(750,HEIGHT)
         popup_x = (MAIN_WIDTH - popup_width) // 2
         popup_y = (MAIN_HEIGHT - popup_height) // 2
         popup_color = (50, 50, 50)  # Dark gray background
         text_color = (255, 255, 255)  # White text
 
-        font = pygame.font.Font(None, 28)
-        key_font = pygame.font.Font(None, 32)  # Slightly larger font for keys
-        header_font = pygame.font.Font(None, 32)  # Slightly larger font for keys
+        small_fonts = [16, 20, 20]
+        big_fonts = [28, 32, 32]
+        line_gap = 35
+        
+        if(SQUARE_SIZE < 75):
+            font_sizes = small_fonts
+            line_gap = 10
+            popup_height = BOARD_WIDTH
+        else:
+            font_sizes = big_fonts
+
+        font = pygame.font.Font(None, font_sizes[0])
+        key_font = pygame.font.Font(None, font_sizes[1])  # Slightly larger font for keys
+        header_font = pygame.font.Font(None, font_sizes[2])  # Slightly larger font for keys
 
         # Shortcuts with key and action paired
         shortcuts = [
@@ -813,7 +926,7 @@ class ChessGUI:
             ("INSERT", "Save current position as home position"),
             ("Z", "Zero the board (clear all pieces)"),
             ("F1", "Cycle to next FEN in the loaded file"),
-            ("U", "Undo last move (cannot currently undo beyond additions)"),
+            ("U", "Undo last move (not fully functional)"),
             ("L", "Toggle Legality"),
             ("T", "Toggle whose turn it is"),
             ("1", "Highlight hovered square RED"),
@@ -848,7 +961,7 @@ class ChessGUI:
             self.screen.blit(key_surface, (key_x, y_offset))  # Draw the key
             self.screen.blit(action_surface, (action_x, y_offset))  # Draw the action
             
-            y_offset += 35  # Move down for the next line
+            y_offset += line_gap  # Move down for the next line
 
         pygame.display.flip()
 

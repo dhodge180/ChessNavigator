@@ -17,7 +17,7 @@
 # | +Ra7   | Add a white rook to a7 (capital = white)    |
 # | -e4    | Remove whatever piece is on e4              |
 
-Title: Some famous problem
+Title: Steven Dowd, Springaren 2012
 FEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
 Subtext: S#5
 Moves: a7a8Q a6b6 c7c8N * b6c7 b7b8b c7d8 e5f6 d6e7 c8d6 e7f6 < b6c6 b7b8r * c6d7 c8b6 d7c7 f2f3 d6e5 < c6c7 c8b6 d6e5
@@ -29,7 +29,7 @@ Moves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2
 
 Title: Testing adding and removing
 FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-Subtext: "Mate in 2"
+Subtext: "Nonsense"
 Moves: e2e4 +Bg6 -f7 +Qa4 +Qa5 -d8 d2d4 h1g5
 
 Title: "Pawn Structure Test"
