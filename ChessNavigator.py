@@ -1,3 +1,7 @@
+"""
+This is the main Chess Navigator program
+"""
+
 import pygame
 import chess
 import chess.pgn
