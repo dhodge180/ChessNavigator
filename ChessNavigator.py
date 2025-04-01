@@ -140,6 +140,7 @@ print("Sample Image path to white king:", image_path)
 # Constants
 BOARD_SIZE: int = 8
 SQUARE_SIZE: int = 70
+"""Pixel size of each square"""
 BOARD_WIDTH: int = SQUARE_SIZE * BOARD_SIZE
 BORDER_SIZE: int = 60
 PANEL_WIDTH = 3 * SQUARE_SIZE
@@ -147,12 +148,15 @@ PANEL_GAP = 0
 MOVES_WIDTH = 0
 HEIGHT_PADDING = 5
 
+
 WIDTH: int = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
 HEIGHT: int = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING # Extra for border
 MAIN_WIDTH: int = BOARD_WIDTH + 2 * BORDER_SIZE
 MAIN_HEIGHT = BOARD_WIDTH + 2*BORDER_SIZE + 2*HEIGHT_PADDING
 WHITE = (238, 238, 210)
+"""Colour of white squares"""
 BLACK = (118, 150, 86)
+"""Colour of black squares"""
 TRUE_BLACK = (0, 0, 0)
 PANEL_COLOR = (20, 60, 60)
 
@@ -168,8 +172,11 @@ def update_all_sizes(square_size):
 
 # Highlighting colours
 RED_HIGHLIGHT = (240, 128, 128)    # Light Coral (soft red)
+"""Colour of red square highlight"""
 YELLOW_HIGHLIGHT = (255, 223, 128)  # Pastel Yellow
+"""Colour of yellow square highlight"""
 GREEN_HIGHLIGHT = (144, 238, 144)   # Light Green (muted)
+"""Colour of green square highlight"""
 
 KEY_COLOR_MAP = {
     pygame.K_1: RED_HIGHLIGHT,
@@ -177,12 +184,18 @@ KEY_COLOR_MAP = {
     pygame.K_3: GREEN_HIGHLIGHT,
     pygame.K_0: None
 }
+"""Key press / square colour associations"""
 
 # FEN position to start from
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
+"""Default starting position if no PROBLEM_LIST file is found, or specific FEN is passed at CMD line"""
 
 # Load chess pieces
 def load_images():
+    """
+    Loads the png images of all pieces into a vector
+    These pngs are available in sizes 40x40 up to 100x100 and were generated from an SVG
+    """
     pieces = {}
     for piece in ['p', 'n', 'b', 'r', 'q', 'k']:
         img_path = get_resource_path(f'images/b{piece.upper()}_{SQUARE_SIZE}px.png')
@@ -195,17 +208,26 @@ def load_images():
     return pieces
 
 def parse_arguments():
-    """Parses command-line arguments for optional FEN input."""
+    """
+    Parses command-line arguments for optional customizations.
+    Specify a FEN with --fen.
+    Specify the problem's title with --title.
+    Specify the stipulation with --stip.
+    Specify a full problem database file (default = PROBLEM_LIST.txt) --fenlist
+    Specify overall title of game window
+    """
     parser = argparse.ArgumentParser(description="Chess game with optional FEN input and Window title.")
     parser.add_argument("--fen", type=str, help="Custom starting position in FEN format.")
     parser.add_argument("--title", type=str, default="", help="Set the problem title")
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
-    parser.add_argument("--fenlist", type=str, help="Path to the FEN list file", default="PROBLEM_LIST.txt")
+    parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM list file", default="PROBLEM_LIST.txt")
     parser.add_argument("--window", type=str, help="Window name")
     return parser.parse_args()
 
 class ChessGame:
+    """Chess game object: used to keep shown board position in memory"""
     def __init__(self, fen=None):
+        """initialization routine for Chess game object"""
         self.board = chess.Board()
         self.start_pos = START_FEN
         self.clock = pygame.time.Clock()
