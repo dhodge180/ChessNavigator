@@ -1,6 +1,6 @@
 My Chess Navigator program for showing chess problems.
 
-The FEN_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
+The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
 
 Various shortcuts are currently implemented but not documented.
 
@@ -25,7 +25,7 @@ Various shortcuts are currently implemented but not documented.
 
 ## For pre-stored analysis
 
-If you wish to be able to navigate a pre-determined tree then the path can be written in FEN_LIST in advance.
+If you wish to be able to navigate a pre-determined tree then the path can be written in PROBLEM_LIST in advance.
 Sample syntax is as follows:
 
 e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5

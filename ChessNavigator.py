@@ -8,10 +8,10 @@ import re
 import os
 import sys
 
-# Global variable to hold the FEN list
-FEN_LIST = []
+# Global variable to hold the PROBLEM LIST
+PROBLEM_LIST = []
 
-def load_fen_list_from_file(filename="FEN_LIST.txt"):
+def load_problem_list_from_file(filename="PROBLEM_LIST.txt"):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
 
@@ -34,7 +34,7 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                     temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
                 elif "fen" in temp_fen_data: # We have a FEN already
                     # Save entry immediately (possibly with Subtext)
-                    FEN_LIST.append(temp_fen_data)
+                    PROBLEM_LIST.append(temp_fen_data)
                     # Start next entry
                     temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
             elif "title" not in temp_fen_data: # Currently no title
@@ -46,12 +46,12 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                 if "title" not in temp_fen_data: # No title yet!
                     # Okay, just a pure FEN is fine
                     temp_fen_data["title"] = "" # Insert blank title
-                    FEN_LIST.append(temp_fen_data) # Save (possibly with subtext)
+                    PROBLEM_LIST.append(temp_fen_data) # Save (possibly with subtext)
                     # Start new entry
                     temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
                 elif "title" in temp_fen_data: # We have a title already
                     # Save entry immediately (possibly with Subtext)
-                    FEN_LIST.append(temp_fen_data)
+                    PROBLEM_LIST.append(temp_fen_data)
                     # Start new entry
                     temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # We don't have a fen yet
@@ -79,7 +79,7 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                 if "title" not in temp_fen_data: # but no title
                     temp_fen_data["title"] = ""  # Insert blank title
                 # Save entry (possible with blank stip
-                FEN_LIST.append(temp_fen_data)
+                PROBLEM_LIST.append(temp_fen_data)
                 # Wipe it clean for next entry
                 temp_fen_data = {"title": "", "stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # not even a fen
@@ -90,14 +90,14 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
     # Finished reading all lines
     # Need to save final entry, assuming it has at least a fen
     if "fen" in temp_fen_data:
-        FEN_LIST.append(temp_fen_data)
+        PROBLEM_LIST.append(temp_fen_data)
 
     # Print when FENs are loaded
-    print(f"Loaded {len(FEN_LIST)} FENs from {filename}.")
+    print(f"Loaded {len(PROBLEM_LIST)} FENs from {filename}.")
 
     # Detail the loaded list of FENS
     print("Loaded positions:")
-    for each_fen_data in FEN_LIST:
+    for each_fen_data in PROBLEM_LIST:
         print("------------------------------------------------------------------------------------------------------")
         #print(fen_data)
         print(f"Title: {each_fen_data['title']}")
@@ -106,11 +106,11 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
         print(f"Moves: {each_fen_data['moves']}")
     print("------------------------------------------------------------------------------------------------------")
 
-    if FEN_LIST:
-        print("Successful load from FEN_LIST file")
+    if PROBLEM_LIST:
+        print("Successful load from PROBLEM_LIST file")
         return True
     else:
-        print("Did not load from FEN_LIST file")
+        print("Did not load from PROBLEM_LIST file")
         return False
 
 # Redirect print statements to a file (optional)
@@ -196,7 +196,7 @@ def parse_arguments():
     parser.add_argument("--fen", type=str, help="Custom starting position in FEN format.")
     parser.add_argument("--title", type=str, default="", help="Set the problem title")
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
-    parser.add_argument("--fenlist", type=str, help="Path to the FEN list file", default="FEN_LIST.txt")
+    parser.add_argument("--fenlist", type=str, help="Path to the FEN list file", default="PROBLEM_LIST.txt")
     parser.add_argument("--window", type=str, help="Window name")
     return parser.parse_args()
 
@@ -225,7 +225,7 @@ class ChessGame:
         self.node = self.moves  # Reset PGN node pointer
 
     def advance_tree_step(self, direction):
-        current_fen_tree = FEN_LIST[-1]['fen_tree']
+        current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
         # If there's another move to play
         if direction == 1: # Request to step forwards
             if self.tree_position + 1 < len(current_fen_tree):
@@ -438,7 +438,7 @@ class ChessGUI:
         self.custom_title = title  # Or any other dynamic title based on your logic
         self.custom_stip = stip
 
-        # If no fen was passed but a FEN_LIST exists. Then start the F1 cycle early
+        # If no fen was passed but a PROBLEM_LIST exists. Then start the F1 cycle early
         if fen is None and self.fenlist:
             self.cycle_fen()
 
@@ -501,18 +501,18 @@ class ChessGUI:
                         self.game.toggle_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
                         self.show_help_popup() # Press H to pop-up shortcuts
-                    elif event.key == pygame.K_F1:  # Press F1 to load next fen from FEN_LIST
+                    elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
                         if self.fenlist:
                             self.cycle_fen()
                     elif event.key == pygame.K_RIGHT:
-                        # Recall that FEN_LIST[-1] is always the FEN we're working on
-                        if fen_list_loaded: # Don't try if no fenlist
+                        # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
+                        if problem_list_loaded: # Don't try if no fenlist
                             self.game.advance_tree_step(+1)
                     elif event.key == pygame.K_LEFT:
-                        if fen_list_loaded:
+                        if problem_list_loaded:
                             self.game.advance_tree_step(-1)
                     elif event.key == pygame.K_END:
-                        if fen_list_loaded:
+                        if problem_list_loaded:
                             self.game.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if SQUARE_SIZE > 40:
@@ -795,8 +795,8 @@ class ChessGUI:
         """Cycle through the FEN list and update the game and window title."""
         print("Loading next diagram from file")
         # Get the current FEN and title
-        current_fen_data = FEN_LIST.pop(0)  # Remove the first element
-        FEN_LIST.append(current_fen_data)  # Move it to the end for the next cycle
+        current_fen_data = PROBLEM_LIST.pop(0)  # Remove the first element
+        PROBLEM_LIST.append(current_fen_data)  # Move it to the end for the next cycle
 
         new_fen = current_fen_data["fen"]
         new_title = current_fen_data["title"]
@@ -808,8 +808,8 @@ class ChessGUI:
         self.custom_stip = subtext
         self.draw_custom_title()
         self.draw_custom_stip()
-        # FEN_LIST[-1] the, last element, is now the one we're working with
-        # FEN_LIST[0] will be loaded when we NEXT run the cycle
+        # PROBLEM_LIST[-1] the, last element, is now the one we're working with
+        # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
@@ -1152,17 +1152,17 @@ if __name__ == "__main__":
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
-    fen_list_loaded = load_fen_list_from_file(passed_fenlist) # default is FEN_LIST.txt but user could customize
+    problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
     # Return value is TRUE or FALSE based on success
-    if fen_list_loaded:
+    if problem_list_loaded:
         # Here we generate move trees from the moves
-        for fen_data in FEN_LIST:
+        for fen_data in PROBLEM_LIST:
             given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
             fen_tree = generate_fen_path(given_fen, move_list)
             fen_data['fen_tree'] = fen_tree
 
-    ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=fen_list_loaded).run()  # Pass the FEN to the GUI and the Window title
+    ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=problem_list_loaded).run()  # Pass the FEN to the GUI and the Window title
 
 
 
