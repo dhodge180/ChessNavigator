@@ -48,12 +48,12 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                     temp_fen_data["title"] = "" # Insert blank title
                     FEN_LIST.append(temp_fen_data) # Save (possibly with subtext)
                     # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": "", "moves": ""}
+                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
                 elif "title" in temp_fen_data: # We have a title already
                     # Save entry immediately (possibly with Subtext)
                     FEN_LIST.append(temp_fen_data)
                     # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "stip": "", "moves": ""}
+                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # We don't have a fen yet
                 temp_fen_data["fen"] = line[len("FEN:"):].strip().strip('"')
 
@@ -81,11 +81,11 @@ def load_fen_list_from_file(filename="FEN_LIST.txt"):
                 # Save entry (possible with blank stip
                 FEN_LIST.append(temp_fen_data)
                 # Wipe it clean for next entry
-                temp_fen_data = {"stip": "", "moves": ""}
+                temp_fen_data = {"title": "", "stip": "", "moves": ""}
             elif "fen" not in temp_fen_data: # not even a fen
                 print("Disregarding this entry without even a FEN")
                 # Wipe it clean for next entry
-                temp_fen_data = {"stip": "", "moves": ""}
+                temp_fen_data = {"title": "", "stip": "", "moves": ""}
 
     # Finished reading all lines
     # Need to save final entry, assuming it has at least a fen
@@ -827,7 +827,7 @@ class ChessGUI:
         # List of shortcut keys and actions
         shortcuts = [
             ("Key Press", "Action"),
-            ("----------------", "------------------------------------------------------------"),
+            ("----------------", "-------------------------------------"),
             ("HOME or R", "Return to home position"),
             ("INSERT", "Save current position as home position"),
             ("Z", "Zero the board (clear all pieces)"),
@@ -835,17 +835,15 @@ class ChessGUI:
             ("U", "Undo last move (not fully functional)"),
             ("L", "Toggle Legality"),
             ("T", "Toggle whose turn it is"),
-            ("1", "Highlight hovered square RED"),
-            ("2", "Highlight hovered square YELLOW"),
-            ("3", "Highlight hovered square GREEN"),
+            ("1/2/3", "Highlight square RED/YELLOW/GREEN"),
             ("0", "Remove hovered square's highlighting"),
             ("DELETE", "Clear all highlighting"),
             ("Ctrl + C", "Copies current position to clipboard as FEN"),
-            ("NUMPAD +", "Increase board size"),
-            ("NUMPAD -", "Decrease board size"),
+            ("+ or =", "Increase board size"),
+            ("-", "Decrease board size"),
             ("LEFT/RIGHT", "Navigate through pre-loaded sequence"),
-            ("H", "Show this help window"),
-            ("ESC", "Close help window"),
+            ("END", "Jump to end of pre-loaded sequence"),
+            ("H", "Show/Hide this help window")
         ]
 
         total_lines = len(shortcuts)
@@ -871,7 +869,7 @@ class ChessGUI:
         # Draw text
         y_offset = popup_y + 20
         key_x = popup_x + 20
-        action_x = key_x + popup_width * 0.35  # Adjust dynamically for spacing
+        action_x = key_x + popup_width * 0.25  # Adjust dynamically for spacing
 
         for i, (key, action) in enumerate(shortcuts):
             # Use header font for the first two rows
@@ -899,88 +897,6 @@ class ChessGUI:
                 if event.type == pygame.KEYDOWN and event.key in (pygame.K_h, pygame.K_ESCAPE):  # Press H or Escape to close
                     waiting = False
 
-
-    def zshow_help_popup(self):
-        """Displays a popup with keyboard shortcuts."""
-        popup_width = 600
-        popup_height = min(750,HEIGHT)
-        popup_x = (MAIN_WIDTH - popup_width) // 2
-        popup_y = (MAIN_HEIGHT - popup_height) // 2
-        popup_color = (50, 50, 50)  # Dark gray background
-        text_color = (255, 255, 255)  # White text
-
-        small_fonts = [16, 20, 20]
-        big_fonts = [28, 32, 32]
-        line_gap = 35
-        
-        if SQUARE_SIZE < 75:
-            font_sizes = small_fonts
-            line_gap = 10
-            popup_height = BOARD_WIDTH
-        else:
-            font_sizes = big_fonts
-
-        font = pygame.font.Font(None, font_sizes[0])
-        key_font = pygame.font.Font(None, font_sizes[1])  # Slightly larger font for keys
-        header_font = pygame.font.Font(None, font_sizes[2])  # Slightly larger font for keys
-
-        # Shortcuts with key and action paired
-        shortcuts = [
-            ("Key Press", "Action"),
-            ("----------------", "------------------------------------------------------------"),
-            ("HOME or R", "Return to home position"),
-            ("INSERT", "Save current position as home position"),
-            ("Z", "Zero the board (clear all pieces)"),
-            ("F1", "Cycle to next FEN in the loaded file"),
-            ("U", "Undo last move (not fully functional)"),
-            ("L", "Toggle Legality"),
-            ("T", "Toggle whose turn it is"),
-            ("1", "Highlight hovered square RED"),
-            ("2", "Highlight hovered square YELLOW"),
-            ("3", "Highlight hovered square GREEN"),
-            ("0", "Remove hovered square's highlighting"),
-            ("DELETE", "Clear all highlighting"),
-            ("Ctrl + C", "Copies current position to clipboard as FEN"),
-            ("NUMPAD +",  "Increase board size"),
-            ("NUMPAD -", "Decrease board size"),
-            ("LEFT/RIGHT", "Navigate through pre-loaded sequence"),
-            ("H", "Show this help window"),
-            ("ESC", "Close help window"),
-        ]
-
-        # Draw the popup background
-        pygame.draw.rect(self.screen, popup_color, (popup_x, popup_y, popup_width, popup_height), border_radius=10)
-
-        # Draw text
-        y_offset = popup_y + 20
-        key_x = popup_x + 20  # Starting X position for keys
-        action_x = key_x + 150  # Starting X position for actions (enough space for the key column)
-        
-        for i, (key, action) in enumerate(shortcuts):
-            if i==0 or i==1:
-                key_surface = header_font.render(key, True, text_color)  # Use the header_font for the top row
-                action_surface = header_font.render(action, True, text_color)  # Use the header_font for the top two rows
-            else:
-                key_surface = key_font.render(key, True, text_color)  # Render the key with the larger font
-                action_surface = font.render(action, True, text_color)  # Render the action description with standard font
-            # Draw the key and action in two columns
-            self.screen.blit(key_surface, (key_x, y_offset))  # Draw the key
-            self.screen.blit(action_surface, (action_x, y_offset))  # Draw the action
-            
-            y_offset += line_gap  # Move down for the next line
-
-        pygame.display.flip()
-
-        # Pause and wait for user to close the popup
-        waiting = True
-        while waiting:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:  # Close window (click corner)
-                    self.running = False  # Close the game
-                    waiting = False  # Exit popup waiting loop
-                if event.type == pygame.KEYDOWN and event.key in (pygame.K_h, pygame.K_ESCAPE):  # Press H or Escape to close
-                    waiting = False
-
 class TempGame:
     def __init__(self, first_position):
         self.board = chess.Board()
@@ -993,7 +909,8 @@ class TempGame:
             'skipback': self.handle_skipback,
             'player_turn': self.handle_set_whos_turn,
             'add': self.handle_add,
-            'remove': self.handle_remove
+            'remove': self.handle_remove,
+            'and': self.handle_and
         }
         self.generated = [] # This will store the full fens and be returned at the end
         self.add_this_fen() # Start by adding the initial FEN. Will need to know this later with -> movements
@@ -1026,6 +943,7 @@ class TempGame:
         print(f"Regular move from {from_square} to {to_square}")
 
         piece = self.board.piece_at(chess.parse_square(from_square))
+        target_piece = self.board.piece_at(chess.parse_square(to_square))
         if piece is None:
             print("Uhm, there was meant to be a piece here!")
             return
@@ -1033,6 +951,12 @@ class TempGame:
         if piece.color != self.board.turn:
             print("You moved out of turn, but I'll allow it.")
             self.board.turn = not self.board.turn # Swap player to move
+
+        if target_piece is not None:
+            if piece.color == target_piece.color:
+                print("You're trying to consume one of your own pieces. I'll allow it.")
+                self.move_handlers['remove']({'type': 'remove', 'from': to_square})
+                self.move_handlers['and']({'type': 'and'})
 
         # Implement the logic for handling regular moves
         mv = chess.Move.from_uci(from_square + to_square)
@@ -1049,6 +973,22 @@ class TempGame:
         promotion_piece = move['promotion_piece']
         print(f"Promotion move from {from_square} to {to_square} promoting to {promotion_piece}")
         # Implement the logic for handling promotion
+
+        piece = self.board.piece_at(chess.parse_square(from_square))
+        target_piece = self.board.piece_at(chess.parse_square(to_square))
+        if piece is None:
+            print("Uhm, there was meant to be a piece here!")
+            return
+
+        if piece.color != self.board.turn:
+            print("You moved out of turn, but I'll allow it.")
+            self.board.turn = not self.board.turn  # Swap player to move
+
+        if target_piece is not None:
+            if piece.color == target_piece.color:
+                print("You're trying to consume one of your own pieces. I'll allow it.")
+                self.move_handlers['remove']({'type': 'remove', 'from': to_square})
+                self.move_handlers['and']({'type': 'and'})
 
         mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
         self.board.push(mv)
@@ -1097,6 +1037,10 @@ class TempGame:
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
         self.add_this_fen()  # Save the fen to the generated list
         #print(self.board)
+
+    def handle_and(self, move):
+        """{'type': 'and'} """
+        self.generated.pop() # This should remove the last element
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
@@ -1152,6 +1096,10 @@ class TempGame:
         # Case c: the string "*" means save checkpoint
         elif move == "*":
             return {'type': 'save'}
+
+        # This case allow multiple moves to be simultaneous
+        elif move == "&":
+            return {'type': 'and'} # Plan is to read next move and overwrite, not advancing the tree
 
         # Case d: the string "H" means return to home
         elif move == "H":

@@ -4,20 +4,24 @@ The FEN_LIST.txt file shows the template for autoloading lots of FENs (with opti
 
 Various shortcuts are currently implemented but not documented.
 
-| Key | Action |
-| --- | ------ |
-| HOME or R | Return to home position |
-| INSERT| Save current position as home position |
-| Z| Zero the board|
-| F1| Cycle to next FEN in the loaded file |
-| U| Undo last move (cannot currently undo beyond additions |
-| L| Toggle Legality |
-| T| Toggle whose turn it is|
-| (1,2,3,0)| Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT|
-| Ctrl + C | Copy current position to clipboard as FEN|
-| NUMPAD + | Increase window size |
-| NUMPAD - | Decrease window size |
-| DELETE| Clear all highlighting |
+| Key  | Action                                                     |
+|------|------------------------------------------------------------|
+| HOME or R | Return to home position                                    |
+| INSERT | Save current position as home position                     |
+| Z    | Zero the board                                             |
+| F1   | Cycle to next FEN in the loaded file                       |
+| U    | Undo last move (cannot currently undo beyond additions     |
+| L    | Toggle Legality                                            |
+| T    | Toggle whose turn it is                                    |
+| (1,2,3,0) | Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT |
+| Ctrl + C | Copy current position to clipboard as FEN                  |
+| + or = | Increase window size                                       |
+| -    | Decrease window size                                       |
+| DELETE | Clear all highlighting                                     |
+| ➡    | Step into predefined move tree                             |
+| ⬅    | Step back along predefined move tree                       |
+| END  | Jump th end of predefined move tree                        |
+| rnbq | Select promotion piece  (during promotion attempt)         |
 
 ## For pre-stored analysis
 
