@@ -955,8 +955,10 @@ class TempGame:
         if target_piece is not None:
             if piece.color == target_piece.color:
                 print("You're trying to consume one of your own pieces. I'll allow it.")
-                self.move_handlers['remove']({'type': 'remove', 'from': to_square})
-                self.move_handlers['and']({'type': 'and'})
+                deletion_move = self.convert_move("-" + to_square)
+                and_move = self.convert_move("&")
+                self.move_handlers[deletion_move['type']](self, deletion_move)
+                self.move_handlers[and_move['type']](self, and_move)
 
         # Implement the logic for handling regular moves
         mv = chess.Move.from_uci(from_square + to_square)
@@ -987,8 +989,10 @@ class TempGame:
         if target_piece is not None:
             if piece.color == target_piece.color:
                 print("You're trying to consume one of your own pieces. I'll allow it.")
-                self.move_handlers['remove']({'type': 'remove', 'from': to_square})
-                self.move_handlers['and']({'type': 'and'})
+                deletion_move = self.convert_move("-" + to_square)
+                and_move = self.convert_move("&")
+                self.move_handlers[deletion_move['type']](self, deletion_move)
+                self.move_handlers[and_move['type']](self, and_move)
 
         mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
         self.board.push(mv)
