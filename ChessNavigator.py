@@ -161,6 +161,8 @@ def load_problem_list_from_file(filename="PROBLEM_LIST.txt"):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
 
+    blank_non_required = {"title": "", "stip": "", "moves": ""}
+
     if not os.path.exists(filename):
         print(f"File {filename} not found.")
         return False
@@ -168,70 +170,71 @@ def load_problem_list_from_file(filename="PROBLEM_LIST.txt"):
     with open(filename, "r") as file:
         lines = file.readlines()
 
-    temp_fen_data = {"stip": "", "moves": ""}
+    temp_fen_data = blank_non_required
+    
     for line in lines:
         line = line.strip()  # Remove leading/trailing whitespaces
 
         # We encounter a Title
         if line.startswith("Title:"):
-            if "title" in temp_fen_data: # We already have a title!
+            if temp_fen_data["title"] != "": # We already have a title!
                 if "fen" not in temp_fen_data: # Second title, no FEN yet. Stupid.
-                    # Total reset and save new title
-                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
+                    print("Error, second title before FEN. Wiping entry.")
                 elif "fen" in temp_fen_data: # We have a FEN already
                     # Save entry immediately (possibly with Subtext)
                     PROBLEM_LIST.append(temp_fen_data)
-                    # Start next entry
-                    temp_fen_data = {"title": line[len("Title:"):].strip().strip('"'), "stip": "", "moves": ""}
-            elif "title" not in temp_fen_data: # Currently no title
-                temp_fen_data["title"] = line[len("Title:"):].strip().strip('"')
+                    # Total reset and save new title
+                # In both cases now reset and save new title
+                print("Resetting for next problem...")
+                temp_fen_data = blank_non_required.copy()
+                # Ready to store new title
+            temp_fen_data["title"] = line[len("Title:"):].strip().strip('"')
 
         # We encounter a fen
         elif line.startswith("FEN:"):
             if "fen" in temp_fen_data: # We already have a fen!
-                if "title" not in temp_fen_data: # No title yet!
-                    # Okay, just a pure FEN is fine
-                    temp_fen_data["title"] = "" # Insert blank title
-                    PROBLEM_LIST.append(temp_fen_data) # Save (possibly with subtext)
-                    # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
-                elif "title" in temp_fen_data: # We have a title already
-                    # Save entry immediately (possibly with Subtext)
-                    PROBLEM_LIST.append(temp_fen_data)
-                    # Start new entry
-                    temp_fen_data = {"fen": line[len("FEN:"):].strip().strip('"'), "title": "", "stip": "", "moves": ""}
-            elif "fen" not in temp_fen_data: # We don't have a fen yet
-                temp_fen_data["fen"] = line[len("FEN:"):].strip().strip('"')
+                # Just save it! And start a new one
+                PROBLEM_LIST.append(temp_fen_data) # Save (possibly with subtext)
+                print("Resetting for next problem...")
+                temp_fen_data = blank_non_required.copy()
+            
+            # Now if we had a fen or didn't, we need to insert the new fen    
+            temp_fen_data["fen"] = line[len("FEN:"):].strip().strip('"')
 
-        # We encounter a Subtext
+        # We encounter a non-fen (one of "these")
         elif line.startswith("Subtext:"):
-            if temp_fen_data["stip"] != "": # We already have a stip!
-                print("Error. Already have a stipulation, overwriting.")
-            # Storing subtext (possible overwrite with above warning)
+            if temp_fen_data["stip"] != "": # We already have one of these
+                if "fen" in temp_fen_data: # Great we already have a FEN.
+                    PROBLEM_LIST.append(temp_fen_data)
+                elif "fen" not in temp_fen_data: # Second one of these, but no FEN yet.
+                    print("Error, second Subtext before FEN. Wiping entry.")
+                # In both cases now reset and save new one of these
+                print("Resetting for next problem...")
+                temp_fen_data = blank_non_required.copy()
+            # In both cases ready to accept next one of these
             temp_fen_data["stip"] = line[len("Subtext:"):].strip().strip('"')
-            # No need to save yet. If end of file we'll save later
 
+        # We encounter a non-fen (one of "these")
         elif line.startswith("Moves:"):
-            if temp_fen_data["moves"] != "": # We already have moves!
-                print("Error. We already have some moves, overwriting.")
-            # Storing moves (possible overwrite with above warning)
+            if temp_fen_data["moves"] != "": # We already have one of these
+                if "fen" in temp_fen_data: # Great we already have a FEN.
+                    PROBLEM_LIST.append(temp_fen_data)
+                elif "fen" not in temp_fen_data: # Second one of these, but no FEN yet.
+                    print("Error, second Subtext before FEN. Wiping entry.")
+                # In both cases now reset and save new one of these
+                print("Resetting for next problem...")
+                temp_fen_data = blank_non_required.copy()
+            # In both cases ready to accept next one of these
             temp_fen_data["moves"] = line[len("Moves:"):].strip().strip('"')
-            # No need to save yet. If we of file we'll save later.
 
         # We encounter a blank line
         elif line == "": # a blank line
             # Assume this separates problems
             if "fen" in temp_fen_data: # at least we have a fen
-                if "title" not in temp_fen_data: # but no title
-                    temp_fen_data["title"] = ""  # Insert blank title
                 # Save entry (possible with blank stip
                 PROBLEM_LIST.append(temp_fen_data)
                 # Wipe it clean for next entry
-                temp_fen_data = {"title": "", "stip": "", "moves": ""}
-            elif "fen" not in temp_fen_data: # not even a fen
-                print("Disregarding this entry without even a FEN")
-                # Wipe it clean for next entry
-                temp_fen_data = {"title": "", "stip": "", "moves": ""}
+            temp_fen_data = blank_non_required.copy()
 
     # Finished reading all lines
     # Need to save final entry, assuming it has at least a fen

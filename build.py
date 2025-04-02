@@ -20,7 +20,7 @@ def build_executable():
     cmd = [
         "pyinstaller",
         "--onefile",
-        # "--noconsole",  # Hide terminal (for GUI apps)
+        "--noconsole",  # Hide terminal (for GUI apps)
         f"--name={EXE_NAME}",
         add_data_option,
         SCRIPT_NAME
