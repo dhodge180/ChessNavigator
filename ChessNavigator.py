@@ -279,51 +279,13 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def test_image_location():
+    """Test function to check where piece images are stored"""
     # Example usage
     image_path = get_resource_path("images/wK.png")
     print("Sample Image path to white king:", image_path)
     return 0
 
 # test_image_location()
-
-# Constants
-#BOARD_SIZE: int = 8
-#SQUARE_SIZE: int = 70
-#"""Pixel size of each square"""
-#BOARD_WIDTH: int = SQUARE_SIZE * BOARD_SIZE
-#BORDER_SIZE: int = 60
-#PANEL_WIDTH = 3 * SQUARE_SIZE
-#PANEL_GAP = 0
-#MOVES_WIDTH = 0
-#HEIGHT_PADDING = 5
-
-
-#WIDTH: int = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
-#HEIGHT: int = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING # Extra for border
-#MAIN_WIDTH: int = BOARD_WIDTH + 2 * BORDER_SIZE
-#MAIN_HEIGHT = BOARD_WIDTH + 2*BORDER_SIZE + 2*HEIGHT_PADDING
-
-#def update_all_sizes(square_size):
-#    global BOARD_WIDTH, PANEL_WIDTH, WIDTH, HEIGHT, MAIN_WIDTH, MAIN_HEIGHT
-#    BOARD_WIDTH = square_size * BOARD_SIZE
-#    PANEL_WIDTH = 4 * square_size
-#    WIDTH = BOARD_WIDTH + PANEL_WIDTH + 2 * BORDER_SIZE + MOVES_WIDTH  # Extra for border + panel
-#    HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING  # Extra for border
-#    MAIN_WIDTH = BOARD_WIDTH + 2 * BORDER_SIZE
-#    MAIN_HEIGHT = BOARD_WIDTH + 2 * BORDER_SIZE + 2 * HEIGHT_PADDING
-
-
-# Highlighting colours
-#RED_HIGHLIGHT = (240, 128, 128)    # Light Coral (soft red)
-#"""Colour of red square highlight"""
-#YELLOW_HIGHLIGHT = (255, 223, 128)  # Pastel Yellow
-#"""Colour of yellow square highlight"""
-#GREEN_HIGHLIGHT = (144, 238, 144)   # Light Green (muted)
-#"""Colour of green square highlight"""
-
-# FEN position to start from
-#START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
-# """Default starting position if no PROBLEM_LIST file is found, or specific FEN is passed at CMD line"""
 
 def parse_arguments():
     """
@@ -332,7 +294,7 @@ def parse_arguments():
     Specify the problem's title with --title.
     Specify the stipulation with --stip.
     Specify a full problem database file (default = PROBLEM_LIST.txt) --fenlist
-    Specify overall title of game window
+    Specify overall title of game window with --window (useful for screensharing)
     """
     parser = argparse.ArgumentParser(description="Chess game with optional FEN input and Window title.")
     parser.add_argument("--fen", type=str, help="Custom starting position in FEN format.")
@@ -369,6 +331,7 @@ class LiveGame:
         self.node = self.moves  # Reset PGN node pointer
 
     def advance_tree_step(self, direction):
+        """Move through current fen tree. Forwards, backwards or jump to end."""
         current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
         # If there's another move to play
         if direction == 1: # Request to step forwards
@@ -591,16 +554,6 @@ class ChessGUI:
         if fen is None and self.fenlist:
             self.cycle_fen()
 
-        # Draw static items that are not part of the run loop
-        # These are all in the run loop
-        # self.draw_custom_title()
-        # self.draw_custom_stip()
-        # self.draw_panel()
-
-    #@staticmethod
-    #def set_window_title(title):
-    #    pygame.display.set_caption(title)
-
     def run(self):
         """Main loop of the GUI."""
         # global SQUARE_SIZE
@@ -618,7 +571,7 @@ class ChessGUI:
                 self.setup_spare_pieces()
                 self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
-                self.draw_pgn_panel()
+                # self.draw_pgn_panel()
                 self.draw_custom_title()
                 self.draw_custom_stip()
 
@@ -716,11 +669,9 @@ class ChessGUI:
         title_rect = title_surface.get_rect(center=(self.config.get_stip_coords()))  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
-    def draw_pgn_panel(self):
-        """Draws the PGN panel on the right side of the screen."""
+    def draw_pgn_panel(self): #Unused
+        # Plan was to draw moves on far right panel
         font = pygame.font.Font(None, 24)  # Font for the PGN text
-        #pgn = self.game.get_pgn()  # Get the PGN from the game
-        #print(pgn)
 
         # Create the text surface with the PGN
         text_surface = font.render("", True, (255, 255, 255))  # White text
@@ -770,7 +721,7 @@ class ChessGUI:
 
         # Coordinates for the bottom-right corner
         circle_radius = 2 * (self.config.get_square_size()+20) / 10
-        circle_x = self.config.get_main_width() + circle_radius + 2 #- circle_radius # Half-way through panel
+        circle_x = self.config.get_main_width() + circle_radius + 5 #- circle_radius # Half-way through panel
         circle_y = self.config.get_height() - circle_radius - self.config.get_square_size() / 10  # 10px margin from the border
 
         # Draw the circle representing the current turn
@@ -782,12 +733,17 @@ class ChessGUI:
         circle_x = self.config.get_main_width() + circle_radius + 2 #- circle_radius # Half-way through panel
         circle_y = self.config.get_height() - circle_radius - self.config.get_square_size() / 10  # 10px margin from the border
 
+        if abs(pos[0]-circle_x) < 2 * circle_radius:
+            if abs(pos[1]-circle_y) < 2 * circle_radius:
+                self.game.toggle_turn()
+        
+        # Don't bother with fancy measuring, just in the square containing the circle
         # Calculate distance from click position to the center of the turn indicator
-        distance = ((pos[0] - circle_x) ** 2 + (pos[1] - circle_y) ** 2) ** 0.5
+        # distance = ((pos[0] - circle_x) ** 2 + (pos[1] - circle_y) ** 2) ** 0.5
 
         # Check if the click is within the circle
-        if distance <= circle_radius:
-            self.game.toggle_turn()
+        #if distance <= circle_radius:
+        #    self.game.toggle_turn()
 
     def precalculate_square_colors(self):
         """Perform start of program board colour calculations"""
