@@ -2,12 +2,6 @@
 
 For full documentation visit [mkdocs.org](https://www.mkdocs.org).
 
-# Main code file
-
-::: ChessNavigator
-    options:
-        show_root: false
-
 ## Manually entered code examples
 
 Some `code` here.
