@@ -12,16 +12,20 @@ is_windows = sys.platform.startswith("win")
 if is_windows:
     add_data_option = "--add-data=images;images"  # Windows uses `;`
     exe_extension = ".exe"  # Windows executable extension
+    icon_path = "icon2.ico"
 else:
     add_data_option = "--add-data=images:images"  # Linux/macOS uses `:`
     exe_extension = ""  # No extension needed for Linux/macOS
+    icon_path = "icon.png"
 
 def build_executable():
     cmd = [
         "pyinstaller",
         "--onefile",
         "--noconsole",  # Hide terminal (for GUI apps)
+        "--clean",
         f"--name={EXE_NAME}",
+        f"--icon={icon_path}",
         add_data_option,
         SCRIPT_NAME
     ]
