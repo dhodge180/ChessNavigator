@@ -12,7 +12,7 @@ is_windows = sys.platform.startswith("win")
 if is_windows:
     add_data_option = "--add-data=images;images"  # Windows uses `;`
     exe_extension = ".exe"  # Windows executable extension
-    icon_path = "icon2.ico"
+    icon_path = "icon.ico"
 else:
     add_data_option = "--add-data=images:images"  # Linux/macOS uses `:`
     exe_extension = ""  # No extension needed for Linux/macOS
