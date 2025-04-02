@@ -16,7 +16,7 @@ if is_windows:
 else:
     add_data_option = "--add-data=images:images"  # Linux/macOS uses `:`
     exe_extension = ""  # No extension needed for Linux/macOS
-    icon_path = "icon.png"
+    icon_path = "images/icon.png"
 
 def build_executable():
     cmd = [

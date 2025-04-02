@@ -527,7 +527,8 @@ class ChessGUI:
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
         # Window icon
-        icon = pygame.image.load("icon.png")
+        icon_path = get_resource_path(f'images/icon.png')
+        icon = pygame.image.load(icon_path)
         pygame.display.set_icon(icon)
         self.screen = pygame.display.set_mode((self.config.get_width(), self.config.get_height()))
         pygame.display.set_caption(window_title_bar)
