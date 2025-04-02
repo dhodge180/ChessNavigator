@@ -563,7 +563,7 @@ class ChessGUI:
         self.redraw = True # should we draw the next frame?
 
         while self.running:
-            if self.dragging_piece or self.redraw: # Removing this condition increases CPU usage
+            if self.dragging_piece or self.redraw: # Redraw everything as something happened
                 self.screen.fill((0, 0, 0))
                 self.draw_board()
                 self.draw_pieces()
@@ -689,6 +689,7 @@ class ChessGUI:
     def get_legality_text(self):
         """Returns the legality text surface and its rectangle for positioning."""
         font = pygame.font.Font(None, 24)  # Smaller text
+        # text: str = "Legality: ON" # + str(self.target_fps)
         text = "Legality: ON" if self.game.legal_moves_enabled else "Legality: OFF"
         color = (0, 255, 0) if self.game.legal_moves_enabled else (255, 0, 0)
 
