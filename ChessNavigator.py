@@ -393,13 +393,14 @@ class LiveGame:
 
             # Check if it's a pawn and it's reaching the promotion rank
             if piece.piece_type == chess.PAWN:
-                print("It's a pawn!")
+                #print("It's a pawn!")
                 promotion_rank = 7 if piece.color == chess.WHITE else 0
-                print("Promotion rank for such pieces is", promotion_rank)
+                #print("Promotion rank for such pieces is", promotion_rank)
                 if chess.square_rank(chess.parse_square(end)) == promotion_rank:
                     # This is a promotion move, set promotion piece before legal move check
-                    print("It's a promotion attempt")
+                    #print("It's a promotion attempt")
                     promotion_piece = self.ask_for_promotion() # Don't need to pass colour, move.promotion won't care
+                    #print("You chose", promotion_piece)
                     move.promotion = promotion_piece  # Set the promotion piece
 
             # Now check if it's a legal move, including any promotion
