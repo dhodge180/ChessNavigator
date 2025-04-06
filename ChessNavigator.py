@@ -9,6 +9,7 @@ import argparse
 from pyperclip import copy
 import re
 
+import json
 import os
 import sys
 
@@ -21,8 +22,8 @@ START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
 
 # Global constants for speed
 BOARD_SIZE = 8
-WHITE = (238, 238, 210) # Used for turn indicator
-TRUE_BLACK = (0, 0, 0) # Used for turn indicator
+TURN_WHITE = (238, 238, 210) # Used for turn indicator
+TURN_BLACK = (0, 0, 0) # Used for turn indicator
 
 # Highlighting colours
 RED_HIGHLIGHT = (240, 128, 128)  # Light Coral (soft red)
@@ -41,7 +42,58 @@ KEY_COLOR_MAP = {
 """Key press / square colour associations"""
 
 class Config:
-    def __init__(self):
+    
+    # Default configuration values -- can be changes by config.json
+    DEFAULTS = {
+        "white_squares": (238, 238, 210),
+        "black_squares": (118, 150, 86),
+        "panel_colour": (20, 60, 60),
+        "square_size": 70
+    }
+
+    def __init__(self, config_path="config.json"):
+
+        self.config_path = config_path
+        self.load_config()
+        self.update_derived_sizes()
+        self.check_and_notify_defaults()
+
+    def load_config(self):
+
+        config = self.DEFAULTS.copy()
+
+        # Load config.json if available
+ 
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r") as f:
+                    user_config = json.load(f)
+                    config.update(user_config)
+            except json.JSONDecodeError as e:
+                print(f"Found config file, but couldn't read it (invalid JSON). Using default settings.")
+            except IOError as e:
+                print(f"Error reading config file: {e}. Using default settings.")
+        else:
+            print(f"No config file found at '{self.config_path}'. Using default settings.")
+
+        # Validate and apply values from the loaded config
+        self.white_squares = self.validate_rgb(config.get("white_squares"))
+        """Colour of white squares"""
+        self.black_squares = self.validate_rgb(config.get("black_squares"))
+        """Colour of black squares"""
+        self.panel_colour = self.validate_rgb(config.get("panel_colour"))
+        """Background colour of panel"""
+        self.square_size = self.validate_square_size(config.get("square_size"))        
+        """Starting square size"""
+
+        # Validate square size (must be 40 to 100 in steps of 10)
+       # valid_square_sizes = set(range(40, 101, 10))
+       # if default_config.get("square_size") not in valid_square_sizes:
+       #     print(f"Invalid square_size '{default_config.get('square_size')}' in config. "
+       #         f"Resetting to default (70). Must be one of: {sorted(valid_square_sizes)}.")
+       #     default_config["square_size"] = 70
+       # self.square_size = default_config["square_size"]
+        
 
         # Fixed display sizes
         self.title_y = None
@@ -54,29 +106,31 @@ class Config:
         self.WIDTH = None
         self.PANEL_WIDTH = None
         self.BOARD_WIDTH = None
-        self.moves_width = 0
-        """Space for a moves panel"""
-        # Extra vertical padding above and below board
+        self.moves_width = 0 # No longer used -- moves panel on right
+        
+        # Extra vertical padding (just top and bottom)
         self.height_padding = 5
-        # Large padding around all board (4 margins)
+        # Large padding around all board (all 4 margins)
         self.border_size = 60
-
-        # Changeable sizes, defaults
+        # Dynamic sizes, defaults
         self.window_width = 800
         self.window_height = 800
-        self.square_size = 70
 
-        # Display colours
-        self.white = (238, 238, 210)
-        """Colour of white squares"""
-        self.black = (118, 150, 86)
-        """Colour of black squares"""
-        self.panel_colour = (20, 60, 60)
-        """Background colour of panel"""
 
-        # Calculate derived quantities
+    def validate_rgb(self, color):
+        #print(f"Info: {color}. Using default value {self.DEFAULTS['white_squares']}.")
+        """Validates if a color is a valid RGB tuple/list, otherwise returns the default."""
+        if isinstance(color, (tuple, list)) and len(color) == 3:
+            # Clamp RGB values to the range 0-255
+            return tuple(max(0, min(255, c)) for c in color)
+        return self.DEFAULTS["white_squares"]  # Return the default white color if invalid
 
-        self.update_derived_sizes()
+    def validate_square_size(self, size):
+        """Validates the square_size (must be one of 40, 50, ..., 100)."""
+        valid_square_sizes = {40, 50, 60, 70, 80, 90, 100}
+        if size in valid_square_sizes:
+            return size
+        return self.DEFAULTS["square_size"]  # Return the default square_size if invalid
 
     def update_derived_sizes(self):
         """(Re)-Calculates various dimensions based on square_size changes"""
@@ -100,6 +154,31 @@ class Config:
 
         self.title_x = self.BOARD_WIDTH // 2 + self.border_size
         self.title_y = self.border_size // 2
+
+    def check_and_notify_defaults(self):
+        """Compares the final values with defaults and notifies the user only if any settings differ from the defaults (i.e., were overridden)."""
+        
+        overridden_settings = []
+        
+        # List of config keys to check
+        config_keys = ["white_squares", "black_squares", "panel_colour", "square_size"]
+        
+        # Loop through the config keys
+        for key in config_keys:
+            default_value = self.DEFAULTS[key]
+            current_value = getattr(self, key)
+
+            # If current value differs from the default, add it to the overridden settings
+            if current_value != default_value:
+                overridden_settings.append(key)
+
+        # Notify the user if any settings were overridden by user-provided values
+        if overridden_settings:
+            print(f"Info: The following settings were overridden by the values in your config file: {', '.join(overridden_settings)}.")
+        
+        # If all values are the same as the defaults, just confirm all is fine
+        if not overridden_settings:
+            print("All configuration settings were successfully loaded and validated with default values.")
 
 
     def get_square_size(self):
@@ -149,10 +228,10 @@ class Config:
         return self.title_x, self.title_y
 
     def get_white(self):
-        return self.white
+        return self.white_squares
 
     def get_black(self):
-        return self.black
+        return self.black_squares
 
     def get_panel_col(self):
         return self.panel_colour
@@ -723,7 +802,7 @@ class ChessGUI:
     def draw_turn_indicator(self):
         """Draws the turn indicator circle in the bottom-right corner."""
         # Determine whose turn it is (White or Black)
-        turn_color = WHITE if self.game.board.turn else TRUE_BLACK  # True = White's turn, False = Black's turn
+        turn_color = TURN_WHITE if self.game.board.turn else TURN_BLACK  # True = White's turn, False = Black's turn
 
         # Coordinates for the bottom-right corner
         circle_radius = 2 * (self.config.get_square_size()+20) / 10
@@ -914,7 +993,7 @@ class ChessGUI:
 
     def cycle_fen(self):
         """Cycle through the FEN list and update the game and window title."""
-        print("Loading next diagram from file")
+        print("Loading diagram from file")
         # Get the current FEN and title
         current_fen_data = PROBLEM_LIST.pop(0)  # Remove the first element
         PROBLEM_LIST.append(current_fen_data)  # Move it to the end for the next cycle
