@@ -8,8 +8,8 @@ import chess.pgn
 import argparse
 from pyperclip import copy
 import re
-
 import json
+
 import os
 import sys
 
@@ -53,49 +53,7 @@ class Config:
 
     def __init__(self, config_path="config.json"):
 
-        self.config_path = config_path
-        self.load_config()
-        self.update_derived_sizes()
-        self.check_and_notify_defaults()
-
-    def load_config(self):
-
-        config = self.DEFAULTS.copy()
-
-        # Load config.json if available
- 
-        if os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, "r") as f:
-                    user_config = json.load(f)
-                    config.update(user_config)
-            except json.JSONDecodeError as e:
-                print(f"Found config file, but couldn't read it (invalid JSON). Using default settings.")
-            except IOError as e:
-                print(f"Error reading config file: {e}. Using default settings.")
-        else:
-            print(f"No config file found at '{self.config_path}'. Using default settings.")
-
-        # Validate and apply values from the loaded config
-        self.white_squares = self.validate_rgb(config.get("white_squares"))
-        """Colour of white squares"""
-        self.black_squares = self.validate_rgb(config.get("black_squares"))
-        """Colour of black squares"""
-        self.panel_colour = self.validate_rgb(config.get("panel_colour"))
-        """Background colour of panel"""
-        self.square_size = self.validate_square_size(config.get("square_size"))        
-        """Starting square size"""
-
-        # Validate square size (must be 40 to 100 in steps of 10)
-       # valid_square_sizes = set(range(40, 101, 10))
-       # if default_config.get("square_size") not in valid_square_sizes:
-       #     print(f"Invalid square_size '{default_config.get('square_size')}' in config. "
-       #         f"Resetting to default (70). Must be one of: {sorted(valid_square_sizes)}.")
-       #     default_config["square_size"] = 70
-       # self.square_size = default_config["square_size"]
-        
-
-        # Fixed display sizes
+        # First load all the variables defaults
         self.title_y = None
         self.title_x = None
         self.stip_y = None
@@ -106,16 +64,55 @@ class Config:
         self.WIDTH = None
         self.PANEL_WIDTH = None
         self.BOARD_WIDTH = None
-        self.moves_width = 0 # No longer used -- moves panel on right
-        
+
+        # Define certain constants
+        self.moves_width = 0  # No longer used -- moves panel on right
         # Extra vertical padding (just top and bottom)
         self.height_padding = 5
         # Large padding around all board (all 4 margins)
         self.border_size = 60
+
         # Dynamic sizes, defaults
         self.window_width = 800
         self.window_height = 800
 
+        self.config_path = config_path
+        self.white_squares = None
+        self.black_squares = None
+        self.panel_colour = None
+        self.square_size = None
+
+        # Load any special config settings from config.json
+        self.load_config()
+        self.update_derived_sizes()
+        self.check_and_notify_defaults()
+
+    def load_config(self):
+
+        local_config = self.DEFAULTS.copy()
+
+        # Load config.json if available
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r") as f:
+                    user_config = json.load(f)
+                    local_config.update(user_config)
+            except json.JSONDecodeError as _e:
+                print(f"Found config file, but couldn't read it (invalid JSON). Using default settings.")
+            except IOError as e:
+                print(f"Error reading config file: {e}. Using default settings.")
+        else:
+            print(f"No config file found at '{self.config_path}'. Using default settings.")
+
+        # Validate and apply values from the loaded config
+        self.white_squares = self.validate_rgb(local_config.get("white_squares"))
+        """Colour of white squares"""
+        self.black_squares = self.validate_rgb(local_config.get("black_squares"))
+        """Colour of black squares"""
+        self.panel_colour = self.validate_rgb(local_config.get("panel_colour"))
+        """Background colour of panel"""
+        self.square_size = self.validate_square_size(local_config.get("square_size"))
+        """Starting square size"""
 
     def validate_rgb(self, color):
         #print(f"Info: {color}. Using default value {self.DEFAULTS['white_squares']}.")
@@ -350,6 +347,7 @@ def get_resource_path(relative_path):
     """ Get the correct path for bundled files when running as an executable """
     if getattr(sys, 'frozen', False):
         # If running as a PyInstaller-built executable
+        # noinspection PyProtectedMember
         base_path = sys._MEIPASS
     else:
         # If running as a normal Python script
@@ -1008,7 +1006,7 @@ class ChessGUI:
         self.custom_stip = subtext
         self.draw_custom_title()
         self.draw_custom_stip()
-        # PROBLEM_LIST[-1] the, last element, is now the one we're working with
+        # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
     def adjust_fps(self, new_fps):
@@ -1153,7 +1151,7 @@ class TempGame:
 
     def handle_move(self, move):
         """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
-        If the move is a uci-format then:
+        If the move is of uci-format then:
         perform it, and update the game
         save the current FEN into the list"""
     
@@ -1217,7 +1215,7 @@ class TempGame:
         self.board.push(mv)
         self.add_this_fen()
 
-    def handle_save(self, move):
+    def handle_save(self, _):
         """ e.g. {'type': 'save'}
         elif the move is to add a checkpoint then:
             add locally save the checkpoint FEN (and keep previous checkpoint)
@@ -1241,7 +1239,7 @@ class TempGame:
         # self.generated.append("SaveCheckPoint")
         # Don't need to add a FEN since we already added it? could revisit
 
-    def handle_home(self, move):
+    def handle_home(self, _):
         """ e.g. {'type': 'home'} """
 
         print("Returning to home position")
@@ -1261,7 +1259,7 @@ class TempGame:
         self.add_this_fen()  # Save the fen to the generated list
         #print(self.board)
 
-    def handle_and(self, move):
+    def handle_and(self, _):
         """{'type': 'and'} """
         self.generated.pop() # This should remove the last element
 
@@ -1359,7 +1357,7 @@ def generate_fen_path(beginning, moves):
     # Read all the moves into a list
     # Already done, in moves
 
-    # Load the starting FEN into a chess object, ie. create a temporary game e.g. via a chess.board(START)
+    # Load the starting FEN into a chess object, i.e. create a temporary game e.g. via a chess.board(START)
     temp_game = TempGame(beginning)
 
     for move in moves:
