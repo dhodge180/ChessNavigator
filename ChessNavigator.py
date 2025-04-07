@@ -1157,6 +1157,7 @@ class TempGame:
     
         from_square = move['from']
         to_square = move['to']
+        # Move recorded
         print(f"Regular move from {from_square} to {to_square}")
 
         piece = self.board.piece_at(chess.parse_square(from_square))
@@ -1179,6 +1180,11 @@ class TempGame:
 
         # Implement the logic for handling regular moves
         mv = chess.Move.from_uci(from_square + to_square)
+        
+        # Move recorded 2
+        san_version = self.board.san(mv)
+        print(f"This move is called {san_version}")
+        
         self.board.push(mv)
         self.add_this_fen()
 
@@ -1190,7 +1196,9 @@ class TempGame:
         from_square = move['from']
         to_square = move['to']
         promotion_piece = move['promotion_piece']
+        # Move recorded
         print(f"Promotion move from {from_square} to {to_square} promoting to {promotion_piece}")
+
         # Implement the logic for handling promotion
 
         piece = self.board.piece_at(chess.parse_square(from_square))
@@ -1212,7 +1220,13 @@ class TempGame:
                 self.move_handlers[and_move['type']](self, and_move)
 
         mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
+        
+        # Move recorded 2
+        san_version = self.board.san(mv)
+        print(f"This move is called {san_version}")
+
         self.board.push(mv)
+
         self.add_this_fen()
 
     def handle_save(self, _):
@@ -1223,6 +1237,7 @@ class TempGame:
             also save current FEN into the list
         """
 
+        # Move recorded
         print("Saving current position")
         # Implement the logic for saving the current position
 
@@ -1242,6 +1257,7 @@ class TempGame:
     def handle_home(self, _):
         """ e.g. {'type': 'home'} """
 
+        # Move recorded
         print("Returning to home position")
         # Implement the logic for returning to the home position
         self.current_checkpoint_index = 0
@@ -1252,7 +1268,8 @@ class TempGame:
         """ e.g. {'type': 'skipback', 'steps': n} """
 
         distance = move['steps']
-        print("Skipping back")
+        # Move recorded
+        print(f"Skipping back {distance} level(s)")
         # Implement the logic for skipping back
         self.current_checkpoint_index = max(0, self.current_checkpoint_index - distance + 1)
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
@@ -1261,13 +1278,17 @@ class TempGame:
 
     def handle_and(self, _):
         """{'type': 'and'} """
+        # Move recorded
+        print(f"...playing another move at the same time...")
         self.generated.pop() # This should remove the last element
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
         to_square = move['to']
         added_piece = move['piece']
-        print(f"Add piece to {to_square}")
+
+        # Move recorded
+        print(f"Add piece ({added_piece}) to {to_square}")
         # Implement the logic for handling capture
         self.board.set_piece_at(chess.parse_square(to_square), chess.Piece.from_symbol(added_piece))
         self.add_this_fen()  # Save the fen to the generated list
@@ -1276,6 +1297,8 @@ class TempGame:
         """ {'type': 'remove', 'from': 'a1'} """
 
         from_square = move['from']
+
+        # Move recorded
         print(f"Removing piece from {from_square}")
         # Implement the logic for removing a piece
         self.board.remove_piece_at(chess.parse_square(from_square))
@@ -1383,5 +1406,117 @@ if __name__ == "__main__":
     ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=problem_list_loaded, settings = config).run()  # Pass the FEN to the GUI and the Window title
 
 
+def get_algebraic(move, position):
+    """Return the algebraic notation of the given move, in the given position"""
+    # position will be a chess.board object
+    # move will typically be a move like g1f3, f1b5, a7a8n, b2a1q
+
+    # Stage 1: Find move without suffix
+        #if move type is normal return e7, Ne7, Qxf8 style
+            # check is_castling(move) return O-O-O or O-O
+            # get piece name on FROM SQUARE
+            # (could check not empty)
+            # check is_capture(move): save result as bool
+            # check piece type: start saving san as "" or "N" or "B" etc..
+                # check for disambiguation? need masks and scanning board
+                # add the x for capture
+            # Add destination square
+            # Add promotion piece if present
+        
 
 
+        #elif move type is promotion return a8=Q+ style
+
+        #elif move type is removal return -(Q)e4 style
+
+        #elif move type is add piece return +Rg1 style
+
+        #elif move is type null return - (not implemented yet but could)
+
+
+
+    # Stage 2: Play the move (better to allow for illegal moves save current fen, set a new fen
+    # call is.check() on new fen
+    # call is.checkmate() on new fen
+    # call is.stalemate() on new fen
+    # append appropriate suffix and exit
+    # return san + "+" or + "#" or + "="
+
+    # Here is the current board.san() from python-chess, need a better version
+        # # Null move.
+        # if not move:
+        #     return "--"
+
+        # # Drops.
+        # if move.drop:
+        #     san = ""
+        #     if move.drop != PAWN:
+        #         san = piece_symbol(move.drop).upper()
+        #     san += "@" + SQUARE_NAMES[move.to_square]
+        #     return san
+
+        # # Castling.
+        # if self.is_castling(move):
+        #     if square_file(move.to_square) < square_file(move.from_square):
+        #         return "O-O-O"
+        #     else:
+        #         return "O-O"
+
+        # piece_type = self.piece_type_at(move.from_square)
+        # assert piece_type, f"san() and lan() expect move to be legal or null, but got {move} in {self.fen()}"
+        # capture = self.is_capture(move)
+
+        # if piece_type == PAWN:
+        #     san = ""
+        # else:
+        #     san = piece_symbol(piece_type).upper()
+
+        # if long:
+        #     san += SQUARE_NAMES[move.from_square]
+        # elif piece_type != PAWN:
+        #     # Get ambiguous move candidates.
+        #     # Relevant candidates: not exactly the current move,
+        #     # but to the same square.
+        #     others = 0
+        #     from_mask = self.pieces_mask(piece_type, self.turn)
+        #     from_mask &= ~BB_SQUARES[move.from_square]
+        #     to_mask = BB_SQUARES[move.to_square]
+        #     for candidate in self.generate_legal_moves(from_mask, to_mask):
+        #         others |= BB_SQUARES[candidate.from_square]
+
+        #     # Disambiguate.
+        #     if others:
+        #         row, column = False, False
+
+        #         if others & BB_RANKS[square_rank(move.from_square)]:
+        #             column = True
+
+        #         if others & BB_FILES[square_file(move.from_square)]:
+        #             row = True
+        #         else:
+        #             column = True
+
+        #         if column:
+        #             san += FILE_NAMES[square_file(move.from_square)]
+        #         if row:
+        #             san += RANK_NAMES[square_rank(move.from_square)]
+        # elif capture:
+        #     san += FILE_NAMES[square_file(move.from_square)]
+
+        # # Captures.
+        # if capture:
+        #     san += "x"
+        # elif long:
+        #     san += "-"
+
+        # # Destination square.
+        # san += SQUARE_NAMES[move.to_square]
+
+        # # Promotion.
+        # if move.promotion:
+        #     san += "=" + piece_symbol(move.promotion).upper()
+
+        # return san
+
+
+    return 1

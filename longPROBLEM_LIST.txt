@@ -1,0 +1,54 @@
+# Syntax is each line should start with either Title: or FEN: or Subtext: or Moves:
+# Blank lines can be used to separate problems (but might not be totally necessary)
+# As long as a FEN is present a diagram will be created titles and subtext are optional
+# If you mess up, unused titles and subtexts may get overwritten
+
+# New feature: predefined moves to play through
+# | Moves  | Result                                      |
+# |--------|---------------------------------------------|
+# | a1b3   | Move piece from a1 to b3                    |
+# | a7b8N  | Promote a7b8 to a knight                    |
+# | *      | Save the current position for future return |
+# | <      | Go back to last saved position (i.e. one *) |
+# | <<     | Go back to two *'s                          |
+# | <<<    | Go back to three *'s                        |
+# | etc..  |                                             |
+# | H      | Go back to Home position for this problem   |
+# | +Ra7   | Add a white rook to a7 (capital = white)    |
+# | -e4    | Remove whatever piece is on e4              |
+# | &      | The next move will executed simultaneously  |
+# |--------|---------------------------------------------|
+
+Special notes:
+Most illegal moves will be accepted, including taking your own pieces.
+e1c1 and e1g1 etc... are always interpreted as castling so if you wish to move a king like this, also put the rook back
+
+Title: Steven Dowd, Springaren 2012
+FEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
+Subtext: S#5
+Moves: a7a8Q a6b6 c7c8N * b6c7 b7b8b c7d8 e5f6 d6e7 c8d6 e7f6 < b6c6 b7b8r * c6d7 c8b6 d7c7 f2f3 d6e5 < c6c7 c8b6 d6e5
+
+Title: Testing opening branches
+FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+Subtext: "Mate in none"
+Moves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5
+
+Title: Testing multi-move with & joiner
+FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+Subtext: "Always keep and eye on your opponent"
+Moves: e2e4 & e7e5 g1f3 b8c6 f1a6 & a6b7 g7g6 & g8f6 & f8g7 & e8g8
+
+Title: Testing add/remove with +Bg6 and -d8
+FEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+Subtext: "Nonsense"
+Moves: e2e4 +Bg6 -f7 +Qa4 +Qa5 -d8 d2d4 h1g5
+
+Title: "Position with no subtext or moves"
+FEN: "8/8/8/8/8/5p2/4p3/8 w - - 0 1"
+
+FEN: "8/p7/4k3/8/4QK2/5p2/4p3/8 w - - 0 1"
+Subtext: "Similar but with no title"
+
+Title: How to not castle (cheat)
+FEN: 8/7k/8/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/R5K1 w KQkq - 0 3
+Moves: g1f1 h7h8 f1e1 h8g7 e1c1 & d1a1 g7h8
