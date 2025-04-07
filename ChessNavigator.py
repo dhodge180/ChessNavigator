@@ -13,6 +13,18 @@ import json
 import os
 import sys
 
+# For moves window
+import tkinter as tk
+import multiprocessing
+import time
+
+# Define the shutdown event
+shutdown_event = multiprocessing.Event()
+
+# Passable references to windows
+#main_window = None
+#moves_windows = None
+
 # Global variable to hold the PROBLEM LIST
 PROBLEM_LIST = []
 
@@ -599,9 +611,14 @@ class ChessGUI:
                  title='Chess Navigator', 
                  stip = "", 
                  fenlist = False, 
-                 settings = None):
+                 settings = None,
+                 main_window_queue = None,
+                 moves_window_queue = None):
         self.spare_pieces = None
         self.config = settings
+        self.main_window_queue = main_window_queue
+        self.moves_window_queue = moves_window_queue
+
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
         # Window icon
@@ -639,12 +656,22 @@ class ChessGUI:
     def run(self):
         """Main loop of the GUI."""
         # global SQUARE_SIZE
-        low_fps = 25
+        low_fps = 10
         high_fps = 60
         self.target_fps = high_fps
         self.redraw = True # should we draw the next frame?
 
+        loop_counter = 0
+
         while self.running:
+            if not self.main_window_queue.empty():
+                recip, message = self.main_window_queue.get()
+                if recip == "new fen":  # Check for messages meant for the main window
+                    print(f"Received message for main_window: {message}")
+                    if message:
+                        self.game.set_new_fen(message)  # Example: process the message in Pygame
+                        self.redraw = True
+
             if self.dragging_piece or self.redraw: # Redraw everything as something happened
                 self.screen.fill((0, 0, 0))
                 self.draw_board()
@@ -662,6 +689,7 @@ class ChessGUI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    shutdown_event.set()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.adjust_fps(high_fps)
                     self.handle_mouse_down(event.pos)
@@ -736,6 +764,8 @@ class ChessGUI:
             pygame.display.flip()
 
             self.clock.tick(self.target_fps)
+
+            loop_counter += 1
 
     def draw_custom_title(self):
         """Draw the custom title at the top of the window."""
@@ -1006,6 +1036,10 @@ class ChessGUI:
         self.custom_stip = subtext
         self.draw_custom_title()
         self.draw_custom_stip()
+
+        # Redraw tk moves_windows
+        self.moves_window_queue.put(("load moves grid", PROBLEM_LIST[-1]['move_tree']))
+
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
@@ -1457,6 +1491,100 @@ def generate_fen_path(beginning, moves):
 
     return temp_game.result(), grid_data
 
+def build_button_grid(main_window_queue, moves_window_queue):
+    root = tk.Tk()
+    moves_window = root
+    root.title("Moves")
+
+    # Window positioning
+    #tk_x = pygame_x + pygame_width
+    #tk_y = pygame_y - 30
+    #root.geometry(f"+{tk_x}+{tk_y}")
+
+    data = [
+        [("e4", "8/8/8/8/8/8/8/8"), ("e5", "8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6"), ("Ngf3", "8/8/8/8/8/8/8/8")],
+        [(None, "8/8/8/8/8/8/8/8"), ("exf8=Q+", "8/8/8/8/8/8/8/8"), ("d4", "8/8/8/8/8/8/8/8")],
+        [("c4", "8/8/8/8/8/8/8/8"), ("c5", "8/8/8/8/8/8/8/8"), (None, "8/8/8/8/8/8/8/8")]
+    ]
+
+    frame = tk.Frame(root)
+    frame.pack(padx=10, pady=10)
+
+    for i, row in enumerate(data):
+        for j, val in enumerate(row):
+            if val[0]:
+                tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
+                          command=lambda v=val[1]: move_button_click(v, main_window_queue)).grid(row=i, column=j, padx=2, pady=2)
+            else:
+                tk.Label(frame, text="").grid(row=i, column=j)
+
+    def check_for_updates():
+        if shutdown_event.is_set():  # If shutdown is requested, destroy the window
+            root.destroy()
+
+        # Recheck every 500ms
+        if not shutdown_event.is_set():
+            if not moves_window_queue.empty():
+                recip, message = moves_window_queue.get()
+                if recip == "load moves grid":
+                    print(f"Moves window received: {message}")
+                    # Do something here to this window
+            root.after(500, check_for_updates)
+
+    # Start checking for updates every 100ms
+    root.after(500, check_for_updates)
+
+    root.mainloop()
+
+def move_button_click(param, queue):
+        print(f"Clicked button: {param}")
+        queue.put(("new fen", param))
+
+def run_gui(passed_fen, window_title, title, stip, problem_list_loaded, config, main_window_queue, moves_window_queue):
+    # Initialize Pygame GUI here
+    main_window = ChessGUI(passed_fen, window_title, title, stip, problem_list_loaded, config, main_window_queue, moves_window_queue)
+    main_window.run()
+
+# Function to handle communication from the Pygame process
+def queue_listener(queue):
+    global main_window, moves_windows
+
+    while not shutdown_event.is_set():
+        if not queue.empty():  # Check if there is any message in the queue
+            recip, message = queue.get()  # Get the message from the queue
+            if recip == "moves":
+                print("Pygame asked Tkinter to do something:")
+                print(message)
+            elif recip == "set_this_fen":
+                print("Moves window asked pygame to do something:")
+                queue.put()
+
+        time.sleep(0.1)
+
+def start_processes():
+
+    # Communication method
+    main_window_queue = multiprocessing.Queue()
+    moves_window_queue = multiprocessing.Queue()
+
+    # Start both processes
+    gui_process = multiprocessing.Process(target=run_gui, args=(
+    passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue, moves_window_queue))
+    tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
+
+    gui_process.start()  # Start the Pygame GUI process
+    tk_process.start()  # Start the Tkinter window process
+
+    # Background process to listen for news from pygame window
+    #listening_process = multiprocessing.Process(target=queue_listener, args=(queue, ))
+    #listening_process.start()
+
+    # Wait for them to finish
+    gui_process.join()  # Wait for the Pygame window to close
+    tk_process.join()  # Wait for Tkinter window to close
+
+    print("Both windows have closed, shutting down")
+
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
@@ -1473,120 +1601,13 @@ if __name__ == "__main__":
             fen_data['fen_tree'] = fen_tree
             fen_data['move_tree'] = move_tree
     config = Config()
-    ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=problem_list_loaded, settings = config).run()  # Pass the FEN to the GUI and the Window title
 
+    start_processes()
 
-#def get_algebraic(move, position):
-#   """Return the algebraic notation of the given move, in the given position"""
-    # position will be a chess.board object
-    # move will typically be a move like g1f3, f1b5, a7a8n, b2a1q
+# TO DO
+# Pass the build_buttons the actual move tree for the current game (do it inside the ChessGUI via a message like
+# "load_moves" and listener can pass PROBLEMLIST['moves_tree'] to some build function
+# need to separate the draw the button frame and draw the buttons (based on a grid)
+# Change button code to put fens behind buttons
 
-    # Stage 1: Find move without suffix
-        #if move type is normal return e7, Ne7, Qxf8 style
-            # check is_castling(move) return O-O-O or O-O
-            # get piece name on FROM SQUARE
-            # (could check not empty)
-            # check is_capture(move): save result as bool
-            # check piece type: start saving san as "" or "N" or "B" etc..
-                # check for disambiguation? need masks and scanning board
-                # add the x for capture
-            # Add destination square
-            # Add promotion piece if present
-        
-
-
-        #elif move type is promotion return a8=Q+ style
-
-        #elif move type is removal return -(Q)e4 style
-
-        #elif move type is add piece return +Rg1 style
-
-        #elif move is type null return - (not implemented yet but could)
-
-
-
-    # Stage 2: Play the move (better to allow for illegal moves save current fen, set a new fen
-    # call is.check() on new fen
-    # call is.checkmate() on new fen
-    # call is.stalemate() on new fen
-    # append appropriate suffix and exit
-    # return san + "+" or + "#" or + "="
-
-    # Here is the current board.san() from python-chess, need a better version
-        # # Null move.
-        # if not move:
-        #     return "--"
-
-        # # Drops.
-        # if move.drop:
-        #     san = ""
-        #     if move.drop != PAWN:
-        #         san = piece_symbol(move.drop).upper()
-        #     san += "@" + SQUARE_NAMES[move.to_square]
-        #     return san
-
-        # # Castling.
-        # if self.is_castling(move):
-        #     if square_file(move.to_square) < square_file(move.from_square):
-        #         return "O-O-O"
-        #     else:
-        #         return "O-O"
-
-        # piece_type = self.piece_type_at(move.from_square)
-        # assert piece_type, f"san() and lan() expect move to be legal or null, but got {move} in {self.fen()}"
-        # capture = self.is_capture(move)
-
-        # if piece_type == PAWN:
-        #     san = ""
-        # else:
-        #     san = piece_symbol(piece_type).upper()
-
-        # if long:
-        #     san += SQUARE_NAMES[move.from_square]
-        # elif piece_type != PAWN:
-        #     # Get ambiguous move candidates.
-        #     # Relevant candidates: not exactly the current move,
-        #     # but to the same square.
-        #     others = 0
-        #     from_mask = self.pieces_mask(piece_type, self.turn)
-        #     from_mask &= ~BB_SQUARES[move.from_square]
-        #     to_mask = BB_SQUARES[move.to_square]
-        #     for candidate in self.generate_legal_moves(from_mask, to_mask):
-        #         others |= BB_SQUARES[candidate.from_square]
-
-        #     # Disambiguate.
-        #     if others:
-        #         row, column = False, False
-
-        #         if others & BB_RANKS[square_rank(move.from_square)]:
-        #             column = True
-
-        #         if others & BB_FILES[square_file(move.from_square)]:
-        #             row = True
-        #         else:
-        #             column = True
-
-        #         if column:
-        #             san += FILE_NAMES[square_file(move.from_square)]
-        #         if row:
-        #             san += RANK_NAMES[square_rank(move.from_square)]
-        # elif capture:
-        #     san += FILE_NAMES[square_file(move.from_square)]
-
-        # # Captures.
-        # if capture:
-        #     san += "x"
-        # elif long:
-        #     san += "-"
-
-        # # Destination square.
-        # san += SQUARE_NAMES[move.to_square]
-
-        # # Promotion.
-        # if move.promotion:
-        #     san += "=" + piece_symbol(move.promotion).upper()
-
-        # return san
-
-
-    #return 1
+# When button clicked, pass the fen to the pygame, run function to set fen
