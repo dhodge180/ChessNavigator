@@ -43,8 +43,17 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 | +Ra7   | Add a white rook to a7 (capital = white)    |
 | -e4    | Remove whatever piece is on e4              |
 
+## For customized board colours and start-up window size
 
+### config.json file format - default values
 
+{
+    "white_squares": [238, 238, 210],
+    "black_squares": [118, 150, 86],
+    "panel_colour": [20, 60, 60],
+    "square_size": 70
+}
 
+Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
 
 
