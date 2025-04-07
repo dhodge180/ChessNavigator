@@ -233,7 +233,7 @@ class Config:
     def get_panel_col(self):
         return self.panel_colour
 
-def load_problem_list_from_file(filename="PROBLEM_LIST.txt"):
+def load_problem_list_from_file(filename=None):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
 
@@ -1142,12 +1142,18 @@ class TempGame:
         # Convert the move string
         converted_move = self.convert_move(move_str)
         move_type = converted_move['type']
-        
+
+        button_label = None
+        button_fen = None
+
         # Call the corresponding handler function from the dictionary
         if move_type in self.move_handlers:
-            self.move_handlers[move_type](converted_move)
+            button_label, button_fen = self.move_handlers[move_type](converted_move)
+
         else:
             print(f"Unknown move type: {move_type}")
+
+        return button_label, button_fen
 
     def handle_move(self, move):
         """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
@@ -1164,7 +1170,7 @@ class TempGame:
         target_piece = self.board.piece_at(chess.parse_square(to_square))
         if piece is None:
             print("Uhm, there was meant to be a piece here!")
-            return
+            return None, None
 
         if piece.color != self.board.turn:
             print("You moved out of turn, but I'll allow it.")
@@ -1183,10 +1189,14 @@ class TempGame:
         
         # Move recorded 2
         san_version = self.board.san(mv)
-        print(f"This move is called {san_version}")
+        #print(f"This move is called {san_version}")
+        button_label = str(san_version)
+        print(f"BUTTON: {button_label}")
         
         self.board.push(mv)
         self.add_this_fen()
+
+        return san_version, self.board.fen()
 
     def handle_promotion(self, move):
         """e.g. {'type': 'promotion', 'from': 'a7', 'to': 'a8', 'promotion_piece': 'Q'}
@@ -1205,7 +1215,7 @@ class TempGame:
         target_piece = self.board.piece_at(chess.parse_square(to_square))
         if piece is None:
             print("Uhm, there was meant to be a piece here!")
-            return
+            return None, None
 
         if piece.color != self.board.turn:
             print("You moved out of turn, but I'll allow it.")
@@ -1223,11 +1233,13 @@ class TempGame:
         
         # Move recorded 2
         san_version = self.board.san(mv)
-        print(f"This move is called {san_version}")
-
+        #print(f"This move is called {san_version}")
+        button_label = str(san_version)
+        print(f"BUTTON: {button_label}")
         self.board.push(mv)
-
         self.add_this_fen()
+
+        return san_version, self.board.fen()
 
     def handle_save(self, _):
         """ e.g. {'type': 'save'}
@@ -1254,6 +1266,8 @@ class TempGame:
         # self.generated.append("SaveCheckPoint")
         # Don't need to add a FEN since we already added it? could revisit
 
+        return None, None
+
     def handle_home(self, _):
         """ e.g. {'type': 'home'} """
 
@@ -1263,6 +1277,8 @@ class TempGame:
         self.current_checkpoint_index = 0
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
         self.add_this_fen() # Save the fen to the generated list
+
+        return None, None
 
     def handle_skipback(self, move):
         """ e.g. {'type': 'skipback', 'steps': n} """
@@ -1276,11 +1292,16 @@ class TempGame:
         self.add_this_fen()  # Save the fen to the generated list
         #print(self.board)
 
+        return None, None
+
     def handle_and(self, _):
         """{'type': 'and'} """
         # Move recorded
         print(f"...playing another move at the same time...")
+        print(f"BUTTON: save current button text for appending next move")
         self.generated.pop() # This should remove the last element
+
+        return None, None
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
@@ -1289,20 +1310,30 @@ class TempGame:
 
         # Move recorded
         print(f"Add piece ({added_piece}) to {to_square}")
+        button_label = "+" + str(added_piece) + str(to_square)
+        print(f"BUTTON: {button_label}")
+
         # Implement the logic for handling capture
         self.board.set_piece_at(chess.parse_square(to_square), chess.Piece.from_symbol(added_piece))
         self.add_this_fen()  # Save the fen to the generated list
+
+        return button_label, self.board.fen()
 
     def handle_remove(self, move):
         """ {'type': 'remove', 'from': 'a1'} """
 
         from_square = move['from']
-
+        piece_there = self.board.piece_at(chess.parse_square(from_square))
         # Move recorded
         print(f"Removing piece from {from_square}")
+        button_label = "-" + str(piece_there) + str(from_square)
+        print(f"BUTTON: {button_label}")
+
         # Implement the logic for removing a piece
         self.board.remove_piece_at(chess.parse_square(from_square))
         self.add_this_fen()
+
+        return None, None
 
     def handle_set_whos_turn(self, move):
         """e.g. {'type': 'player_turn', 'player': 'B'}
@@ -1314,6 +1345,9 @@ class TempGame:
             # Target player to move means we need to change
             self.board.turn = not self.board.turn
             self.add_this_fen()
+
+        return None, None
+
 
     def result(self):
         return self.generated
@@ -1383,10 +1417,45 @@ def generate_fen_path(beginning, moves):
     # Load the starting FEN into a chess object, i.e. create a temporary game e.g. via a chess.board(START)
     temp_game = TempGame(beginning)
 
-    for move in moves:
-        temp_game.process_move(move)
+    grid_data = [] # 2D grid of (label, fen) data
+    next_i = 0
+    next_j = 0
 
-    return temp_game.result()
+    COLUMNS = 5
+
+    def ensure_row(i):
+        while len(grid_data) <= i:
+            grid_data.append([None] * COLUMNS)
+
+    for move in moves:
+        # Create blank row if it doesn't exist yet
+        ensure_row(next_i)
+
+        # Save label and fen
+
+        # Save values in (next_i,next_j)
+        # temp_game.process_move returns button_label and button_fen
+        grid_data[next_i][next_j] = temp_game.process_move(move)
+
+        # Update next box
+        next_j += 1
+        if next_j >= COLUMNS:
+            next_j = 0
+            next_i += 1
+
+    print("Grid contents:\n")
+
+    for row_idx, row in enumerate(grid_data):
+        print(f"Row {row_idx}: ", end="")
+        for cell in row:
+            if cell is None:
+                print("[     ]", end=" ")
+            else:
+                label, fen = cell
+                print(f"[{label}]", end=" ")
+        print()  # Newline after each row
+
+    return temp_game.result(), grid_data
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
@@ -1400,14 +1469,15 @@ if __name__ == "__main__":
         for fen_data in PROBLEM_LIST:
             given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
-            fen_tree = generate_fen_path(given_fen, move_list)
+            fen_tree, move_tree = generate_fen_path(given_fen, move_list)
             fen_data['fen_tree'] = fen_tree
+            fen_data['move_tree'] = move_tree
     config = Config()
     ChessGUI(passed_fen, window_title_bar = window_title, title=args.title, stip=args.stip, fenlist=problem_list_loaded, settings = config).run()  # Pass the FEN to the GUI and the Window title
 
 
-def get_algebraic(move, position):
-    """Return the algebraic notation of the given move, in the given position"""
+#def get_algebraic(move, position):
+#   """Return the algebraic notation of the given move, in the given position"""
     # position will be a chess.board object
     # move will typically be a move like g1f3, f1b5, a7a8n, b2a1q
 
@@ -1519,4 +1589,4 @@ def get_algebraic(move, position):
         # return san
 
 
-    return 1
+    #return 1
