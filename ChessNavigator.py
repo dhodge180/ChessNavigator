@@ -1,6 +1,7 @@
 """
 This is the main Chess Navigator program
 """
+from pickle import GLOBAL
 
 import pygame
 import chess
@@ -27,6 +28,9 @@ shutdown_event = multiprocessing.Event()
 
 # Global variable to hold the PROBLEM LIST
 PROBLEM_LIST = []
+
+# Global for fancy multiprocessing mode
+MOVES_WINDOW_VERSION = False
 
 # FEN position to start from
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
@@ -391,6 +395,7 @@ def parse_arguments():
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
     parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM list file", default="PROBLEM_LIST.txt")
     parser.add_argument("--window", type=str, help="Window name")
+    parser.add_argument("--moves", type=str, help="Launch parallel moves window", default=True)
     return parser.parse_args()
 
 class LiveGame:
@@ -665,15 +670,16 @@ class ChessGUI:
         loop_counter = 0
 
         while self.running:
-            if not self.main_window_queue.empty():
-                recip, message = self.main_window_queue.get()
-                if recip == "new fen":  # Check for messages meant for the main window
-                    print(f"Received message for main_window: {message}")
-                    if message:
-                        #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
-                        #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
-                        self.game.set_new_fen(message)  # Example: process the message in Pygame
-                        self.redraw = True
+            if MOVES_WINDOW_VERSION:
+                if not self.main_window_queue.empty():
+                    recip, message = self.main_window_queue.get()
+                    if recip == "new fen":  # Check for messages meant for the main window
+                        print(f"Received message for main_window: {message}")
+                        if message:
+                            #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
+                            #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
+                            self.game.set_new_fen(message)  # Example: process the message in Pygame
+                            self.redraw = True
 
             if self.dragging_piece or self.redraw: # Redraw everything as something happened
                 self.screen.fill((0, 0, 0))
@@ -1045,8 +1051,9 @@ class ChessGUI:
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
         # Redraw tk moves_windows
-        self.moves_window_queue.put(
-            ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+        if MOVES_WINDOW_VERSION == True:
+            self.moves_window_queue.put(
+                ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
@@ -1616,34 +1623,45 @@ def queue_listener(queue):
 
 def start_processes():
 
+    if MOVES_WINDOW_VERSION == True:
     # Communication method
-    main_window_queue = multiprocessing.Queue()
-    moves_window_queue = multiprocessing.Queue()
+        main_window_queue = multiprocessing.Queue()
+        moves_window_queue = multiprocessing.Queue()
 
-    # Start both processes
-    gui_process = multiprocessing.Process(target=run_gui, args=(
-    passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue, moves_window_queue))
-    tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
+        # Start both processes
+        gui_process = multiprocessing.Process(target=run_gui, args=(
+        passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue, moves_window_queue))
+        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
 
-    gui_process.start()  # Start the Pygame GUI process
-    tk_process.start()  # Start the Tkinter window process
+        gui_process.start()  # Start the Pygame GUI process
+        tk_process.start()  # Start the Tkinter window process
 
-    # Background process to listen for news from pygame window
-    #listening_process = multiprocessing.Process(target=queue_listener, args=(queue, ))
-    #listening_process.start()
+        # Background process to listen for news from pygame window
+        #listening_process = multiprocessing.Process(target=queue_listener, args=(queue, ))
+        #listening_process.start()
 
-    # Wait for them to finish
-    gui_process.join()  # Wait for the Pygame window to close
-    tk_process.join()  # Wait for Tkinter window to close
+        # Wait for them to finish
+        gui_process.join()  # Wait for the Pygame window to close
+        tk_process.join()  # Wait for Tkinter window to close
 
-    print("Both windows have closed, shutting down")
+        print("Both windows have closed, shutting down")
+
+    else:
+        main_window_queue = None
+        moves_window_queue = None
+
+        # Start both processes
+        ChessGUI(passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue,
+            moves_window_queue).run()
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
+    MOVES_WINDOW_VERSION = True if args.moves else False # FANCY mode needs enabling
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
+
     # Return value is TRUE or FALSE based on success
     if problem_list_loaded:
         # Here we generate move trees from the moves
