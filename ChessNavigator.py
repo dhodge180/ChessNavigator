@@ -670,6 +670,8 @@ class ChessGUI:
                 if recip == "new fen":  # Check for messages meant for the main window
                     print(f"Received message for main_window: {message}")
                     if message:
+                        #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
+                        #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
                         self.game.set_new_fen(message)  # Example: process the message in Pygame
                         self.redraw = True
 
@@ -1166,6 +1168,9 @@ class TempGame:
             'remove': self.handle_remove,
             'and': self.handle_and
         }
+        self.move_id = 1
+        self.id_record = []  # Vector storing (FEN position number in list, move_id) pairs
+
         self.generated = [] # This will store the full fens and be returned at the end
         self.add_this_fen() # Start by adding the initial FEN. Will need to know this later with -> movements
         self.checkpoints = [] # Create checkpoints list
@@ -1174,8 +1179,12 @@ class TempGame:
 
     def add_this_fen(self):
         self.generated.append(self.board.fen())
+        self.id_record.insert(len(self.generated), self.move_id)
 
     def process_move(self, move_str):
+        # Global move id to pass around
+        self.move_id += 1
+
         # Convert the move string
         converted_move = self.convert_move(move_str)
         move_type = converted_move['type']
@@ -1190,7 +1199,7 @@ class TempGame:
         else:
             print(f"Unknown move type: {move_type}")
 
-        return button_label, button_fen
+        return button_label, button_fen, self.move_id
 
     def handle_move(self, move):
         """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
@@ -1387,7 +1396,7 @@ class TempGame:
 
 
     def result(self):
-        return self.generated
+        return self.generated, self.id_record
 
     @staticmethod
     def convert_move(move: str) -> dict[str, str | int]:
@@ -1459,8 +1468,8 @@ def generate_fen_path(beginning, moves):
     next_i = 0
     next_j = 0
 
-    checkpoint_data = []
-    checkpoint_data.append(1)
+    checkpoint_data = [1]
+    #checkpoint_data.append(1)
 
     COLUMNS = 15
 
@@ -1472,6 +1481,7 @@ def generate_fen_path(beginning, moves):
     loc_button_fen = None
     loc_button_position = None
     loc_checkpoint = [1]
+    loc_move_id = None
 
     for move in moves:
         # Create blank row if it doesn't exist yet
@@ -1482,7 +1492,7 @@ def generate_fen_path(beginning, moves):
         # Save values in (next_i,next_j)
         # temp_game.process_move returns button_label and button_fen
         # process_move also appends the next fen to the self.generated list
-        loc_button_label, loc_button_fen = temp_game.process_move(move)
+        loc_button_label, loc_button_fen, loc_move_id = temp_game.process_move(move)
         if loc_button_label == "back":
             print("Back button")
             loc_checkpoint = loc_button_fen
@@ -1498,7 +1508,7 @@ def generate_fen_path(beginning, moves):
             checkpoint_data.insert(loc_checkpoint, next_j) # Should store current column for this checkpoint number
 
         else: # Only create button if not back or * or H
-            grid_data[next_i][next_j] = (loc_button_label, loc_button_fen)
+            grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
             # Update next box
             next_j += 1
             if next_j >= COLUMNS:
@@ -1512,10 +1522,10 @@ def generate_fen_path(beginning, moves):
         print(f"Row {row_idx}: ", end="")
         for cell in row:
             if cell is None:
-                print("[     ]", end=" ")
+                print(f"[ ]", end=" ")
             else:
-                label, fen = cell
-                print(f"[{label}]", end=" ")
+                label, fen, id = cell
+                print(f"[{id}]", end=" ")
         print()  # Newline after each row
 
     return temp_game.result(), grid_data
@@ -1546,17 +1556,17 @@ def build_button_grid(main_window_queue, moves_window_queue):
     #tk_y = pygame_y - 30
     #root.geometry(f"+{tk_x}+{tk_y}")
 
-    data = [
-        [("e4", "8/8/8/8/8/8/8/8"), ("e5", "8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6"), ("Ngf3", "8/8/8/8/8/8/8/8")],
-        [(None, "8/8/8/8/8/8/8/8"), ("exf8=Q+", "8/8/8/8/8/8/8/8"), ("d4", "8/8/8/8/8/8/8/8")],
-        [("c4", "8/8/8/8/8/8/8/8"), ("c5", "8/8/8/8/8/8/8/8"), (None, "8/8/8/8/8/8/8/8")]
-    ]
+    #data = [
+    #    [("e4", "8/8/8/8/8/8/8/8"), ("e5", "8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6"), ("Ngf3", "8/8/8/8/8/8/8/8")],
+    #    [(None, "8/8/8/8/8/8/8/8"), ("exf8=Q+", "8/8/8/8/8/8/8/8"), ("d4", "8/8/8/8/8/8/8/8")],
+    #    [("c4", "8/8/8/8/8/8/8/8"), ("c5", "8/8/8/8/8/8/8/8"), (None, "8/8/8/8/8/8/8/8")]
+    #]
 
     frame = tk.Frame(root)
     frame.pack(padx=10, pady=10)
 
-    data = [[(None, None), (None, None)], [(None, None), (None, None)]]
-    create_buttons(data)
+    #data = [[(None, None, None), (None, None, None)], [(None, None, None), (None, None, None)]]
+    #create_buttons(data)
 
     def check_for_updates():
         if shutdown_event.is_set():  # If shutdown is requested, destroy the window
@@ -1578,9 +1588,6 @@ def build_button_grid(main_window_queue, moves_window_queue):
     root.after(500, check_for_updates)
 
     root.mainloop()
-
-def create_buttons(data):
-    return 0
 
 def move_button_click(param, queue):
         print(f"Clicked button: {param}")
@@ -1644,7 +1651,8 @@ if __name__ == "__main__":
             given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
             fen_tree, move_tree = generate_fen_path(given_fen, move_list)
-            fen_data['fen_tree'] = fen_tree
+            fen_data['fen_tree'] = fen_tree[0]
+            fen_data['ids'] = fen_tree[1]
             fen_data['move_tree'] = move_tree
     config = Config()
 
