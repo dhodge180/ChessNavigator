@@ -1,12 +1,12 @@
 """
 This is the main Chess Navigator program
 """
-from pickle import GLOBAL
 
 import pygame
 import chess
 import chess.pgn
 import argparse
+
 from pyperclip import copy
 import re
 import json
@@ -400,11 +400,12 @@ def parse_arguments():
 
 class LiveGame:
     """Chess game object: used to keep shown board position in memory"""
-    def __init__(self, fen=None):
+    def __init__(self, fen=None, move_window_queue=None):
         """initialization routine for Chess game object"""
         self.board = chess.Board()
         self.start_pos = START_FEN
         self.clock = pygame.time.Clock()
+        self.move_window_queue = move_window_queue
         if fen:
             self.start_pos = fen
             try:
@@ -424,6 +425,12 @@ class LiveGame:
         self.moves = chess.pgn.Game()  # Reset PGN game
         self.node = self.moves  # Reset PGN node pointer
 
+    def jump_tree_step(self, target):
+        """Jumps to a specific node of the tree and remembers for future arrow navigation"""
+        current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
+        self.tree_position = target
+        self.board.set_fen(current_fen_tree[self.tree_position])
+
     def advance_tree_step(self, direction):
         """Move through current fen tree. Forwards, backwards or jump to end."""
         current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
@@ -439,6 +446,9 @@ class LiveGame:
 
         # Move to next position (might be same position if at an end already)
         self.board.set_fen(current_fen_tree[self.tree_position])
+        # Could now send news to move window to move highlight marker
+        if MOVES_WINDOW_VERSION:
+            self.move_window_queue.put(('state', self.tree_position))
 
     def set_new_fen(self, new_fen):
         """Updates the board with a new FEN and resets move history & PGN tracking."""
@@ -633,7 +643,7 @@ class ChessGUI:
         self.screen = pygame.display.set_mode((self.config.get_width(), self.config.get_height()))
         pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
-        self.game = LiveGame(fen)
+        self.game = LiveGame(fen, moves_window_queue)
         #self.moves_window_queue.put(("load moves grid", 0))  # Value passed is PROBLEM_LIST index of new game
         self.running = True
         self.dragging_piece = None
@@ -676,9 +686,18 @@ class ChessGUI:
                     if recip == "new fen":  # Check for messages meant for the main window
                         print(f"Received message for main_window: {message}")
                         if message:
+                            # Let's assume the message is the move_id
+                            # move_id is the hidden tag on the button they start at 1
+
+                            # The passed message is the number of which entry of the fen_tree we want
+                            #moveid_fen = PROBLEM_LIST[-1]['fen_tree'][int(message)-1]
+                            self.game.jump_tree_step(int(message))
+
                             #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
                             #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
-                            self.game.set_new_fen(message)  # Example: process the message in Pygame
+
+                            #self.game.set_new_fen(moveid_fen)  # Example: process the message in Pygame
+
                             self.redraw = True
 
             if self.dragging_piece or self.redraw: # Redraw everything as something happened
@@ -1046,12 +1065,13 @@ class ChessGUI:
         self.custom_stip = subtext
         self.draw_custom_title()
         self.draw_custom_stip()
+        self.game.tree_position = 0
 
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
         # Redraw tk moves_windows
-        if MOVES_WINDOW_VERSION == True:
+        if MOVES_WINDOW_VERSION:
             self.moves_window_queue.put(
                 ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
 
@@ -1175,7 +1195,7 @@ class TempGame:
             'remove': self.handle_remove,
             'and': self.handle_and
         }
-        self.move_id = 1
+        self.move_id = -1
         self.id_record = []  # Vector storing (FEN position number in list, move_id) pairs
 
         self.generated = [] # This will store the full fens and be returned at the end
@@ -1186,11 +1206,12 @@ class TempGame:
 
     def add_this_fen(self):
         self.generated.append(self.board.fen())
-        self.id_record.insert(len(self.generated), self.move_id)
+        self.move_id += 1
+        self.id_record.append(self.move_id)
 
     def process_move(self, move_str):
         # Global move id to pass around
-        self.move_id += 1
+        # Increment self.move_id += 1 when a new fen is added.
 
         # Convert the move string
         converted_move = self.convert_move(move_str)
@@ -1353,6 +1374,8 @@ class TempGame:
         print(f"...playing another move at the same time...")
         print(f"BUTTON: save current button text for appending next move")
         self.generated.pop() # This should remove the last element
+        self.id_record.pop() # Copy same behavuour on move_id
+        self.move_id -= 1
 
         return "&", None
 
@@ -1478,16 +1501,21 @@ def generate_fen_path(beginning, moves):
     checkpoint_data = [1]
     #checkpoint_data.append(1)
 
-    COLUMNS = 15
+    max_columns = 25
 
     def ensure_row(i):
         while len(grid_data) <= i:
-            grid_data.append([None] * COLUMNS)
+            grid_data.append([None] * max_columns)
 
+    # noinspection PyUnusedLocal
     loc_button_label = None
+    # noinspection PyUnusedLocal
     loc_button_fen = None
+    # noinspection PyUnusedLocal
     loc_button_position = None
-    loc_checkpoint = [1]
+    # noinspection PyUnusedLocal
+    loc_checkpoint = None
+    # noinspection PyUnusedLocal
     loc_move_id = None
 
     for move in moves:
@@ -1503,7 +1531,9 @@ def generate_fen_path(beginning, moves):
         if loc_button_label == "back":
             print("Back button")
             loc_checkpoint = loc_button_fen
+            # Jump back to column of checkpoint we're going to
             next_j = checkpoint_data[loc_checkpoint] # Should be stored column number for this checkpoint
+            # Drop down one row for next move
             next_i += 1
         elif loc_button_label == "H":
             next_j = 0
@@ -1518,7 +1548,7 @@ def generate_fen_path(beginning, moves):
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
             # Update next box
             next_j += 1
-            if next_j >= COLUMNS:
+            if next_j >= max_columns:
                 next_j = 0
                 next_i += 1
 
@@ -1539,9 +1569,19 @@ def generate_fen_path(beginning, moves):
 
 def build_button_grid(main_window_queue, moves_window_queue):
 
+    # Dictionary to store button references for later highlighting (by val[2] ie. move id)
+    button_dict = {}
+    btn_bg_color = '#d0d0d0'
+
     def clear_buttons():
         for widget in frame.winfo_children():
             widget.destroy()
+        button_dict.clear()
+
+    def move_button_click(param, queue):
+            print(f"Clicked button: {param}")
+            highlight_button(param)
+            queue.put(("new fen", param))
 
     def create_buttons(data):
         """Function takes a move_tree data grid and creates the buttons"""
@@ -1549,13 +1589,20 @@ def build_button_grid(main_window_queue, moves_window_queue):
         for i, row in enumerate(data):
             for j, val in enumerate(row):
                 if val is not None:
-                    tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
-                              command=lambda v=val[1]: move_button_click(v, main_window_queue)).grid(row=i, column=j, padx=2, pady=2)
+                    # We're going to pass val[2] which is a move ID as the hidden val on the button
+                    # val[0] is the button text
+                    # val[1] is the FEN but we're now going to use move_id to allow peristent tree advancing
+                    # Need to set all colour to btn_bg_color so that hovering or focus doesn't change it
+                    button = tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
+                                       bg=btn_bg_color, activebackground=btn_bg_color, highlightcolor=btn_bg_color,
+                              command=lambda v=val[2]: move_button_click(v, main_window_queue))
+                    button.grid(row=i, column=j, padx=2, pady=2)
+                    button_dict[val[2]] = button
                 else:
                     tk.Label(frame, text="").grid(row=i, column=j)
 
     root = tk.Tk()
-    moves_window = root
+    #moves_window = root
     root.title("Moves")
 
     # Window positioning
@@ -1563,19 +1610,24 @@ def build_button_grid(main_window_queue, moves_window_queue):
     #tk_y = pygame_y - 30
     #root.geometry(f"+{tk_x}+{tk_y}")
 
-    #data = [
-    #    [("e4", "8/8/8/8/8/8/8/8"), ("e5", "8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6"), ("Ngf3", "8/8/8/8/8/8/8/8")],
-    #    [(None, "8/8/8/8/8/8/8/8"), ("exf8=Q+", "8/8/8/8/8/8/8/8"), ("d4", "8/8/8/8/8/8/8/8")],
-    #    [("c4", "8/8/8/8/8/8/8/8"), ("c5", "8/8/8/8/8/8/8/8"), (None, "8/8/8/8/8/8/8/8")]
-    #]
-
     frame = tk.Frame(root)
     frame.pack(padx=10, pady=10)
 
     #data = [[(None, None, None), (None, None, None)], [(None, None, None), (None, None, None)]]
     #create_buttons(data)
 
-    def check_for_updates():
+    def highlight_button(button_id):
+        """Function to highlight a button by changing its background color"""
+        # Reset all button backgrounds to default color
+        for btn in button_dict.values():
+            btn.config(bg="#f0f0f0")  # Reset to default color
+
+        # Highlight the button with the matching button_id
+        if button_id in button_dict:
+            button = button_dict[button_id]
+            button.config(bg="yellow")  # Set the background to yellow (highlight color)
+
+    def check_for_updates(_):
         if shutdown_event.is_set():  # If shutdown is requested, destroy the window
             root.destroy()
 
@@ -1583,22 +1635,21 @@ def build_button_grid(main_window_queue, moves_window_queue):
         if not shutdown_event.is_set():
             if not moves_window_queue.empty():
                 recip, message = moves_window_queue.get()
-                if recip == "load moves grid":
+                if recip == "load moves grid": # Being asked to create buttons from fenlist grid data
                     print(f"Moves window received: {message}")
                     # Do something here to this window
                     new_grid_data = message
                     clear_buttons()
                     create_buttons(new_grid_data)
-            root.after(500, check_for_updates)
+                elif recip == "state": # being told which button is live
+                    highlight_button(int(message))
+
+            root.after(200, check_for_updates, 0)
 
     # Start checking for updates every 100ms
-    root.after(500, check_for_updates)
+    root.after(200, check_for_updates, 0)
 
     root.mainloop()
-
-def move_button_click(param, queue):
-        print(f"Clicked button: {param}")
-        queue.put(("new fen", param))
 
 def run_gui(passed_fen, window_title, title, stip, problem_list_loaded, config, main_window_queue, moves_window_queue):
     # Initialize Pygame GUI here
@@ -1672,6 +1723,13 @@ if __name__ == "__main__":
             fen_data['fen_tree'] = fen_tree[0]
             fen_data['ids'] = fen_tree[1]
             fen_data['move_tree'] = move_tree
+            #print("Debug print:")
+            #print(f"fen_tree[0] is length {len(fen_tree[0])}")
+            #print(f"fen_tree[1] is length {len(fen_tree[1])}")
+            #for item in fen_tree[0]:
+            #    print(item)
+            #print(fen_tree[1])
+            #print("End of Debug")
     config = Config()
 
     start_processes()
