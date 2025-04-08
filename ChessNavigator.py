@@ -629,6 +629,7 @@ class ChessGUI:
         pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
         self.game = LiveGame(fen)
+        #self.moves_window_queue.put(("load moves grid", 0))  # Value passed is PROBLEM_LIST index of new game
         self.running = True
         self.dragging_piece = None
         self.dragging_pos = (0, 0)
@@ -1022,6 +1023,7 @@ class ChessGUI:
     def cycle_fen(self):
         """Cycle through the FEN list and update the game and window title."""
         print("Loading diagram from file")
+
         # Get the current FEN and title
         current_fen_data = PROBLEM_LIST.pop(0)  # Remove the first element
         PROBLEM_LIST.append(current_fen_data)  # Move it to the end for the next cycle
@@ -1037,11 +1039,12 @@ class ChessGUI:
         self.draw_custom_title()
         self.draw_custom_stip()
 
-        # Redraw tk moves_windows
-        self.moves_window_queue.put(("load moves grid", PROBLEM_LIST[-1]['move_tree']))
-
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
+
+        # Redraw tk moves_windows
+        self.moves_window_queue.put(
+            ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
@@ -1215,8 +1218,8 @@ class TempGame:
                 print("You're trying to consume one of your own pieces. I'll allow it.")
                 deletion_move = self.convert_move("-" + to_square)
                 and_move = self.convert_move("&")
-                self.move_handlers[deletion_move["type"]](self, deletion_move)
-                self.move_handlers[and_move["type"]](self, and_move)
+                self.move_handlers["remove"](self, deletion_move)
+                self.move_handlers["and"](self, and_move)
 
         # Implement the logic for handling regular moves
         mv = chess.Move.from_uci(from_square + to_square)
@@ -1260,8 +1263,8 @@ class TempGame:
                 print("You're trying to consume one of your own pieces. I'll allow it.")
                 deletion_move = self.convert_move("-" + to_square)
                 and_move = self.convert_move("&")
-                self.move_handlers[deletion_move['type']](self, deletion_move)
-                self.move_handlers[and_move['type']](self, and_move)
+                self.move_handlers['remove'](deletion_move)
+                self.move_handlers['and'](and_move)
 
         mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
         
@@ -1300,7 +1303,7 @@ class TempGame:
         # self.generated.append("SaveCheckPoint")
         # Don't need to add a FEN since we already added it? could revisit
 
-        return None, None
+        return "*", None
 
     def handle_home(self, _):
         """ e.g. {'type': 'home'} """
@@ -1312,7 +1315,7 @@ class TempGame:
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
         self.add_this_fen() # Save the fen to the generated list
 
-        return None, None
+        return "H", None
 
     def handle_skipback(self, move):
         """ e.g. {'type': 'skipback', 'steps': n} """
@@ -1326,7 +1329,7 @@ class TempGame:
         self.add_this_fen()  # Save the fen to the generated list
         #print(self.board)
 
-        return None, None
+        return str(distance), None
 
     def handle_and(self, _):
         """{'type': 'and'} """
@@ -1335,7 +1338,7 @@ class TempGame:
         print(f"BUTTON: save current button text for appending next move")
         self.generated.pop() # This should remove the last element
 
-        return None, None
+        return "&", None
 
     def handle_add(self, move):
         """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
@@ -1367,7 +1370,7 @@ class TempGame:
         self.board.remove_piece_at(chess.parse_square(from_square))
         self.add_this_fen()
 
-        return None, None
+        return button_label, self.board.fen()
 
     def handle_set_whos_turn(self, move):
         """e.g. {'type': 'player_turn', 'player': 'B'}
@@ -1380,7 +1383,7 @@ class TempGame:
             self.board.turn = not self.board.turn
             self.add_this_fen()
 
-        return None, None
+        return str(player_to_move), None
 
 
     def result(self):
@@ -1492,6 +1495,21 @@ def generate_fen_path(beginning, moves):
     return temp_game.result(), grid_data
 
 def build_button_grid(main_window_queue, moves_window_queue):
+
+    def clear_buttons():
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+    def create_buttons(data):
+        """Function takes a move_tree data grid and creates the buttons"""
+        for i, row in enumerate(data):
+            for j, val in enumerate(row):
+                if val is not None:
+                    tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
+                              command=lambda v=val[1]: move_button_click(v, main_window_queue)).grid(row=i, column=j, padx=2, pady=2)
+                else:
+                    tk.Label(frame, text="").grid(row=i, column=j)
+
     root = tk.Tk()
     moves_window = root
     root.title("Moves")
@@ -1510,13 +1528,8 @@ def build_button_grid(main_window_queue, moves_window_queue):
     frame = tk.Frame(root)
     frame.pack(padx=10, pady=10)
 
-    for i, row in enumerate(data):
-        for j, val in enumerate(row):
-            if val[0]:
-                tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
-                          command=lambda v=val[1]: move_button_click(v, main_window_queue)).grid(row=i, column=j, padx=2, pady=2)
-            else:
-                tk.Label(frame, text="").grid(row=i, column=j)
+    data = [[(None, None), (None, None)], [(None, None), (None, None)]]
+    create_buttons(data)
 
     def check_for_updates():
         if shutdown_event.is_set():  # If shutdown is requested, destroy the window
@@ -1529,12 +1542,18 @@ def build_button_grid(main_window_queue, moves_window_queue):
                 if recip == "load moves grid":
                     print(f"Moves window received: {message}")
                     # Do something here to this window
+                    new_grid_data = message
+                    clear_buttons()
+                    create_buttons(new_grid_data)
             root.after(500, check_for_updates)
 
     # Start checking for updates every 100ms
     root.after(500, check_for_updates)
 
     root.mainloop()
+
+def create_buttons(data):
+    return 0
 
 def move_button_click(param, queue):
         print(f"Clicked button: {param}")
