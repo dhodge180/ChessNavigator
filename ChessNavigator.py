@@ -1303,7 +1303,7 @@ class TempGame:
         # self.generated.append("SaveCheckPoint")
         # Don't need to add a FEN since we already added it? could revisit
 
-        return "*", None
+        return "*", self.current_checkpoint_index
 
     def handle_home(self, _):
         """ e.g. {'type': 'home'} """
@@ -1315,7 +1315,7 @@ class TempGame:
         self.board.set_fen(self.checkpoints[self.current_checkpoint_index])
         self.add_this_fen() # Save the fen to the generated list
 
-        return "H", None
+        return "H", self.current_checkpoint_index
 
     def handle_skipback(self, move):
         """ e.g. {'type': 'skipback', 'steps': n} """
@@ -1329,7 +1329,7 @@ class TempGame:
         self.add_this_fen()  # Save the fen to the generated list
         #print(self.board)
 
-        return str(distance), None
+        return "back", self.current_checkpoint_index
 
     def handle_and(self, _):
         """{'type': 'and'} """
@@ -1454,15 +1454,24 @@ def generate_fen_path(beginning, moves):
     # Load the starting FEN into a chess object, i.e. create a temporary game e.g. via a chess.board(START)
     temp_game = TempGame(beginning)
 
+    # Create the move_tree already in finished arrangement
     grid_data = [] # 2D grid of (label, fen) data
     next_i = 0
     next_j = 0
 
-    COLUMNS = 5
+    checkpoint_data = []
+    checkpoint_data.append(1)
+
+    COLUMNS = 15
 
     def ensure_row(i):
         while len(grid_data) <= i:
             grid_data.append([None] * COLUMNS)
+
+    loc_button_label = None
+    loc_button_fen = None
+    loc_button_position = None
+    loc_checkpoint = [1]
 
     for move in moves:
         # Create blank row if it doesn't exist yet
@@ -1472,13 +1481,30 @@ def generate_fen_path(beginning, moves):
 
         # Save values in (next_i,next_j)
         # temp_game.process_move returns button_label and button_fen
-        grid_data[next_i][next_j] = temp_game.process_move(move)
-
-        # Update next box
-        next_j += 1
-        if next_j >= COLUMNS:
+        # process_move also appends the next fen to the self.generated list
+        loc_button_label, loc_button_fen = temp_game.process_move(move)
+        if loc_button_label == "back":
+            print("Back button")
+            loc_checkpoint = loc_button_fen
+            next_j = checkpoint_data[loc_checkpoint] # Should be stored column number for this checkpoint
+            next_i += 1
+        elif loc_button_label == "H":
             next_j = 0
             next_i += 1
+        elif loc_button_label == "*":
+            print("Save action")
+            # loc_button_fen will contain index of checkpoint
+            loc_checkpoint = loc_button_fen
+            checkpoint_data.insert(loc_checkpoint, next_j) # Should store current column for this checkpoint number
+
+        else: # Only create button if not back or * or H
+            grid_data[next_i][next_j] = (loc_button_label, loc_button_fen)
+            # Update next box
+            next_j += 1
+            if next_j >= COLUMNS:
+                next_j = 0
+                next_i += 1
+
 
     print("Grid contents:\n")
 
@@ -1502,6 +1528,7 @@ def build_button_grid(main_window_queue, moves_window_queue):
 
     def create_buttons(data):
         """Function takes a move_tree data grid and creates the buttons"""
+
         for i, row in enumerate(data):
             for j, val in enumerate(row):
                 if val is not None:
