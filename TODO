@@ -152,3 +152,5 @@ investigate windows config Config error
 decide on all the shadow variables
 
 check all my variables passing, defaults and names. think about shadowing
+
+change Config __init__ function into a startup(cls) function, then don't need to call config = Config(), save __init__ for when you really want an instance. __init__(self) can just run self.startup()
