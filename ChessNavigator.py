@@ -58,7 +58,7 @@ KEY_COLOR_MAP = {
 """Key press / square colour associations"""
 
 class Config:
-    
+
     # Default configuration values -- can be changes by config.json
     DEFAULTS = {
         "white_squares": (238, 238, 210),
@@ -67,50 +67,64 @@ class Config:
         "square_size": 70
     }
 
-    def __init__(self, config_path="config.json"):
+    # Customizable
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 800
+
+    MAIN_HEIGHT = 0
+    MAIN_WIDTH = 0
+
+    HEIGHT = 0
+    WIDTH = 0
+
+    BOARD_WIDTH = 0
+    PANEL_WIDTH = 0
+
+    BOARD_AND_PANEL_WIDTH = 0
+    stip_x = 0
+    stip_y = 0
+    STIP_COORDS = (stip_x, stip_y)
+    title_x = 0
+    title_y = 0
+    TITLE_COORDS = (title_x, title_y)
+
+    # Customizable
+    WHITE_SQUARES = (238, 238, 210)
+    BLACK_SQUARES = (118, 150, 86)
+    PANEL_COLOUR = (20, 60, 60)
+    SQUARE_SIZE = 70
+
+    # Genuine fixed
+    HEIGHT_PADDING = 5
+    BORDER_SIZE = 60
+    MOVES_WIDTH = 0
+    config_path = "config.json"
+
+    @classmethod
+    def set_square_size(cls, new_size):
+        """Updates square size and recalculates all dependent values."""
+        cls.SQUARE_SIZE = new_size
+        cls.update_derived_sizes()
+
+    def __init__(self):
 
         # First load all the variables defaults
-        self.title_y = None
-        self.title_x = None
-        self.stip_y = None
-        self.stip_x = None
-        self.MAIN_HEIGHT = None
-        self.MAIN_WIDTH = None
-        self.HEIGHT = None
-        self.WIDTH = None
-        self.PANEL_WIDTH = None
-        self.BOARD_WIDTH = None
-
-        # Define certain constants
-        self.moves_width = 0  # No longer used -- moves panel on right
-        # Extra vertical padding (just top and bottom)
-        self.height_padding = 5
-        # Large padding around all board (all 4 margins)
-        self.border_size = 60
-
-        # Dynamic sizes, defaults
-        self.window_width = 800
-        self.window_height = 800
-
-        self.config_path = config_path
-        self.white_squares = None
-        self.black_squares = None
-        self.panel_colour = None
-        self.square_size = None
+        # KEEP these locals always accesses through COORDs tuple
 
         # Load any special config settings from config.json
-        self.load_config()
-        self.update_derived_sizes()
-        self.check_and_notify_defaults()
+        Config.load_config()
+        Config.update_derived_sizes()
+        Config.check_and_notify_defaults()
 
-    def load_config(self):
+    @classmethod
+    def load_config(cls):
 
-        local_config = self.DEFAULTS.copy()
+        local_config = cls.DEFAULTS.copy()
 
         # Load config.json if available
-        if os.path.exists(self.config_path):
+        if os.path.exists(cls.config_path):
             try:
-                with open(self.config_path, "r") as f:
+                with open(cls.config_path, "r") as f:
                     user_config = json.load(f)
                     local_config.update(user_config)
             except json.JSONDecodeError as _e:
@@ -118,57 +132,63 @@ class Config:
             except IOError as e:
                 print(f"Error reading config file: {e}. Using default settings.")
         else:
-            print(f"No config file found at '{self.config_path}'. Using default settings.")
+            print(f"No config file found at '{cls.config_path}'. Using default settings.")
 
         # Validate and apply values from the loaded config
-        self.white_squares = self.validate_rgb(local_config.get("white_squares"))
+        Config.white_squares = Config.validate_rgb(local_config.get("white_squares"))
         """Colour of white squares"""
-        self.black_squares = self.validate_rgb(local_config.get("black_squares"))
+        Config.black_squares = Config.validate_rgb(local_config.get("black_squares"))
         """Colour of black squares"""
-        self.panel_colour = self.validate_rgb(local_config.get("panel_colour"))
+        Config.panel_colour = Config.validate_rgb(local_config.get("panel_colour"))
         """Background colour of panel"""
-        self.square_size = self.validate_square_size(local_config.get("square_size"))
+        Config.square_size = Config.validate_square_size(local_config.get("square_size"))
         """Starting square size"""
 
-    def validate_rgb(self, color):
+    @classmethod
+    def validate_rgb(cls, color):
         #print(f"Info: {color}. Using default value {self.DEFAULTS['white_squares']}.")
         """Validates if a color is a valid RGB tuple/list, otherwise returns the default."""
         if isinstance(color, (tuple, list)) and len(color) == 3:
             # Clamp RGB values to the range 0-255
             return tuple(max(0, min(255, c)) for c in color)
-        return self.DEFAULTS["white_squares"]  # Return the default white color if invalid
+        return cls.DEFAULTS["white_squares"]  # Return the default white color if invalid
 
-    def validate_square_size(self, size):
+    @classmethod
+    def validate_square_size(cls, size):
         """Validates the square_size (must be one of 40, 50, ..., 100)."""
         valid_square_sizes = {40, 50, 60, 70, 80, 90, 100}
         if size in valid_square_sizes:
             return size
-        return self.DEFAULTS["square_size"]  # Return the default square_size if invalid
+        return cls.DEFAULTS["square_size"]  # Return the default square_size if invalid
 
-    def update_derived_sizes(self):
+    @classmethod
+    def update_derived_sizes(cls):
         """(Re)-Calculates various dimensions based on square_size changes"""
 
-        self.BOARD_WIDTH = self.square_size * BOARD_SIZE
+        cls.BOARD_WIDTH = cls.SQUARE_SIZE * BOARD_SIZE
         """Width of just the board"""
-        self.PANEL_WIDTH = 4 * self.square_size
+        cls.PANEL_WIDTH = 4 * cls.SQUARE_SIZE
         """Side panel with spare pieces (width)"""
-        self.WIDTH = self.BOARD_WIDTH + self.PANEL_WIDTH + 2 * self.border_size + self.moves_width
+        cls.WIDTH = cls.BOARD_WIDTH + cls.PANEL_WIDTH + 2 * cls.BORDER_SIZE + cls.MOVES_WIDTH
         """Full width"""
-        self.HEIGHT = self.BOARD_WIDTH + 2 * self.border_size + 2 * self.height_padding
+        cls.HEIGHT = cls.BOARD_WIDTH + 2 * cls.BORDER_SIZE + 2 * cls.HEIGHT_PADDING
         """Full height"""
-        self.MAIN_WIDTH = self.BOARD_WIDTH + 2 * self.border_size
+        cls.MAIN_WIDTH = cls.BOARD_WIDTH + 2 * cls.BORDER_SIZE
         """Width of board with padding"""
-        self.MAIN_HEIGHT = self.BOARD_WIDTH + 2 * self.border_size + 2 * self.height_padding
+        cls.MAIN_HEIGHT = cls.BOARD_WIDTH + 2 * cls.BORDER_SIZE + 2 * cls.HEIGHT_PADDING
         """Height of board with padding"""
 
         # Text locations
-        self.stip_x = self.BOARD_WIDTH // 2 + self.border_size
-        self.stip_y = self.HEIGHT - self.height_padding - self.border_size // 2
+        cls.stip_x = cls.BOARD_WIDTH // 2 + cls.BORDER_SIZE
+        cls.stip_y = cls.HEIGHT - cls.HEIGHT_PADDING - cls.BORDER_SIZE // 2
+        cls.STIP_COORDS = (cls.stip_x, cls.stip_y)
 
-        self.title_x = self.BOARD_WIDTH // 2 + self.border_size
-        self.title_y = self.border_size // 2
+        cls.title_x = cls.BOARD_WIDTH // 2 + cls.BORDER_SIZE
+        cls.title_y = cls.BORDER_SIZE // 2
+        cls.TITLE_COORDS = (cls.title_x, cls.title_y)
 
-    def check_and_notify_defaults(self):
+    @classmethod
+    def check_and_notify_defaults(cls):
         """Compares the final values with defaults and notifies the user only if any settings differ from the defaults (i.e., were overridden)."""
         
         overridden_settings = []
@@ -178,8 +198,8 @@ class Config:
         
         # Loop through the config keys
         for key in config_keys:
-            default_value = self.DEFAULTS[key]
-            current_value = getattr(self, key)
+            default_value = cls.DEFAULTS[key]
+            current_value = getattr(cls, key)
 
             # If current value differs from the default, add it to the overridden settings
             if current_value != default_value:
@@ -192,62 +212,6 @@ class Config:
         # If all values are the same as the defaults, just confirm all is fine
         if not overridden_settings:
             print("All configuration settings were successfully loaded and validated with default values.")
-
-
-    def get_square_size(self):
-        return self.square_size
-
-    def set_square_size(self, new_size):
-        """Updates square size and recalculates all dependent values."""
-        self.square_size = new_size
-        self.update_derived_sizes()
-
-    # Getter methods for derived values
-
-    def get_board_width(self):
-        return self.BOARD_WIDTH
-
-    def get_height(self):
-        return self.HEIGHT
-
-    def get_width(self):
-        return self.WIDTH
-
-    def get_main_height(self):
-        return self.MAIN_HEIGHT
-
-    def get_main_width(self):
-        return self.MAIN_WIDTH
-
-    def get_panel_width(self):
-        return self.PANEL_WIDTH
-
-    def get_border_size(self):
-        return self.border_size
-
-    def get_board_and_panel_width(self):
-        return self.BOARD_WIDTH+2*self.border_size+self.PANEL_WIDTH
-
-    def get_height_padding(self):
-        return self.height_padding
-
-    def get_moves_width(self):
-        return self.moves_width
-
-    def get_stip_coords(self):
-        return self.stip_x, self.stip_y
-
-    def get_title_coords(self):
-        return self.title_x, self.title_y
-
-    def get_white(self):
-        return self.white_squares
-
-    def get_black(self):
-        return self.black_squares
-
-    def get_panel_col(self):
-        return self.panel_colour
 
 def load_problem_list_from_file(filename=None):
     """Load FENs, their titles and stipulations from an external file.
@@ -625,12 +589,11 @@ class ChessGUI:
     def __init__(self, fen=None, window_title_bar = "", 
                  title='Chess Navigator', 
                  stip = "", 
-                 fenlist = False, 
-                 settings = None,
+                 fenlist = False,
                  main_window_queue = None,
                  moves_window_queue = None):
         self.spare_pieces = None
-        self.config = settings
+        #self.config = settings
         self.main_window_queue = main_window_queue
         self.moves_window_queue = moves_window_queue
 
@@ -640,7 +603,7 @@ class ChessGUI:
         icon_path = get_resource_path(f'images/icon.png')
         icon = pygame.image.load(icon_path)
         pygame.display.set_icon(icon)
-        self.screen = pygame.display.set_mode((self.config.get_width(), self.config.get_height()))
+        self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
         pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
         self.game = LiveGame(fen, moves_window_queue)
@@ -755,17 +718,17 @@ class ChessGUI:
                         if problem_list_loaded:
                             self.game.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
-                        if self.config.get_square_size() > 40:
-                            self.config.set_square_size(self.config.get_square_size() - 10)
-                            self.config.update_derived_sizes()
+                        if Config.SQUARE_SIZE > 40:
+                            Config.set_square_size(Config.SQUARE_SIZE - 10)
+                            Config.update_derived_sizes()
                             self.pieces = load_images()
-                            self.screen = pygame.display.set_mode((self.config.get_width(), self.config.get_height()))
+                            self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
                     elif event.key in (pygame.K_KP_PLUS, pygame.K_EQUALS):
-                        if self.config.get_square_size() < 100:
-                            self.config.set_square_size(self.config.get_square_size() + 10)
-                            self.config.update_derived_sizes()
+                        if Config.SQUARE_SIZE < 100:
+                            Config.set_square_size(Config.SQUARE_SIZE + 10)
+                            Config.update_derived_sizes()
                             self.pieces = load_images()
-                            self.screen = pygame.display.set_mode((self.config.get_width(), self.config.get_height()))
+                            self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
                     # Square highlighting
                     elif event.key in KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
                         pos = pygame.mouse.get_pos()
@@ -797,16 +760,16 @@ class ChessGUI:
 
     def draw_custom_title(self):
         """Draw the custom title at the top of the window."""
-        _border_size = self.config.get_border_size()
+        _border_size = Config.BORDER_SIZE
         title_surface = self.font.render(self.custom_title, True, (255, 255, 255))  # White color
-        title_rect = title_surface.get_rect(center=(self.config.get_board_width() // 2 + _border_size,
+        title_rect = title_surface.get_rect(center=(Config.BOARD_WIDTH // 2 + _border_size,
                                                     _border_size // 2 ))  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
     def draw_custom_stip(self):
         """Draw the custom title at the top of the window."""
         title_surface = self.font.render(self.custom_stip, True, (255, 255, 255))  # White color
-        title_rect = title_surface.get_rect(center=(self.config.get_stip_coords()))  # Adjust position as needed
+        title_rect = title_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
     def draw_pgn_panel(self): #Unused
@@ -817,11 +780,11 @@ class ChessGUI:
         text_surface = font.render("", True, (255, 255, 255))  # White text
 
         # Set the location for the panel (on the right side of the screen)
-        panel_x = self.config.get_width() - self.config.get_moves_width()
+        panel_x = Config.WIDTH - Config.MOVES_WIDTH
         panel_y = 0  # Start from top with some margin
 
         # Draw the background for the panel
-        pygame.draw.rect(self.screen, (0, 0, 0), (panel_x, panel_y, self.config.get_moves_width(), self.config.get_height()))
+        pygame.draw.rect(self.screen, (0, 0, 0), (panel_x, panel_y, Config.MOVES_WIDTH, Config.HEIGHT))
 
         # Draw the PGN text in the panel
         self.screen.blit(text_surface, (panel_x + 10, panel_y+10))  # 10px margin inside the panel
@@ -834,7 +797,7 @@ class ChessGUI:
         color = (0, 255, 0) if self.game.legal_moves_enabled else (255, 0, 0)
 
         text_surface = font.render(text, True, color)
-        text_x = self.config.get_width() - self.config.get_moves_width() - text_surface.get_width() - 10  # Align to top-right
+        text_x = Config.WIDTH - Config.MOVES_WIDTH - text_surface.get_width() - 10  # Align to top-right
         text_y = 10  # Small margin from top
         text_rect = text_surface.get_rect(topleft=(text_x, text_y))
 
@@ -845,7 +808,7 @@ class ChessGUI:
         y_margin = 10
         x_margin = 10
         text_surface, _ = self.get_legality_text()
-        x_left = self.config.get_board_and_panel_width() - text_surface.get_width()
+        x_left = Config.WIDTH - text_surface.get_width()
         self.screen.blit(text_surface, (x_left - x_margin, y_margin))
 
     def check_legal_toggle_click(self, pos):
@@ -861,18 +824,18 @@ class ChessGUI:
         turn_color = TURN_WHITE if self.game.board.turn else TURN_BLACK  # True = White's turn, False = Black's turn
 
         # Coordinates for the bottom-right corner
-        circle_radius = 2 * (self.config.get_square_size()+20) / 10
-        circle_x = self.config.get_main_width() + circle_radius + 5 #- circle_radius # Half-way through panel
-        circle_y = self.config.get_height() - circle_radius - self.config.get_square_size() / 10  # 10px margin from the border
+        circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
+        circle_x = Config.MAIN_WIDTH + circle_radius + 5 #- circle_radius # Half-way through panel
+        circle_y = Config.HEIGHT - circle_radius - Config.SQUARE_SIZE / 10  # 10px margin from the border
 
         # Draw the circle representing the current turn
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
 
     def check_turn_toggle_click(self, pos):
         # Code copied from draw_turn_indicator
-        circle_radius = 2 * self.config.get_square_size() / 10
-        circle_x = self.config.get_main_width() + circle_radius + 2 #- circle_radius # Half-way through panel
-        circle_y = self.config.get_height() - circle_radius - self.config.get_square_size() / 10  # 10px margin from the border
+        circle_radius = 2 * Config.SQUARE_SIZE / 10
+        circle_x = Config.MAIN_WIDTH + circle_radius + 2 #- circle_radius # Half-way through panel
+        circle_y = Config.HEIGHT - circle_radius - Config.SQUARE_SIZE / 10  # 10px margin from the border
 
         if abs(pos[0]-circle_x) < 2 * circle_radius:
             if abs(pos[1]-circle_y) < 2 * circle_radius:
@@ -898,14 +861,14 @@ class ChessGUI:
         return square_colors
 
     def get_default_color(self, row, col):
-        color = self.config.get_white() if (row + col) % 2 == 0 else self.config.get_black()
+        color = Config.WHITE_SQUARES if (row + col) % 2 == 0 else Config.BLACK_SQUARES
         return color
 
     def draw_board(self):
         """Draws the chessboard inside the border."""
-        _square_size = self.config.get_square_size()
-        _border_size = self.config.get_border_size()
-        _height_padding = self.config.get_height_padding()
+        _square_size = Config.SQUARE_SIZE
+        _border_size = Config.BORDER_SIZE
+        _height_padding = Config.HEIGHT_PADDING
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
                 # color = WHITE if (row + col) % 2 == 0 else BLACK
@@ -920,16 +883,16 @@ class ChessGUI:
 
     def draw_pieces(self):
         """Draws pieces inside the board with border offset."""
-        _border_size = self.config.get_border_size()
-        _height_padding = self.config.get_height_padding()
+        _border_size = Config.BORDER_SIZE
+        _height_padding = Config.HEIGHT_PADDING
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
                 square = chess.square(col, 7 - row)
                 piece = self.game.board.piece_at(square)
                 if piece and (self.dragging_square != square):
                     img = self.pieces[piece.symbol()]
-                    self.screen.blit(img, (_border_size + col * self.config.get_square_size(),
-                                           _border_size + _height_padding + row * self.config.get_square_size()))
+                    self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
+                                           _border_size + _height_padding + row * Config.SQUARE_SIZE))
 
         # Draw dragged piece on top
         if self.dragging_piece:
@@ -939,18 +902,18 @@ class ChessGUI:
     def setup_spare_pieces(self):
         """Defines positions for the spare pieces on the panel."""
         self.spare_pieces = []
-        _panel_width = self.config.get_panel_width()
+        _panel_width = Config.PANEL_WIDTH
         piece_order = ['K', 'Q', 'R', 'B', 'N', 'P']  # Display order
         for i, piece in enumerate(piece_order):
             # Place white pieces on the left side of the panel
-            self.spare_pieces.append((piece, (_panel_width*0.1, 50 + i * (self.config.get_square_size()+20))))  # White pieces (x offset is 10% of panel)
+            self.spare_pieces.append((piece, (_panel_width*0.1, 50 + i * (Config.SQUARE_SIZE+20))))  # White pieces (x offset is 10% of panel)
             # Place black pieces on the right side of the panel
-            self.spare_pieces.append((piece.lower(), (_panel_width*0.1+self.config.get_square_size(), 50 + i * (self.config.get_square_size()+20))))  # Black pieces (x offset is 10% of panel)
+            self.spare_pieces.append((piece.lower(), (_panel_width*0.1+Config.SQUARE_SIZE, 50 + i * (Config.SQUARE_SIZE+20))))  # Black pieces (x offset is 10% of panel)
 
     def draw_panel(self):
         # Move the panel to the right to avoid overlapping with the board
-        panel_x = self.config.get_main_width()  # Adjusted position
-        pygame.draw.rect(self.screen, self.config.get_panel_col(), (panel_x, 0, self.config.get_panel_width(), self.config.get_height()))
+        panel_x = Config.MAIN_WIDTH  # Adjusted position
+        pygame.draw.rect(self.screen, Config.PANEL_COLOUR, (panel_x, 0, Config.PANEL_WIDTH, Config.HEIGHT))
 
         # Draw spare pieces in the new panel position
         for piece, pos in self.spare_pieces:
@@ -962,17 +925,17 @@ class ChessGUI:
         """Converts the mouse click position to a square on the board."""
         x, y = pos
         # Adjust for the border offset
-        x -= self.config.get_border_size()
-        y -= self.config.get_border_size() + self.config.get_height_padding()
+        x -= Config.BORDER_SIZE
+        y -= Config.BORDER_SIZE + Config.HEIGHT_PADDING
 
         if x < 0 or y < 0:  # Outside the board
             return None
 
         # Check if the click is within the board area (8x8 grid)
-        _board_width = self.config.get_board_width()
+        _board_width = Config.BOARD_WIDTH
         if x < _board_width and y < _board_width:
-            col = x // self.config.get_square_size()
-            row = y // self.config.get_square_size()
+            col = x // Config.SQUARE_SIZE
+            row = y // Config.SQUARE_SIZE
             return chess.square(col, 7 - row)  # Convert to chess square notation
 
         return None  # If outside the board
@@ -990,11 +953,11 @@ class ChessGUI:
 
     def get_piece_from_panel(self, pos):
         """Check if user clicks on a spare piece."""
-        panel_x = self.config.get_main_width()
+        panel_x = Config.MAIN_WIDTH
 
         for piece, piece_pos in self.spare_pieces:
             px, py = piece_pos
-            if panel_x + px <= pos[0] <= panel_x + px + self.config.get_square_size() and py <= pos[1] <= py + self.config.get_square_size():
+            if panel_x + px <= pos[0] <= panel_x + px + Config.SQUARE_SIZE and py <= pos[1] <= py + Config.SQUARE_SIZE:
                 return piece
         return None
 
@@ -1017,11 +980,11 @@ class ChessGUI:
                 self.dragging_piece = self.pieces[piece.symbol()]
                 self.piece_source = "board"
                 self.dragging_square = square
-                self.dragging_pos = (pos[0] - self.config.get_square_size() // 2, pos[1] - self.config.get_square_size() // 2)
+                self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
     def handle_mouse_motion(self, pos):
         if self.dragging_piece:
-            self.dragging_pos = (pos[0] - self.config.get_square_size() // 2, pos[1] - self.config.get_square_size() // 2)
+            self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
     def handle_mouse_up(self, pos):
         """Handles dropping a piece, ensuring its color is preserved."""
@@ -1081,9 +1044,9 @@ class ChessGUI:
     def show_help_popup(self):
         """Displays a scalable help popup without cutting any lines, even for small board sizes."""
 
-        popup_width = min(600, int(self.config.get_main_width() * 0.8))  # Max 600px or 80% of screen width
-        max_popup_height = int(self.config.get_height() * 0.9)  # 90% of screen height
-        popup_x = int((self.config.get_main_height() - popup_width) // 2)
+        popup_width = min(600, int(Config.MAIN_WIDTH * 0.8))  # Max 600px or 80% of screen width
+        max_popup_height = int(Config.HEIGHT * 0.9)  # 90% of screen height
+        popup_x = int((Config.MAIN_HEIGHT - popup_width) // 2)
         #popup_y = int((MAIN_HEIGHT - max_popup_height) // 2)
         popup_color = (50, 50, 50)  # Dark gray background
         text_color = (255, 255, 255)  # White text
@@ -1120,7 +1083,7 @@ class ChessGUI:
 
         # Prevent the popup from becoming too small
         popup_height = int(max(total_lines * line_gap + 40, 250))  # Minimum 250px
-        popup_y = int((self.config.get_main_height() - popup_height) // 2)  # Adjust center
+        popup_y = int((Config.MAIN_HEIGHT - popup_height) // 2)  # Adjust center
 
         # Set up fonts
         font = pygame.font.Font(None, font_size)
@@ -1168,7 +1131,7 @@ def load_images():
     These pngs are available in sizes 40x40 up to 100x100 and were generated from an SVG
     """
     pieces = {}
-    square_size: int = config.get_square_size()
+    square_size: int = Config.SQUARE_SIZE
     for piece in ['p', 'n', 'b', 'r', 'q', 'k']:
         img_path = get_resource_path(f'images/b{piece.upper()}_{square_size}px.png')
         img_black = pygame.image.load(img_path)
@@ -1651,9 +1614,9 @@ def build_button_grid(main_window_queue, moves_window_queue):
 
     root.mainloop()
 
-def run_gui(passed_fen, window_title, title, stip, problem_list_loaded, config, main_window_queue, moves_window_queue):
+def run_gui(passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue):
     # Initialize Pygame GUI here
-    main_window = ChessGUI(passed_fen, window_title, title, stip, problem_list_loaded, config, main_window_queue, moves_window_queue)
+    main_window = ChessGUI(passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue)
     main_window.run()
 
 # Function to handle communication from the Pygame process
@@ -1681,7 +1644,7 @@ def start_processes():
 
         # Start both processes
         gui_process = multiprocessing.Process(target=run_gui, args=(
-        passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue, moves_window_queue))
+        passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue))
         tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
 
         gui_process.start()  # Start the Pygame GUI process
@@ -1702,7 +1665,7 @@ def start_processes():
         moves_window_queue = None
 
         # Start both processes
-        ChessGUI(passed_fen, window_title, args.title, args.stip, problem_list_loaded, config, main_window_queue,
+        ChessGUI(passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
             moves_window_queue).run()
 
 if __name__ == "__main__":
@@ -1712,7 +1675,8 @@ if __name__ == "__main__":
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
-
+    config = Config()
+    Config.load_config()
     # Return value is TRUE or FALSE based on success
     if problem_list_loaded:
         # Here we generate move trees from the moves
@@ -1730,7 +1694,6 @@ if __name__ == "__main__":
             #    print(item)
             #print(fen_tree[1])
             #print("End of Debug")
-    config = Config()
 
     start_processes()
 
