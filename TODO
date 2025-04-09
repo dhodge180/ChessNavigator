@@ -144,3 +144,11 @@ so it makes sense to create our list of fens, and we use << <<< and < to determi
 H = go home (checkpoint 0)
 
 samplemoves = ["e2e4", "e7e5", "g1f3", "b8c6", "*", "f1b5", "a7a6", "<", "f1c4" "f8c5", "*", "b2b4", "c5b4", "<", "c2c3", "d7d5", "<<", "d2d4", "e5d4", "H", "g1f3", "g7g5", "f3g5"]
+
+refactor all the config variables. make the global class variables Class.width etc.. define classmethods like Config.load_config() and Config.updateAll() then get rid of all the getters. keep the tiny number of setters used for resizing.
+
+investigate windows config Config error
+
+decide on all the shadow variables
+
+check all my variables passing, defaults and names. think about shadowing
