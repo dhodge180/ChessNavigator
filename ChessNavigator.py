@@ -1691,7 +1691,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
