@@ -32,31 +32,6 @@ PROBLEM_LIST = []
 # Global for fancy multiprocessing mode
 MOVES_WINDOW_VERSION = None
 
-# FEN position to start from
-START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
-"""Default starting position if no PROBLEM_LIST file is found, or specific FEN is passed at CMD line"""
-
-# Global constants for speed
-BOARD_SIZE = 8
-TURN_WHITE = (238, 238, 210) # Used for turn indicator
-TURN_BLACK = (0, 0, 0) # Used for turn indicator
-
-# Highlighting colours
-RED_HIGHLIGHT = (240, 128, 128)  # Light Coral (soft red)
-"""Colour of red square highlight"""
-YELLOW_HIGHLIGHT = (255, 223, 128)  # Pastel Yellow
-"""Colour of yellow square highlight"""
-GREEN_HIGHLIGHT = (144, 238, 144)  # Light Green (muted)
-"""Colour of green square highlight"""
-
-KEY_COLOR_MAP = {
-    pygame.K_1: RED_HIGHLIGHT,
-    pygame.K_2: YELLOW_HIGHLIGHT,
-    pygame.K_3: GREEN_HIGHLIGHT,
-    pygame.K_0: None
-}
-"""Key press / square colour associations"""
-
 class Config:
 
     # Default configuration values -- can be changes by config.json
@@ -99,6 +74,32 @@ class Config:
     BORDER_SIZE = 60
     MOVES_WIDTH = 0
     config_path = "config.json"
+
+    # Global constants for speed
+    BOARD_SIZE = 8
+    TURN_WHITE = (238, 238, 210) # Used for turn indicator
+    TURN_BLACK = (0, 0, 0) # Used for turn indicator
+
+    # FEN position to start from
+    START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
+    """Default starting position if no PROBLEM_LIST file is found, or specific FEN is passed at CMD line"""
+
+    # Highlighting colours
+    RED_HIGHLIGHT = (240, 128, 128)  # Light Coral (soft red)
+    """Colour of red square highlight"""
+    YELLOW_HIGHLIGHT = (255, 223, 128)  # Pastel Yellow
+    """Colour of yellow square highlight"""
+    GREEN_HIGHLIGHT = (144, 238, 144)  # Light Green (muted)
+    """Colour of green square highlight"""
+
+    KEY_COLOR_MAP = {
+        pygame.K_1: RED_HIGHLIGHT,
+        pygame.K_2: YELLOW_HIGHLIGHT,
+        pygame.K_3: GREEN_HIGHLIGHT,
+        pygame.K_0: None
+    }
+    """Key press / square colour associations"""
+
 
     @classmethod
     def set_square_size(cls, new_size):
@@ -168,7 +169,7 @@ class Config:
     def update_derived_sizes(cls):
         """(Re)-Calculates various dimensions based on square_size changes"""
 
-        cls.BOARD_WIDTH = cls.SQUARE_SIZE * BOARD_SIZE
+        cls.BOARD_WIDTH = cls.SQUARE_SIZE * cls.BOARD_SIZE
         """Width of just the board"""
         cls.PANEL_WIDTH = 4 * cls.SQUARE_SIZE
         """Side panel with spare pieces (width)"""
@@ -370,7 +371,7 @@ class LiveGame:
     def __init__(self, fen=None, move_window_queue=None):
         """initialization routine for Chess game object"""
         self.board = chess.Board()
-        self.start_pos = START_FEN
+        self.start_pos = Config.START_FEN
         self.clock = pygame.time.Clock()
         self.move_window_queue = move_window_queue
         if fen:
@@ -733,12 +734,12 @@ class ChessGUI:
                             self.pieces = load_images()
                             self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
                     # Square highlighting
-                    elif event.key in KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
+                    elif event.key in Config.KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
                         pos = pygame.mouse.get_pos()
                         square = self.get_square_under_mouse(pos)
                         #print(f"Square is {square}")
                         if square is not None:
-                            self.change_square_color(square, KEY_COLOR_MAP[event.key])
+                            self.change_square_color(square, Config.KEY_COLOR_MAP[event.key])
                     elif event.key == pygame.K_DELETE: # Pressed 0 to clean all highlights
                         # Reset all colours, recopy from TRUE_COLORS
                         self.square_colors = [row [:] for row in self.TRUE_COLORS]
@@ -824,7 +825,7 @@ class ChessGUI:
     def draw_turn_indicator(self):
         """Draws the turn indicator circle in the bottom-right corner."""
         # Determine whose turn it is (White or Black)
-        turn_color = TURN_WHITE if self.game.board.turn else TURN_BLACK  # True = White's turn, False = Black's turn
+        turn_color = Config.TURN_WHITE if self.game.board.turn else Config.TURN_BLACK  # True = White's turn, False = Black's turn
 
         # Coordinates for the bottom-right corner
         circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
@@ -855,9 +856,9 @@ class ChessGUI:
     def precalculate_square_colors(self):
         """Perform start of program board colour calculations"""
         square_colors = []
-        for row in range(BOARD_SIZE):
+        for row in range(Config.BOARD_SIZE):
             row_colors = []
-            for col in range(BOARD_SIZE):
+            for col in range(Config.BOARD_SIZE):
                 color = self.get_default_color(row, col)
                 row_colors.append(color)
             square_colors.append(row_colors)
@@ -872,8 +873,8 @@ class ChessGUI:
         _square_size = Config.SQUARE_SIZE
         _border_size = Config.BORDER_SIZE
         _height_padding = Config.HEIGHT_PADDING
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
+        for row in range(Config.BOARD_SIZE):
+            for col in range(Config.BOARD_SIZE):
                 # color = WHITE if (row + col) % 2 == 0 else BLACK
                 color = self.square_colors[row][col]
                 pygame.draw.rect(
@@ -888,8 +889,8 @@ class ChessGUI:
         """Draws pieces inside the board with border offset."""
         _border_size = Config.BORDER_SIZE
         _height_padding = Config.HEIGHT_PADDING
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
+        for row in range(Config.BOARD_SIZE):
+            for col in range(Config.BOARD_SIZE):
                 square = chess.square(col, 7 - row)
                 piece = self.game.board.piece_at(square)
                 if piece and (self.dragging_square != square):
@@ -1675,12 +1676,11 @@ def start_processes():
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False
+    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
-    Config.startup("config.json")
     # Return value is TRUE or FALSE based on success
     if problem_list_loaded:
         # Here we generate move trees from the moves
@@ -1698,6 +1698,8 @@ if __name__ == "__main__":
             #    print(item)
             #print(fen_tree[1])
             #print("End of Debug")
+
+    Config.startup("config.json")
 
     start_processes()
 
