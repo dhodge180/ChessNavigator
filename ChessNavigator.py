@@ -597,13 +597,15 @@ class ChessGUI:
                  stip = "", 
                  fenlist = False, #problem_list_loaded
                  main_window_queue = None,
-                 moves_window_queue = None):
+                 moves_window_queue = None,
+                 shutdown_trigger_ingui = None):
         self.spare_pieces = None
         #self.config = settings
         self.main_window_queue = main_window_queue
         self.moves_window_queue = moves_window_queue
         self.PROBLEM_LIST_ingui = PROB_LIST # Passed old global here
         self.MOVES_WINDOW_VERSION_ingui = MV_WIN_TRUE # Passed old global here
+        self.shutdown_trigger_ingui = shutdown_trigger_ingui
 
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
@@ -688,7 +690,7 @@ class ChessGUI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                    shutdown_event.set()
+                    self.shutdown_trigger_ingui.set()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.adjust_fps(high_fps)
                     self.handle_mouse_down(event.pos)
@@ -1540,7 +1542,7 @@ def generate_fen_path(beginning, moves):
 
     return temp_game.result(), grid_data
 
-def build_button_grid(main_window_queue, moves_window_queue):
+def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
 
     Config.startup("config.json")
 
@@ -1604,11 +1606,11 @@ def build_button_grid(main_window_queue, moves_window_queue):
             button.config(bg="yellow")  # Set the background to yellow (highlight color)
 
     def check_for_updates(_):
-        if shutdown_event.is_set():  # If shutdown is requested, destroy the window
+        if shutdown_trigger.is_set():  # If shutdown is requested, destroy the window
             root.destroy()
 
         # Recheck every 500ms
-        if not shutdown_event.is_set():
+        if not shutdown_trigger.is_set():
             if not moves_window_queue.empty():
                 recip, message = moves_window_queue.get()
                 if recip == "load moves grid": # Being asked to create buttons from fenlist grid data
@@ -1627,10 +1629,10 @@ def build_button_grid(main_window_queue, moves_window_queue):
 
     root.mainloop()
 
-def run_gui(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue):
+def run_gui(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event):
     # Initialize Pygame GUI here
     Config.startup("config.json")
-    main_window = ChessGUI(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue)
+    main_window = ChessGUI(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event)
     main_window.run()
 
 # Function to handle communication from the Pygame process
@@ -1658,8 +1660,8 @@ def start_processes(MWV, PL):
 
         # Start both processes
         gui_process = multiprocessing.Process(target=run_gui, args=(PL.copy(), MWV,
-        passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue))
-        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
+        passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
+        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event))
 
         gui_process.start()  # Start the Pygame GUI process
         tk_process.start()  # Start the Tkinter window process
@@ -1680,7 +1682,7 @@ def start_processes(MWV, PL):
 
         # Start just the ChessGUI
         ChessGUI(PL.copy(), MWV, passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
-            moves_window_queue).run()
+            moves_window_queue, shutdown_event).run()
 
 if __name__ == "__main__":
 
