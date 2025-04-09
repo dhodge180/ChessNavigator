@@ -106,20 +106,15 @@ class Config:
         cls.SQUARE_SIZE = new_size
         cls.update_derived_sizes()
 
-    def __init__(self):
-
-        # First load all the variables defaults
-        # KEEP these locals always accesses through COORDs tuple
-
-        # Load any special config settings from config.json
-        Config.load_config()
-        Config.update_derived_sizes()
-        Config.check_and_notify_defaults()
-
     @classmethod
-    def load_config(cls):
+    def startup(cls, input_path = "config.json"):
+        """Three stage startup: load config, derive quantities, check and notify defaults"""
 
+        # STAGE 1
+
+        # These are variables that can be loaded from file
         local_config = cls.DEFAULTS.copy()
+        cls.config_path = input_path
 
         # Load config.json if available
         if os.path.exists(cls.config_path):
@@ -143,6 +138,14 @@ class Config:
         """Background colour of panel"""
         Config.square_size = Config.validate_square_size(local_config.get("square_size"))
         """Starting square size"""
+
+        # STAGE 2
+
+        cls.update_derived_sizes()
+
+        # STAGE 3
+
+        cls.check_and_notify_defaults()
 
     @classmethod
     def validate_rgb(cls, color):
@@ -647,7 +650,7 @@ class ChessGUI:
                 if not self.main_window_queue.empty():
                     recip, message = self.main_window_queue.get()
                     if recip == "new fen":  # Check for messages meant for the main window
-                        print(f"Received message for main_window: {message}")
+                        # print(f"Received message for main_window: {message}")
                         if message:
                             # Let's assume the message is the move_id
                             # move_id is the hidden tag on the button they start at 1
@@ -1231,7 +1234,7 @@ class TempGame:
         san_version = self.board.san(mv)
         #print(f"This move is called {san_version}")
         button_label = str(san_version)
-        print(f"BUTTON: {button_label}")
+        #print(f"BUTTON: {button_label}")
         
         self.board.push(mv)
         self.add_this_fen()
@@ -1518,18 +1521,17 @@ def generate_fen_path(beginning, moves):
                 next_j = 0
                 next_i += 1
 
-
-    print("Grid contents:\n")
-
-    for row_idx, row in enumerate(grid_data):
-        print(f"Row {row_idx}: ", end="")
-        for cell in row:
-            if cell is None:
-                print(f"[ ]", end=" ")
-            else:
-                label, fen, id = cell
-                print(f"[{id}]", end=" ")
-        print()  # Newline after each row
+    # print("Grid contents:\n")
+    #
+    # for row_idx, row in enumerate(grid_data):
+    #     print(f"Row {row_idx}: ", end="")
+    #     for cell in row:
+    #         if cell is None:
+    #             print(f"[ ]", end=" ")
+    #         else:
+    #             label, fen, id = cell
+    #             print(f"[{id}]", end=" ")
+    #     print()  # Newline after each row
 
     return temp_game.result(), grid_data
 
@@ -1545,7 +1547,7 @@ def build_button_grid(main_window_queue, moves_window_queue):
         button_dict.clear()
 
     def move_button_click(param, queue):
-            print(f"Clicked button: {param}")
+            #print(f"Clicked button: {param}")
             highlight_button(param)
             queue.put(("new fen", param))
 
@@ -1602,7 +1604,7 @@ def build_button_grid(main_window_queue, moves_window_queue):
             if not moves_window_queue.empty():
                 recip, message = moves_window_queue.get()
                 if recip == "load moves grid": # Being asked to create buttons from fenlist grid data
-                    print(f"Moves window received: {message}")
+                    #print(f"Moves window received: {message}")
                     # Do something here to this window
                     new_grid_data = message
                     clear_buttons()
@@ -1678,8 +1680,7 @@ if __name__ == "__main__":
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
-    config = Config()
-    Config.load_config()
+    Config.startup("config.json")
     # Return value is TRUE or FALSE based on success
     if problem_list_loaded:
         # Here we generate move trees from the moves
