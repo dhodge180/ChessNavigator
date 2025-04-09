@@ -30,7 +30,7 @@ shutdown_event = multiprocessing.Event()
 PROBLEM_LIST = []
 
 # Global for fancy multiprocessing mode
-MOVES_WINDOW_VERSION = False
+MOVES_WINDOW_VERSION = None
 
 # FEN position to start from
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
@@ -359,7 +359,7 @@ def parse_arguments():
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
     parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM list file", default="PROBLEM_LIST.txt")
     parser.add_argument("--window", type=str, help="Window name")
-    parser.add_argument("--moves", type=str, help="Launch parallel moves window", default=True)
+    parser.add_argument("--movewindow", action="store_true", help="Launch parallel moves window")
     return parser.parse_args()
 
 class LiveGame:
@@ -411,7 +411,7 @@ class LiveGame:
         # Move to next position (might be same position if at an end already)
         self.board.set_fen(current_fen_tree[self.tree_position])
         # Could now send news to move window to move highlight marker
-        if MOVES_WINDOW_VERSION:
+        if MOVES_WINDOW_VERSION == True:
             self.move_window_queue.put(('state', self.tree_position))
 
     def set_new_fen(self, new_fen):
@@ -643,7 +643,7 @@ class ChessGUI:
         loop_counter = 0
 
         while self.running:
-            if MOVES_WINDOW_VERSION:
+            if MOVES_WINDOW_VERSION == True:
                 if not self.main_window_queue.empty():
                     recip, message = self.main_window_queue.get()
                     if recip == "new fen":  # Check for messages meant for the main window
@@ -1034,9 +1034,12 @@ class ChessGUI:
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
         # Redraw tk moves_windows
-        if MOVES_WINDOW_VERSION:
+        if MOVES_WINDOW_VERSION == True:
             self.moves_window_queue.put(
                 ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+            return
+        else:
+            return
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
@@ -1664,13 +1667,13 @@ def start_processes():
         main_window_queue = None
         moves_window_queue = None
 
-        # Start both processes
+        # Start just the ChessGUI
         ChessGUI(passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
             moves_window_queue).run()
 
 if __name__ == "__main__":
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = True if args.moves else False # FANCY mode needs enabling
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None

@@ -56,4 +56,15 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
 
+Command line options:
+
+--window "New title" specifies Window title (for screen capture purposes)
+
+--movewindow loads the pop-up move window
+
+--fen passes a single fen
+--title forces title of single fen passed
+--stip forces stip of single fen passed
+
+--fenlist passes the file to look at (default PROBLEM_LIST.txt is always looked for anyway)
 
