@@ -27,10 +27,10 @@ shutdown_event = multiprocessing.Event()
 #moves_windows = None
 
 # Global variable to hold the PROBLEM LIST
-PROBLEM_LIST = []
+# PROBLEM_LIST = []
 
 # Global for fancy multiprocessing mode
-MOVES_WINDOW_VERSION = None
+# MOVES_WINDOW_VERSION = None
 
 class Config:
 
@@ -217,7 +217,7 @@ class Config:
         if not overridden_settings:
             print("All configuration settings were successfully loaded and validated with default values.")
 
-def load_problem_list_from_file(filename=None):
+def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
 
@@ -242,7 +242,7 @@ def load_problem_list_from_file(filename=None):
                     print("Error, second title before FEN. Wiping entry.")
                 elif "fen" in temp_fen_data: # We have a FEN already
                     # Save entry immediately (possibly with Subtext)
-                    PROBLEM_LIST.append(temp_fen_data)
+                    PROBLEM_LIST_inload.append(temp_fen_data)
                     # Total reset and save new title
                 # In both cases now reset and save new title
                 print("Resetting for next problem...")
@@ -254,7 +254,7 @@ def load_problem_list_from_file(filename=None):
         elif line.startswith("FEN:"):
             if "fen" in temp_fen_data: # We already have a fen!
                 # Just save it! And start a new one
-                PROBLEM_LIST.append(temp_fen_data) # Save (possibly with subtext)
+                PROBLEM_LIST_inload.append(temp_fen_data) # Save (possibly with subtext)
                 print("Resetting for next problem...")
                 temp_fen_data = blank_non_required.copy()
             
@@ -265,7 +265,7 @@ def load_problem_list_from_file(filename=None):
         elif line.startswith("Subtext:"):
             if temp_fen_data["stip"] != "": # We already have one of these
                 if "fen" in temp_fen_data: # Great we already have a FEN.
-                    PROBLEM_LIST.append(temp_fen_data)
+                    PROBLEM_LIST_inload.append(temp_fen_data)
                 elif "fen" not in temp_fen_data: # Second one of these, but no FEN yet.
                     print("Error, second Subtext before FEN. Wiping entry.")
                 # In both cases now reset and save new one of these
@@ -278,7 +278,7 @@ def load_problem_list_from_file(filename=None):
         elif line.startswith("Moves:"):
             if temp_fen_data["moves"] != "": # We already have one of these
                 if "fen" in temp_fen_data: # Great we already have a FEN.
-                    PROBLEM_LIST.append(temp_fen_data)
+                    PROBLEM_LIST_inload.append(temp_fen_data)
                 elif "fen" not in temp_fen_data: # Second one of these, but no FEN yet.
                     print("Error, second Subtext before FEN. Wiping entry.")
                 # In both cases now reset and save new one of these
@@ -292,21 +292,21 @@ def load_problem_list_from_file(filename=None):
             # Assume this separates problems
             if "fen" in temp_fen_data: # at least we have a fen
                 # Save entry (possible with blank stip
-                PROBLEM_LIST.append(temp_fen_data)
+                PROBLEM_LIST_inload.append(temp_fen_data)
                 # Wipe it clean for next entry
             temp_fen_data = blank_non_required.copy()
 
     # Finished reading all lines
     # Need to save final entry, assuming it has at least a fen
     if "fen" in temp_fen_data:
-        PROBLEM_LIST.append(temp_fen_data)
+        PROBLEM_LIST_inload.append(temp_fen_data)
 
     # Print when FENs are loaded
-    print(f"Loaded {len(PROBLEM_LIST)} FENs from {filename}.")
+    print(f"Loaded {len(PROBLEM_LIST_inload)} FENs from {filename}.")
 
     # Detail the loaded list of FENS
     print("Loaded positions:")
-    for each_fen_data in PROBLEM_LIST:
+    for each_fen_data in PROBLEM_LIST_inload:
         print("------------------------------------------------------------------------------------------------------")
         #print(fen_data)
         print(f"Title: {each_fen_data['title']}")
@@ -315,7 +315,7 @@ def load_problem_list_from_file(filename=None):
         print(f"Moves: {each_fen_data['moves']}")
     print("------------------------------------------------------------------------------------------------------")
 
-    if PROBLEM_LIST:
+    if PROBLEM_LIST_inload:
         print("Successful load from PROBLEM_LIST file")
         return True
     else:
@@ -368,7 +368,7 @@ def parse_arguments():
 
 class LiveGame:
     """Chess game object: used to keep shown board position in memory"""
-    def __init__(self, fen=None, move_window_queue=None):
+    def __init__(self, PROBLEM_LIST_ingame, MWV, fen=None, move_window_queue=None):
         """initialization routine for Chess game object"""
         self.board = chess.Board()
         self.start_pos = Config.START_FEN
@@ -383,6 +383,8 @@ class LiveGame:
                 print("Invalid FEN! Using default starting position.")
         self.move_history = None
         self.tree_position = 0  # Which element of the fen_tree are we at
+        self.PROBLEM_LIST_ingame = PROBLEM_LIST_ingame
+        self.MOVES_WINDOW_VERSION_ingame = MWV # Passing variable as to whether there is a move window to send messages to
         self._initialize_game_state()
 
     def _initialize_game_state(self):
@@ -395,13 +397,13 @@ class LiveGame:
 
     def jump_tree_step(self, target):
         """Jumps to a specific node of the tree and remembers for future arrow navigation"""
-        current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
+        current_fen_tree = self.PROBLEM_LIST_ingame[-1]['fen_tree']
         self.tree_position = target
         self.board.set_fen(current_fen_tree[self.tree_position])
 
     def advance_tree_step(self, direction):
         """Move through current fen tree. Forwards, backwards or jump to end."""
-        current_fen_tree = PROBLEM_LIST[-1]['fen_tree']
+        current_fen_tree = self.PROBLEM_LIST_ingame[-1]['fen_tree']
         # If there's another move to play
         if direction == 1: # Request to step forwards
             if self.tree_position + 1 < len(current_fen_tree):
@@ -415,7 +417,7 @@ class LiveGame:
         # Move to next position (might be same position if at an end already)
         self.board.set_fen(current_fen_tree[self.tree_position])
         # Could now send news to move window to move highlight marker
-        if MOVES_WINDOW_VERSION == True:
+        if self.MOVES_WINDOW_VERSION_ingame == True:
             self.move_window_queue.put(('state', self.tree_position))
 
     def set_new_fen(self, new_fen):
@@ -590,16 +592,18 @@ class LiveGame:
         self.board.push(chess.Move.null())
 
 class ChessGUI:
-    def __init__(self, fen=None, window_title_bar = "", 
+    def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "", 
                  title='Chess Navigator', 
                  stip = "", 
-                 fenlist = False,
+                 fenlist = False, #problem_list_loaded
                  main_window_queue = None,
                  moves_window_queue = None):
         self.spare_pieces = None
         #self.config = settings
         self.main_window_queue = main_window_queue
         self.moves_window_queue = moves_window_queue
+        self.PROBLEM_LIST_ingui = PROB_LIST # Passed old global here
+        self.MOVES_WINDOW_VERSION_ingui = MV_WIN_TRUE # Passed old global here
 
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
@@ -610,7 +614,7 @@ class ChessGUI:
         self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
         pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
-        self.game = LiveGame(fen, moves_window_queue)
+        self.game = LiveGame(self.PROBLEM_LIST_ingui, self.MOVES_WINDOW_VERSION_ingui, fen, moves_window_queue)
         #self.moves_window_queue.put(("load moves grid", 0))  # Value passed is PROBLEM_LIST index of new game
         self.running = True
         self.dragging_piece = None
@@ -647,7 +651,7 @@ class ChessGUI:
         loop_counter = 0
 
         while self.running:
-            if MOVES_WINDOW_VERSION == True:
+            if self.MOVES_WINDOW_VERSION_ingui == True:
                 if not self.main_window_queue.empty():
                     recip, message = self.main_window_queue.get()
                     if recip == "new fen":  # Check for messages meant for the main window
@@ -713,13 +717,13 @@ class ChessGUI:
                             self.cycle_fen()
                     elif event.key == pygame.K_RIGHT:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
-                        if problem_list_loaded: # Don't try if no fenlist
+                        if self.fenlist: # Don't try if no fenlist
                             self.game.advance_tree_step(+1)
                     elif event.key == pygame.K_LEFT:
-                        if problem_list_loaded:
+                        if self.fenlist:
                             self.game.advance_tree_step(-1)
                     elif event.key == pygame.K_END:
-                        if problem_list_loaded:
+                        if self.fenlist:
                             self.game.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if Config.SQUARE_SIZE > 40:
@@ -1019,8 +1023,8 @@ class ChessGUI:
         print("Loading diagram from file")
 
         # Get the current FEN and title
-        current_fen_data = PROBLEM_LIST.pop(0)  # Remove the first element
-        PROBLEM_LIST.append(current_fen_data)  # Move it to the end for the next cycle
+        current_fen_data = self.PROBLEM_LIST_ingui.pop(0)  # Remove the first element
+        self.PROBLEM_LIST_ingui.append(current_fen_data)  # Move it to the end for the next cycle
 
         new_fen = current_fen_data["fen"]
         new_title = current_fen_data["title"]
@@ -1038,9 +1042,9 @@ class ChessGUI:
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
         # Redraw tk moves_windows
-        if MOVES_WINDOW_VERSION == True:
+        if self.MOVES_WINDOW_VERSION_ingui == True:
             self.moves_window_queue.put(
-                ("load moves grid", PROBLEM_LIST[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+                ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
             return
         else:
             return
@@ -1538,9 +1542,12 @@ def generate_fen_path(beginning, moves):
 
 def build_button_grid(main_window_queue, moves_window_queue):
 
+    Config.startup("config.json")
+
     # Dictionary to store button references for later highlighting (by val[2] ie. move id)
     button_dict = {}
     btn_bg_color = '#d0d0d0'
+    
 
     def clear_buttons():
         for widget in frame.winfo_children():
@@ -1620,36 +1627,37 @@ def build_button_grid(main_window_queue, moves_window_queue):
 
     root.mainloop()
 
-def run_gui(passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue):
+def run_gui(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue):
     # Initialize Pygame GUI here
-    main_window = ChessGUI(passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue)
+    Config.startup("config.json")
+    main_window = ChessGUI(PROB_LIST, MOVES_WINDOW_VERSION, passed_fen, window_title, title, stip, problem_list_loaded, main_window_queue, moves_window_queue)
     main_window.run()
 
 # Function to handle communication from the Pygame process
-def queue_listener(queue):
-    global main_window, moves_windows
+# def queue_listener(queue):
+#     global main_window, moves_windows
 
-    while not shutdown_event.is_set():
-        if not queue.empty():  # Check if there is any message in the queue
-            recip, message = queue.get()  # Get the message from the queue
-            if recip == "moves":
-                print("Pygame asked Tkinter to do something:")
-                print(message)
-            elif recip == "set_this_fen":
-                print("Moves window asked pygame to do something:")
-                queue.put()
+#     while not shutdown_event.is_set():
+#         if not queue.empty():  # Check if there is any message in the queue
+#             recip, message = queue.get()  # Get the message from the queue
+#             if recip == "moves":
+#                 print("Pygame asked Tkinter to do something:")
+#                 print(message)
+#             elif recip == "set_this_fen":
+#                 print("Moves window asked pygame to do something:")
+#                 queue.put()
 
-        time.sleep(0.1)
+#         time.sleep(0.1)
 
-def start_processes():
+def start_processes(MWV, PL):
 
-    if MOVES_WINDOW_VERSION == True:
+    if MWV == True:
     # Communication method
         main_window_queue = multiprocessing.Queue()
         moves_window_queue = multiprocessing.Queue()
 
         # Start both processes
-        gui_process = multiprocessing.Process(target=run_gui, args=(
+        gui_process = multiprocessing.Process(target=run_gui, args=(PL.copy(), MWV,
         passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue))
         tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, ))
 
@@ -1671,16 +1679,20 @@ def start_processes():
         moves_window_queue = None
 
         # Start just the ChessGUI
-        ChessGUI(passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
+        ChessGUI(PL.copy(), MWV, passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
             moves_window_queue).run()
 
 if __name__ == "__main__":
+
+    MOVES_WINDOW_VERSION = None
+    PROBLEM_LIST = []
+
     args = parse_arguments()  # Get arguments from command line
     MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
-    problem_list_loaded = load_problem_list_from_file(passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
+    problem_list_loaded = load_problem_list_from_file(PROBLEM_LIST, passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
     # Return value is TRUE or FALSE based on success
     if problem_list_loaded:
         # Here we generate move trees from the moves
@@ -1699,9 +1711,7 @@ if __name__ == "__main__":
             #print(fen_tree[1])
             #print("End of Debug")
 
-    Config.startup("config.json")
-
-    start_processes()
+    start_processes(MOVES_WINDOW_VERSION, PROBLEM_LIST)
 
 # TO DO
 # Pass the build_buttons the actual move tree for the current game (do it inside the ChessGUI via a message like
