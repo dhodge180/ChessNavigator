@@ -39,7 +39,9 @@ class Config:
         "white_squares": (238, 238, 210),
         "black_squares": (118, 150, 86),
         "panel_colour": (20, 60, 60),
-        "square_size": 70
+        "square_size": 70,
+        "title_font_size": 30,
+        "stip_font_size": 30
     }
 
     # Customizable
@@ -62,6 +64,8 @@ class Config:
     title_x = 0
     title_y = 0
     TITLE_COORDS = (title_x, title_y)
+    title_font_size = 10
+    stip_font_size = 10
 
     # Customizable
     WHITE_SQUARES = (238, 238, 210)
@@ -140,6 +144,11 @@ class Config:
         Config.square_size = Config.validate_square_size(local_config.get("square_size"))
         """Starting square size"""
 
+        Config.title_font_size = Config.validate_font_size(local_config.get("title_font_size"), min_size=10, max_size=45, font_type="title")
+        """For title font size validation"""
+        Config.stip_font_size = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
+        """For stip font size validation (example if you have stip_font_size in your config)"""
+
         # STAGE 2
 
         cls.update_derived_sizes()
@@ -164,6 +173,34 @@ class Config:
         if size in valid_square_sizes:
             return size
         return cls.DEFAULTS["square_size"]  # Return the default square_size if invalid
+    
+    @classmethod
+    def validate_font_size(cls, size, min_size=10, max_size=45, font_type="font"):
+        """Validates the font size (must be an integer between min_size and max_size, inclusive).
+        Rounds down if passed as a float. Falls back to default if invalid.
+        
+        Args:
+            size (int or float): The size to validate.
+            min_size (int, optional): The minimum acceptable font size (default is 10).
+            max_size (int, optional): The maximum acceptable font size (default is 45).
+            font_type (str, optional): The name of the font type (for warning message clarity).
+            
+        Returns:
+            int: The validated font size.
+        """
+        try:
+            size_int = int(float(size))  # Convert to float first to handle decimals, then floor to int
+            if min_size <= size_int <= max_size:
+                return size_int
+            elif size_int > max_size:
+                print(f"Warning: {font_type.capitalize()} font size '{size}' is too large. Using {max_size} instead.")
+                return max_size
+        except (ValueError, TypeError):
+            pass
+
+        # If invalid or not in the valid range, fall back to default
+        print(f"Warning: Invalid {font_type} font size '{size}'. Using default ({cls.DEFAULTS[f'{font_type}_font_size']}).")
+        return cls.DEFAULTS[f"{font_type}_font_size"]
 
     @classmethod
     def update_derived_sizes(cls):
@@ -198,11 +235,12 @@ class Config:
         overridden_settings = []
         
         # List of config keys to check
-        config_keys = ["white_squares", "black_squares", "panel_colour", "square_size"]
+        #config_keys = ["white_squares", "black_squares", "panel_colour", "square_size", "title_font_size"]
         
         # Loop through the config keys
-        for key in config_keys:
-            default_value = cls.DEFAULTS[key]
+        #for key in config_keys:
+        for key, default_value in cls.DEFAULTS.items():
+            #default_value = cls.DEFAULTS[key]
             current_value = getattr(cls, key)
 
             # If current value differs from the default, add it to the overridden settings
@@ -634,7 +672,8 @@ class ChessGUI:
         self.TRUE_COLORS = [row[:] for row in self.square_colors] # New copy of list
 
         # Add custom title inside the window
-        self.font = pygame.font.SysFont("Arial", 30)  # Change font and size here
+        self.title_font = pygame.font.SysFont("Arial", Config.title_font_size)  # Change font and size here
+        self.stip_font = pygame.font.SysFont("Arial", Config.stip_font_size)  # Change font and size here
         self.custom_title = title  # Or any other dynamic title based on your logic
         self.custom_stip = stip
 
@@ -771,14 +810,14 @@ class ChessGUI:
     def draw_custom_title(self):
         """Draw the custom title at the top of the window."""
         _border_size = Config.BORDER_SIZE
-        title_surface = self.font.render(self.custom_title, True, (255, 255, 255))  # White color
+        title_surface = self.title_font.render(self.custom_title, True, (255, 255, 255))  # White color
         title_rect = title_surface.get_rect(center=(Config.BOARD_WIDTH // 2 + _border_size,
                                                     _border_size // 2 ))  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
     def draw_custom_stip(self):
         """Draw the custom title at the top of the window."""
-        title_surface = self.font.render(self.custom_stip, True, (255, 255, 255))  # White color
+        title_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
         title_rect = title_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
