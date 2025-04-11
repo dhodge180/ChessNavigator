@@ -230,7 +230,7 @@ def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
     with open(filename, "r") as file:
         lines = file.readlines()
 
-    temp_fen_data = blank_non_required
+    temp_fen_data = blank_non_required.copy()
     
     for line in lines:
         line = line.strip()  # Remove leading/trailing whitespaces
