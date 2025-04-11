@@ -37,3 +37,5 @@ samplemoves = ["e2e4", "e7e5", "g1f3", "b8c6", "*", "f1b5", "a7a6", "<", "f1c4" 
 change Config __init__ function into a startup(cls) function, then don't need to call config = Config(), save __init__ for when you really want an instance. __init__(self) can just run self.startup()
 
 Consider a separate config for tk window and for pygame. What config values does tk even want to know? We currently now run config AFTER spawning the pygame (for multiprocessing spawn Windows rules)
+
+DOCUMENT DOCUMENT DOCUMENT!
