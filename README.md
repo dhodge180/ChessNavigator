@@ -10,6 +10,7 @@ Various shortcuts are currently implemented but not documented.
 | INSERT | Save current position as home position                     |
 | Z    | Zero the board                                             |
 | F1   | Cycle to next FEN in the loaded file                       |
+| F3   | Cycle to previous FEN in the loaded file                   |
 | U    | Undo last move (cannot currently undo beyond additions     |
 | L    | Toggle Legality                                            |
 | T    | Toggle whose turn it is                                    |

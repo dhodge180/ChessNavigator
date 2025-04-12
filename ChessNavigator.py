@@ -40,8 +40,8 @@ class Config:
         "black_squares": (118, 150, 86),
         "panel_colour": (20, 60, 60),
         "square_size": 70,
-        "title_font_size": 30,
-        "stip_font_size": 30
+        "title_font_size": 28,
+        "stip_font_size": 28
     }
 
     # Customizable
@@ -81,7 +81,7 @@ class Config:
 
     # Global constants for speed
     BOARD_SIZE = 8
-    TURN_WHITE = (238, 238, 210) # Used for turn indicator
+    TURN_WHITE = (255, 255, 255) # Used for turn indicator
     TURN_BLACK = (0, 0, 0) # Used for turn indicator
 
     # FEN position to start from
@@ -756,6 +756,9 @@ class ChessGUI:
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
                         if self.fenlist:
                             self.cycle_fen()
+                    elif event.key == pygame.K_F3:
+                        if self.fenlist:
+                            self.reverse_cycle_fen()
                     elif event.key == pygame.K_RIGHT:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
@@ -1059,8 +1062,35 @@ class ChessGUI:
             self.dragging_square = None
             self.piece_source = None
 
+    def reverse_cycle_fen(self):
+        """Move back to the previous problem"""
+        # Clever logic says that if self = [C,D,E,F,A,B]... we are staring at B and rather than load C we want to load A
+        # So we remove A and B from the end, put tem on the front then do cycle_fen.
+
+        # Handle the 1-element case
+        if len(self.PROBLEM_LIST_ingui) == 1:
+            print("Only one problem in the list, cannot go back.")
+            return
+
+        print("Loading previous diagram from file")
+        # Step 1: Remove the last two elements
+        last = self.PROBLEM_LIST_ingui.pop()     # B
+        second_last = self.PROBLEM_LIST_ingui.pop()  # A
+
+        # Step 2: Put them at the front in reverse order (A, then B)
+        self.PROBLEM_LIST_ingui.insert(0, last)        # [B, C, D, E, F]
+        self.PROBLEM_LIST_ingui.insert(0, second_last) # [A, B, C, D, E, F]
+
+        # Step 3: Load A using existing logic
+        self.cycle_fen()
+
+
     def cycle_fen(self):
         """Cycle through the FEN list and update the game and window title."""
+        # What this does is take the list [C, D, E, F, A, B] loads C, and moves it to the end. Leaving [D, E, F, A, B, C]
+
+        # This also gets called at program start. So cannot bypass (currently) when list contains 1 element.
+
         print("Loading diagram from file")
 
         # Get the current FEN and title
@@ -1085,7 +1115,8 @@ class ChessGUI:
         # Redraw tk moves_windows
         if self.MOVES_WINDOW_VERSION_ingui == True:
             self.moves_window_queue.put(
-                ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+            #   ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+                ("load moves grid", current_fen_data["move_tree"]))
             return
         else:
             return
