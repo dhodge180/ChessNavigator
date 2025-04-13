@@ -253,7 +253,7 @@ class Config:
         
         # If all values are the same as the defaults, just confirm all is fine
         if not overridden_settings:
-            print("All configuration settings were successfully loaded and validated with default values.")
+            print("All configuration settings were successfully loaded and validated with default values.\n")
 
 def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
     """Load FENs, their titles and stipulations from an external file.
@@ -267,6 +267,8 @@ def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
 
     with open(filename, "r") as file:
         lines = file.readlines()
+        # Ensure final diagram is always processed properly
+        lines.append("\n") # Adds a blank line to the end   
 
     temp_fen_data = blank_non_required.copy()
     
@@ -1369,7 +1371,7 @@ class TempGame:
         san_version = self.board.san(mv)
         #print(f"This move is called {san_version}")
         button_label = str(san_version)
-        print(f"BUTTON: {button_label}")
+        #print(f"BUTTON: {button_label}")
         self.board.push(mv)
         self.add_this_fen()
 
@@ -1775,7 +1777,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
@@ -1786,6 +1788,7 @@ if __name__ == "__main__":
         for fen_data in PROBLEM_LIST:
             given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
+            print("\n*** Analysing given moves for a position ***\n")
             fen_tree, move_tree = generate_fen_path(given_fen, move_list)
             fen_data['fen_tree'] = fen_tree[0]
             fen_data['ids'] = fen_tree[1]
