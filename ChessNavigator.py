@@ -489,11 +489,8 @@ class LiveGame:
         return '\n'.join(pgn_lines)
 
     def delete_piece_at(self, start):
-        # Only allow removing a piece from board when legality is turned off
-        if not self.legal_moves_enabled:
-            self.board.remove_piece_at(start)
-        else:
-            print("Dropped piece off board, but it was illegal so not executed")
+        # Legality being off is checked before calling
+        self.board.remove_piece_at(start)
 
     def move_piece(self, start, end):
         move = chess.Move.from_uci(start + end)
@@ -629,6 +626,9 @@ class LiveGame:
         """Toggles the turn by making a null move."""
         self.board.push(chess.Move.null())
 
+    def toggle_legality(self):
+        self.legal_moves_enabled = not self.legal_moves_enabled  # Toggle legality mode
+
 class ChessGUI:
     def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "", 
                  title='Chess Navigator', 
@@ -740,11 +740,13 @@ class ChessGUI:
                     self.handle_mouse_up(event.pos)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_l:
-                        self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
+                        #self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
+                        self.game.toggle_legality()
                     elif event.key == pygame.K_u:
                         self.game.undo_move() # Press u to undo last move
                     elif event.key == pygame.K_z:
                         self.game.clear_board() # Press z to zero/clear the board
+                        self.game.legal_moves_enabled = False # Turn legality to false to allow placement
                     elif event.key == pygame.K_INSERT:
                         self.game.redefine_start() # Press INSERT to redefine root position
                     elif event.key in (pygame.K_HOME, pygame.K_r):
@@ -868,7 +870,9 @@ class ChessGUI:
         _, text_rect = self.get_legality_text()
 
         if text_rect.collidepoint(pos):
-            self.game.legal_moves_enabled = not self.game.legal_moves_enabled
+            #self.game.legal_moves_enabled = not self.game.legal_moves_enabled
+            self.game.toggle_legality()
+            
 
     def draw_turn_indicator(self):
         """Draws the turn indicator circle in the bottom-right corner."""
@@ -1050,12 +1054,22 @@ class ChessGUI:
 
             elif self.piece_source == "panel" and new_square is not None:
                 # Add the piece to the board and record the action for undo
-                piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
-                self.game.add_piece(piece_symbol, new_square)
+                # New logic: only allow adding pieces when legality is off
+                if not self.game.legal_moves_enabled:
+                    piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
+                    self.game.add_piece(piece_symbol, new_square)
+                else:
+                    print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
 
             elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
                 # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
-                self.game.delete_piece_at(self.dragging_square)
+                # Only allow removing a piece from board when legality is turned off
+                if not self.game.legal_moves_enabled:
+                    self.game.delete_piece_at(self.dragging_square)
+                    #self.board.remove_piece_at(self.dragging_square)
+                else:
+                    print("Dropped piece off board, but it was illegal so not executed")
+                # self.game.delete_piece_at(self.dragging_square)
 
             # Reset dragging state
             self.dragging_piece = None
