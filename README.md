@@ -2,6 +2,10 @@ My Chess Navigator program for showing chess problems.
 
 The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
 
+## Method of move entry
+
+New move entry is by dragging the mouse.
+
 Various shortcuts are currently implemented but not documented.
 
 | Key  | Action                                                     |
@@ -10,6 +14,7 @@ Various shortcuts are currently implemented but not documented.
 | INSERT | Save current position as home position                     |
 | Z    | Zero the board                                             |
 | F1   | Cycle to next FEN in the loaded file                       |
+| F3   | Cycle to previous FEN in the loaded file                       |
 | U    | Undo last move (cannot currently undo beyond additions     |
 | L    | Toggle Legality                                            |
 | T    | Toggle whose turn it is                                    |
@@ -23,6 +28,12 @@ Various shortcuts are currently implemented but not documented.
 | END  | Jump th end of predefined move tree                        |
 | rnbq | Select promotion piece  (during promotion attempt)         |
 
+### Adding and removing pieces
+
+Adding new pieces by dragging them from the extra pieces panel requires first toggling "Legality" off.
+
+Removing pieces by dragging them from the board and dropping them off the board requires first toggling "Legality" off.
+
 ## For pre-stored analysis
 
 If you wish to be able to navigate a pre-determined tree then the path can be written in PROBLEM_LIST in advance.
@@ -33,7 +44,7 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 | Format | Result                                      |
 |--------|---------------------------------------------|
 | a1b3   | Move piece from a1 to b3                    |
-| a7b8N  | Promote a7b8 to a knight                    |
+| a7b8n  | Promote a7b8 to a knight                    |
 | *      | Save the current position for future return |
 | <      | Go back to last saved position              |
 | <<     | Go back to second last saved position       |
@@ -43,6 +54,8 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 | +Ra7   | Add a white rook to a7 (capital = white)    |
 | -e4    | Remove whatever piece is on e4              |
 
+When using the `--movewindow` additional moves window, you can also navigate the position tree by clicking the moves in that window.
+
 ## For customized board colours and start-up window size
 
 ### config.json file format - default values
@@ -51,20 +64,31 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
     "white_squares": [238, 238, 210],
     "black_squares": [118, 150, 86],
     "panel_colour": [20, 60, 60],
-    "square_size": 70
+    "square_size": 70,
+    "font_title_size": 28,
+    "font_stip_size": 28
 }
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
 
-Command line options:
+Font sizes of the title above the diagram and stipulation below the diagram are also customizable.
+
+## Command line options:
+
+### Customizing the window(s)
 
 --window "New title" specifies Window title (for screen capture purposes)
-
 --movewindow loads the pop-up move window
 
---fen passes a single fen
+### To load a single position: (do not lead PROBLEM_LIST.txt in directory)
+
 --title forces title of single fen passed
 --stip forces stip of single fen passed
+--fen passes a single fen (with no intention of loading set positions from file)
+
+### To load a mini-database of positions
 
 --fenlist passes the file to look at (default PROBLEM_LIST.txt is always looked for anyway)
+
+
 
