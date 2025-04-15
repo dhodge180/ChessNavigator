@@ -2,6 +2,10 @@ My Chess Navigator program for showing chess problems.
 
 The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
 
+## Method of move entry
+
+New move entry is by dragging the mouse.
+
 Various shortcuts are currently implemented but not documented.
 
 | Key  | Action                                                     |
@@ -21,6 +25,12 @@ Various shortcuts are currently implemented but not documented.
 | ⬅    | Step back along predefined move tree                       |
 | END  | Jump to end of predefined move tree                        |
 | rnbq | Select promotion piece  (during promotion attempt)         |
+
+### Adding and removing pieces
+
+Adding new pieces by dragging them from the extra pieces panel requires first toggling "Legality" off.
+
+Removing pieces by dragging them from the board and dropping them off the board requires first toggling "Legality" off.
 
 ## For pre-stored analysis
 
@@ -54,6 +64,8 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 | H      | Go back to Home position for this problem   |
 | +Ra7   | Add a white rook to a7 (capital = white)    |
 | -e4    | Remove whatever piece is on e4              |
+
+When using the `--movewindow` additional moves window, you can also navigate the position tree by clicking the moves in that window.
 
 ## For customized board colours and start-up window size
 
