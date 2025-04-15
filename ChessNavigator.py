@@ -1613,7 +1613,7 @@ def generate_fen_path(beginning, moves):
 
         else: # Only create button if not back or * or H
             if special_label_append: # if we're about to overwrite the first move in an and statement
-                loc_button_label = grid_data[next_i][next_j][0] + "&" + loc_button_label
+                loc_button_label = grid_data[next_i][next_j][0] + "\n" + loc_button_label
                 special_label_append = False
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
             # Update next box
@@ -1643,7 +1643,6 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
     # Dictionary to store button references for later highlighting (by val[2] ie. move id)
     button_dict = {}
     btn_bg_color = '#d0d0d0'
-    
 
     def clear_buttons():
         for widget in frame.winfo_children():
@@ -1655,6 +1654,9 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
             highlight_button(param)
             queue.put(("new fen", param))
 
+    def button_height(value):
+        return 1+value.count("\n")
+
     def create_buttons(data):
         """Function takes a move_tree data grid and creates the buttons"""
 
@@ -1665,7 +1667,7 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
                     # val[0] is the button text
                     # val[1] is the FEN but we're now going to use move_id to allow peristent tree advancing
                     # Need to set all colour to btn_bg_color so that hovering or focus doesn't change it
-                    button = tk.Button(frame, text=val[0], width=6, height=1, padx=2, pady=2,
+                    button = tk.Button(frame, text=val[0], width=6, height=button_height(val[0]), padx=2, pady=2,
                                        bg=btn_bg_color, activebackground=btn_bg_color, highlightcolor=btn_bg_color,
                               command=lambda v=val[2]: move_button_click(v, main_window_queue))
                     button.grid(row=i, column=j, padx=2, pady=2)
@@ -1784,7 +1786,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
