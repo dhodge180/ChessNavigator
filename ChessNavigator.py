@@ -17,7 +17,6 @@ import sys
 # For moves window
 import tkinter as tk
 import multiprocessing
-import time
 
 # Define the shutdown event
 shutdown_event = multiprocessing.Event()
@@ -1579,6 +1578,8 @@ def generate_fen_path(beginning, moves):
     loc_checkpoint = None
     # noinspection PyUnusedLocal
     loc_move_id = None
+    
+    special_label_append = False
 
     for move in moves:
         # Create blank row if it doesn't exist yet
@@ -1600,6 +1601,10 @@ def generate_fen_path(beginning, moves):
         elif loc_button_label == "H":
             next_j = 0
             next_i += 1
+        elif loc_button_label == "&":
+            # We are reading an & let's try skipping back two?
+            next_j -= 1 # Perfect, except we lose record of text on button, can we append?
+            special_label_append = True
         elif loc_button_label == "*":
             print("Save action")
             # loc_button_fen will contain index of checkpoint
@@ -1607,6 +1612,9 @@ def generate_fen_path(beginning, moves):
             checkpoint_data.insert(loc_checkpoint, next_j) # Should store current column for this checkpoint number
 
         else: # Only create button if not back or * or H
+            if special_label_append: # if we're about to overwrite the first move in an and statement
+                loc_button_label = grid_data[next_i][next_j][0] + "&" + loc_button_label
+                special_label_append = False
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
             # Update next box
             next_j += 1
@@ -1614,17 +1622,17 @@ def generate_fen_path(beginning, moves):
                 next_j = 0
                 next_i += 1
 
-    # print("Grid contents:\n")
-    #
-    # for row_idx, row in enumerate(grid_data):
-    #     print(f"Row {row_idx}: ", end="")
-    #     for cell in row:
-    #         if cell is None:
-    #             print(f"[ ]", end=" ")
-    #         else:
-    #             label, fen, id = cell
-    #             print(f"[{id}]", end=" ")
-    #     print()  # Newline after each row
+    print("Grid contents:\n")
+    
+    for row_idx, row in enumerate(grid_data):
+        print(f"Row {row_idx}: ", end="")
+        for cell in row:
+            if cell is None:
+                print(f"[ ]", end=" ")
+            else:
+                label, fen, id = cell
+                print(f"[{id}]", end=" ")
+        print()  # Newline after each row
 
     return temp_game.result(), grid_data
 
@@ -1773,11 +1781,10 @@ def start_processes(MWV, PL):
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    MOVES_WINDOW_VERSION = None
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
