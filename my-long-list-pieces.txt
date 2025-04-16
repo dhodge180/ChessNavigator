@@ -1,0 +1,22 @@
+My maximal list
+
+	b       bishop
+	ca      camel
+	et      elephant			0,1+1,1+1,2 rider
+	g       grasshopper
+	gi      giraffe
+	k       king
+	ka      kangaroo
+	le      leo
+	li      lion
+	ma      mao
+	mo      moa
+	n       nightrider
+	p       pawn
+	pa      pao 
+	q       queen   
+	r       rook   
+	ro      rose   
+	s       knight   
+	va      vao   
+	z       zebra   

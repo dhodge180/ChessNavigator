@@ -1,0 +1,11 @@
+My implemented list:
+
+	b       bishop
+	g       grasshopper
+	k       king
+	ma	mao
+	p       pawn
+	q       queen   
+	r       rook   
+	ro      rose   
+	s       knight   
