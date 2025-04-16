@@ -1,0 +1,165 @@
+Popeye supports the following piece walks:
+
+	15      1,5-leaper
+	16      1,6-leaper
+	24      2,4-leaper
+	25      2,5-leaper
+	35      3,5-leaper
+	36      3,6-leaper
+	37      3,7-leaper
+	ah	MAoHopper
+	al      alfil   
+	am      amazon   
+	an      antelope   
+	ao      maorider
+	ar      archbishop   
+	b       bishop
+	b1	bouncer
+	b2	rook bouncer
+	b3	bishop bouncer
+	be      bishop eagle
+	bh      bishop hopper
+	bi      bison                           1,3+2,3 leaper
+	bk      bouncy knight
+	bl      bishop-lion
+	bm      bishop moose
+        bn      bouncy nightrider (continues ride by bouncing in any direction from board edge)
+	bo	bob
+	bp      berolina pawn   
+	br      bishop/rook hunter		absolute B/R hunter
+	bs      berolina superpawn
+	bt      boyscout
+	bu      root-25-leaper (bucephale)   
+	bw      bishop sparrow
+	c       cardinal
+	ca      camel
+	cg      contra grasshopper
+	ch      camelrider hopper
+	cp      chinese pawn
+	cr      camelrider
+	ct      CAT (cavalier trojan)
+	cy      charybdis
+	da      dabbaba
+	db      doublebishopper
+	dg      doublegrasshopper
+	dk      doublerookhopper
+	do      dolphin                        grasshopper + kangaroo
+	dr      dragon
+	ds      ("Diagonalspiralspringer")
+	du      dummy
+	ea      eagle
+	ee	eagle equihopper
+	eh      edgehog
+	ek      erlking
+	em      empress
+	en	eagle nonstop equihopper
+	eq      equihopper
+	et      elephant			0,1+1,1+1,2 rider
+	f       friend
+	fa	faro				Argentinien Rook
+	fe      fers
+	fr      fersrider           like bishop, but different rebirth square
+	g       grasshopper
+	g2      grasshopper-2
+	g3      grasshopper-3
+	ge      greater treehopper
+	gf      greater leafhopper
+	gh      gnurider hopper
+	gi      giraffe
+	gl      gral                           alfil + rookhopper
+	gn      gnu
+	gr      gnurider
+	gt      girlscout
+	ha      hamster
+	hc      ContraHamster
+	k       king
+	ka      kangaroo
+	kh      kinghopper
+	kl      kangaroo lion
+	ko      kao
+	kp      knight hopper
+	l       locust
+	lb      bishop locust
+	le      leo
+	lh      leaf hopper
+	li      lion
+	ln      nightrider locust
+	lo	loco				Argentinian Bishop
+	lr      rook locust
+        ls      rose locust
+	m       moose
+	ma      mao
+	mg      marguerite                      g+sw+ea+m+ha
+	mh      marine ship
+	ml      maorider lion
+	mm      moarider lion
+	mo      moa
+	mp      marine pawn
+	ms      marine knight
+	n       nightrider
+	na      nao				chinese nightrider
+	nd      nereide
+	ne      nonstop equihopper
+	nh      nightrider hopper
+	nl      nightrider lion
+	o       orphan
+	oa      moarider
+	oh	MOaHopper
+	ok      okapi                           knight + zebra
+	or      Orix                        English equihopper on queen lines
+	p       pawn
+	pa      pao 
+	po      poseidon  
+	pp      reverse pawn       moves opposite to normal p and promotes at opp end of board
+	pr      princess   
+	q       queen   
+	qe      equistopper			stoppable
+	qf      non-stop equistopper  		not stoppable
+        qn      quintessence = (3,1)-Zigzag Nightrider (e.g. a1-b3-d2-e4-g3...)
+	qq      querquisite
+	r       rook   
+	ra      rao                             chinese rose
+	rb      reflecting bishop   
+	re      rook eagle
+	rf      root-50-leaper
+	rh      rook hopper
+	rk      radial leaper (aka radial knight)
+	rl      rook-lion
+	rm      rook moose
+	rn      rose-lion
+	rp      rose-hopper
+	ro      rose   
+	rr      rook/bishop hunter		absolute R/B hunter
+	rt	rabbit
+	rw      rook sparrow
+	s       knight   
+        s1      (1,1)-Zigzag Nightrider (e.g. b1-a3-c2-b4-d3...)
+        s2      (2,0)-Zigzag Nightrider (e.g. a1-b3-c1-d3-e1...)
+        s3      (3,3)-Zigzag Nightrider (e.g. a1-b3-d4-e6-g7...)
+        s4      (4,0)-Zigzag Nightrider (e.g. a1-c2-e1-g2...)
+	sa	saltador		Argentinian Knight
+	se	senora			Argentinian Queen
+	sh      ship
+	si      sirene
+	sk      skylla
+	so      scorpion
+	sp      superpawn
+	sq      squirrel   
+	ss      ("Spiralspringer")
+	st      sting (king + royal grasshopper)
+	sw      sparrow
+	th      tree hopper
+	tr      triton
+	uu      ubiubi
+	va      vao   
+	wa      waran   
+	we      wazir   
+	wr      wazirrider            like rook, but different rebirth square
+	z       zebra   
+	ze      Zebu                  1,3+1,4 knight
+	zh      zebrarider hopper
+	zr      zebrarider
+        X/Y     X/Y hunter            generalized hunter:
+                                      away from the homebase like a n X,
+                                      in direction of the homebase like an Y;
+                                      horizontal moves not allowed
