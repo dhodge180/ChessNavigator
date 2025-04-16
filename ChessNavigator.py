@@ -646,6 +646,8 @@ class ChessGUI:
         self.MOVES_WINDOW_VERSION_ingui = MV_WIN_TRUE # Passed old global here
         self.shutdown_trigger_ingui = shutdown_trigger_ingui
 
+        #self.custom_pieces_enabled = False # Adding custom pieces (grasshoppers)
+
         pygame.init()
         self.fenlist = fenlist # True/False on whether a fenlist was loaded
         # Window icon
@@ -960,12 +962,24 @@ class ChessGUI:
         """Defines positions for the spare pieces on the panel."""
         self.spare_pieces = []
         _panel_width = Config.PANEL_WIDTH
+        x_offset_base = _panel_width * 0.1
         piece_order = ['K', 'Q', 'R', 'B', 'N', 'P']  # Display order
+
         for i, piece in enumerate(piece_order):
+            y = 50 + i * (Config.SQUARE_SIZE + 20) # y-coordinate of pieces, progressively
             # Place white pieces on the left side of the panel
-            self.spare_pieces.append((piece, (_panel_width*0.1, 50 + i * (Config.SQUARE_SIZE+20))))  # White pieces (x offset is 10% of panel)
+            self.spare_pieces.append((piece, (x_offset_base, y)))  # White pieces (x offset is 10% of panel)
             # Place black pieces on the right side of the panel
-            self.spare_pieces.append((piece.lower(), (_panel_width*0.1+Config.SQUARE_SIZE, 50 + i * (Config.SQUARE_SIZE+20))))  # Black pieces (x offset is 10% of panel)
+            self.spare_pieces.append((piece.lower(), (x_offset_base+Config.SQUARE_SIZE, y)))  # Black pieces (x offset is 10% of panel)
+
+        # if getattr(self, "custom_pieces_enabled", False):
+        #     # Define your custom pieces, for example: 'A', 'B', 'C'
+        #     custom_pieces = ['g', 'G']  # You can customize this list
+        #     for i, piece in enumerate(custom_pieces):
+        #         y = 50 + i * (Config.SQUARE_SIZE + 20)
+        #         # Custom pieces in a third column
+        #         self.spare_pieces.append((piece, (x_offset_base + 2 * Config.SQUARE_SIZE, y)))
+
 
     def draw_panel(self):
         # Move the panel to the right to avoid overlapping with the board
@@ -1230,7 +1244,7 @@ def load_images():
     """
     pieces = {}
     square_size: int = Config.SQUARE_SIZE
-    for piece in ['p', 'n', 'b', 'r', 'q', 'k']:
+    for piece in ['p', 'n', 'b', 'r', 'q', 'k', 'g']:
         img_path = get_resource_path(f'images/b{piece.upper()}_{square_size}px.png')
         img_black = pygame.image.load(img_path)
         pieces[piece] = pygame.transform.scale(img_black, (square_size, square_size))  # Scale to fit squares
