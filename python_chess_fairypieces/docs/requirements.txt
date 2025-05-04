@@ -1,0 +1,3 @@
+Sphinx==8.1.2
+sphinxcontrib-jquery==4.1
+sphinx-rtd-theme==3.0.1
