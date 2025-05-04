@@ -4,7 +4,7 @@ This is the main Chess Navigator program
 
 import pygame
 import chess
-import chess.pgn
+#import chess.pgn
 import argparse
 
 from pyperclip import copy
@@ -431,8 +431,8 @@ class LiveGame:
         self.legal_moves_enabled = True
         self.move_history = []  # Reset move history
         self.tree_position = 0  # Reset to start the element of the fen_tree are we at
-        self.moves = chess.pgn.Game()  # Reset PGN game
-        self.node = self.moves  # Reset PGN node pointer
+        #self.moves = chess.pgn.Game()  # Reset PGN game
+        #self.node = self.moves  # Reset PGN node pointer
 
     def jump_tree_step(self, target):
         """Jumps to a specific node of the tree and remembers for future arrow navigation"""
@@ -480,14 +480,14 @@ class LiveGame:
         # self.node = self.node.add_variation(move)
         self.move_history.append(("move", move))
 
-    def get_pgn(self):
-        pgn = str(self.moves)
-
-        # Remove headers
-        pgn_lines = pgn.splitlines()[8:]
-
-        #Re join remaining lines
-        return '\n'.join(pgn_lines)
+    # def get_pgn(self):
+    #     pgn = str(self.moves)
+    #
+    #     # Remove headers
+    #     pgn_lines = pgn.splitlines()[8:]
+    #
+    #     #Re join remaining lines
+    #     return '\n'.join(pgn_lines)
 
     def delete_piece_at(self, start):
         # Legality being off is checked before calling
