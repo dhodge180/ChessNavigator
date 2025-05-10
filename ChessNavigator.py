@@ -7,6 +7,8 @@ import chess
 #import chess.pgn
 import argparse
 
+from mychess import ProblemListContainer
+
 from pyperclip import copy
 import re
 import json
@@ -17,6 +19,8 @@ import sys
 # For moves window
 import tkinter as tk
 import multiprocessing
+
+from collections import OrderedDict
 
 # Define the shutdown event
 shutdown_event = multiprocessing.Event()
@@ -423,6 +427,11 @@ class LiveGame:
         self.move_history = None
         self.tree_position = 0  # Which element of the fen_tree are we at
         self.PROBLEM_LIST_ingame = PROBLEM_LIST_ingame
+ 
+        self.problem_container = PROBLEM_LIST_ingame
+        self.problem_container.set_current("001")
+        self.current_composition = self.problem_container.get_current()
+        
         self.MOVES_WINDOW_VERSION_ingame = MWV # Passing variable as to whether there is a move window to send messages to
         self._initialize_game_state()
 
@@ -437,12 +446,20 @@ class LiveGame:
     def jump_tree_step(self, target):
         """Jumps to a specific node of the tree and remembers for future arrow navigation"""
         current_fen_tree = self.PROBLEM_LIST_ingame[-1]['fen_tree']
+        
+        current_comp = self.problem_container.get_current()
+        current_fen_tree = current_comp.fen_tree
+            
         self.tree_position = target
         self.board.set_fen(current_fen_tree[self.tree_position])
 
     def advance_tree_step(self, direction):
         """Move through current fen tree. Forwards, backwards or jump to end."""
         current_fen_tree = self.PROBLEM_LIST_ingame[-1]['fen_tree']
+        
+        current_comp = self.problem_container.get_current()
+        current_fen_tree = current_comp.fen_tree
+        
         # If there's another move to play
         if direction == 1: # Request to step forwards
             if self.tree_position + 1 < len(current_fen_tree):
@@ -643,6 +660,10 @@ class ChessGUI:
         self.main_window_queue = main_window_queue
         self.moves_window_queue = moves_window_queue
         self.PROBLEM_LIST_ingui = PROB_LIST # Passed old global here
+        
+        self.problem_container = PROB_LIST
+        self.problem_order = self.problem_container.problem_order # List of composition IDs
+        
         self.MOVES_WINDOW_VERSION_ingui = MV_WIN_TRUE # Passed old global here
         self.shutdown_trigger_ingui = shutdown_trigger_ingui
 
@@ -1097,18 +1118,27 @@ class ChessGUI:
         # So we remove A and B from the end, put tem on the front then do cycle_fen.
 
         # Handle the 1-element case
-        if len(self.PROBLEM_LIST_ingui) == 1:
+        #if len(self.PROBLEM_LIST_ingui) == 1:
+        if len(self.problem_order) == 1:    
             print("Only one problem in the list, cannot go back.")
             return
 
         print("Loading previous diagram from file")
         # Step 1: Remove the last two elements
-        last = self.PROBLEM_LIST_ingui.pop()     # B
-        second_last = self.PROBLEM_LIST_ingui.pop()  # A
+        #last = self.PROBLEM_LIST_ingui.pop()     # B
+        #second_last = self.PROBLEM_LIST_ingui.pop()  # A
+        
+        # NEW
+        last = self.problem_order.pop()
+        second_last = self.problem_order.pop()
 
         # Step 2: Put them at the front in reverse order (A, then B)
-        self.PROBLEM_LIST_ingui.insert(0, last)        # [B, C, D, E, F]
-        self.PROBLEM_LIST_ingui.insert(0, second_last) # [A, B, C, D, E, F]
+        #self.PROBLEM_LIST_ingui.insert(0, last)        # [B, C, D, E, F]
+        #self.PROBLEM_LIST_ingui.insert(0, second_last) # [A, B, C, D, E, F]
+
+        # NEW
+        self.problem_order.insert(0, last)
+        self.problem_order.insert(0, second_last)
 
         # Step 3: Load A using existing logic
         self.cycle_fen()
@@ -1123,20 +1153,38 @@ class ChessGUI:
         print("Loading diagram from file")
 
         # Get the current FEN and title
-        current_fen_data = self.PROBLEM_LIST_ingui.pop(0)  # Remove the first element
-        self.PROBLEM_LIST_ingui.append(current_fen_data)  # Move it to the end for the next cycle
+        #current_fen_data = self.PROBLEM_LIST_ingui.pop(0)  # Remove the first element
+        #self.PROBLEM_LIST_ingui.append(current_fen_data)  # Move it to the end for the next cycle
 
-        new_fen = current_fen_data["fen"]
-        new_title = current_fen_data["title"]
-        subtext = current_fen_data["stip"]
+        # NEW Move first ID to the end
+        current_id = self.problem_order.pop(0)
+        self.problem_order.append(current_id)
+        
+        # NEW Make the one we just moved the current
+        self.problem_container.set_current(current_id)
+        current_comp = self.current.problem_container.get_current()
+        
+        # Old
+        #new_fen = current_fen_data["fen"]
+        #new_title = current_fen_data["title"]
+        #subtext = current_fen_data["stip"]
 
         # Update the game and window title
-        self.game.set_new_fen(new_fen)
-        self.custom_title = new_title
-        self.custom_stip = subtext
+        # self.game.set_new_fen(new_fen)
+        # self.custom_title = new_title
+        # self.custom_stip = subtext
+        # self.draw_custom_title()
+        # self.draw_custom_stip()
+        # self.game.tree_position = 0
+
+        # NEW Update game state 
+        self.game.set_new_fen(current_comp.fen)
+        self.custom_title = current_comp.title
+        self.custom_stip = current_comp.stipulation
         self.draw_custom_title()
         self.draw_custom_stip()
         self.game.tree_position = 0
+        
 
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
@@ -1145,7 +1193,8 @@ class ChessGUI:
         if self.MOVES_WINDOW_VERSION_ingui == True:
             self.moves_window_queue.put(
             #   ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
-                ("load moves grid", current_fen_data["move_tree"]))
+                #("load moves grid", current_fen_data["move_tree"])) # OLD
+                ("load moves grid", comp.move_tree)) # NEW
             return
         else:
             return
@@ -1769,7 +1818,9 @@ def start_processes(MWV, PL):
         moves_window_queue = multiprocessing.Queue()
 
         # Start both processes
-        gui_process = multiprocessing.Process(target=run_gui, args=(PL.copy(), MWV,
+        #gui_process = multiprocessing.Process(target=run_gui, args=(PL.copy(), MWV,
+        #    passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
+        gui_process = multiprocessing.Process(target=run_gui, args=(PL, MWV,
             passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
         tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event))
 
@@ -1792,7 +1843,9 @@ def start_processes(MWV, PL):
 
         # Start just the ChessGUI
         Config.startup("config.json")
-        ChessGUI(PL.copy(), MWV, passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
+        # ChessGUI(PL.copy(), MWV, passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
+        #     moves_window_queue, shutdown_event).run()
+        ChessGUI(PL, MWV, passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue,
             moves_window_queue, shutdown_event).run()
 
 if __name__ == "__main__":
@@ -1823,8 +1876,34 @@ if __name__ == "__main__":
             #    print(item)
             #print(fen_tree[1])
             #print("End of Debug")
+            
+        # Initialize the container
+        problem_container = ProblemListContainer()
+        for fen_data in PROBLEM_LIST:
+            comp = problem_container.add_composition(
+                title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
+                fen=fen_data['fen'],
+                moves=fen_data.get('moves', ''),
+                stipulation=fen_data.get('stipulation', '')
+            )
+            
+            # NEW
+            
+            # Generate trees
+            move_list = comp.moves.split()
+            fen_tree, move_tree = generate_fen_path(comp.fen, move_list)
 
-    start_processes(MOVES_WINDOW_VERSION, PROBLEM_LIST)
+            # Store in Composition
+            comp.fen_tree = fen_tree[0]
+            comp.ids = fen_tree[1]
+            comp.move_tree = move_tree
+
+            # Track order of problems
+            problem_container.problem_order.append(comp.id)   
+    
+
+    #start_processes(MOVES_WINDOW_VERSION, PROBLEM_LIST)
+    start_processes(MOVES_WINDOW_VERSION, problem_container)
 
 # TO DO
 # Pass the build_buttons the actual move tree for the current game (do it inside the ChessGUI via a message like
