@@ -14,25 +14,74 @@ class Composition:
         self.fen_tree = None
         self.ids = None
         self.move_tree = None
+        self.tree_position = 0
+        self.position = None
+        self.move_window_version = False
+
+    def turn_on_move_windows_messaging(self):
+        self.move_window_version = True
+
+    def create_position(self):
+        self.position = ChessPosition(self.fen)
+
+    def get_position_object(self):
+        return self.position
+
+    def advance_tree_step(self, direction):
+        """Move through current fen tree. Forwards, backwards or jump to end."""
+        current_fen_tree = self.fen_tree
+
+        # If there's another move to play
+        if direction == 1:  # Request to step forwards
+            if self.tree_position + 1 < len(current_fen_tree):
+                self.tree_position += 1
+        elif direction == -1:
+            if self.tree_position > 0:
+                self.tree_position -= 1
+        elif direction is None:  # This means jump to the end
+            self.tree_position = len(current_fen_tree) - 1
+
+        # Move to next position (might be same position if at an end already)
+        self.position.set_fen(current_fen_tree[self.tree_position])
+        # Could now send news to move window to move highlight marker
+        if self.move_window_version == True:
+            self.move_window_queue.put(('state', self.tree_position))
 
 class ProblemListContainer:
     def __init__(self):
         self.compositions = OrderedDict()
-        self.current_id = None
-        self.problem_order = []
+        self.current_index = 0
+        self.num_compositions = 0
 
     def add_composition(self, title: str, fen: str, moves: str, stipulation: str):
-        comp_id = f"{len(self.compositions) + 1:03}"
+        """Add a new composition and return it."""
+        # Use the number of compositions as the index (1-based)
+        comp_id = self.num_compositions + 1
         comp = Composition(comp_id, title, fen, moves, stipulation)
         self.compositions[comp_id] = comp
-        self.problem_order.append(comp_id)
+        self.num_compositions += 1
         return comp
-    
-    def set_current(self, current):
-        self.current_id = current
+
+    def set_current(self, current_index):
+        """Set the current problem using an index."""
+        if 1 <= current_index <= self.num_compositions:
+            self.current_index = current_index
+        else:
+            raise IndexError("Current index out of range.")
 
     def get_current(self):
-        return self.compositions.get(self.current_id)
+        """Get the current composition."""
+        return self.compositions.get(self.current_index)
+
+    def go_forward_one(self):
+        """Move to the next problem by advancing the index."""
+        if self.num_compositions > 0:
+            self.current_index = (self.current_index % self.num_compositions) + 1  # Wrap around when necessary
+
+    def go_back_one(self):
+        """Move to the next problem by advancing the index."""
+        if self.num_compositions > 0:
+            self.current_index = (self.current_index - 2) % self.num_compositions + 1  # Wrap around when necessary
 
 
 ## Chess Position handler (using FEN)
@@ -52,6 +101,25 @@ class ChessPosition:
             self.set_fen(fen)
         self.user_to_internal_map = load_existing_map()
         self.internal_to_user_map = {v: k for k, v in self.user_to_internal_map.items()}
+
+        self.legal_moves_enabled = False
+        self.start_pos = fen
+        self.move_history = []
+
+        self.board_index = self.create_index_lookup()
+
+    def create_index_lookup(self):
+        """Creates a lookup table for row, col -> index."""
+        lookup = {}
+        for row in range(8):
+            for col in range(8):
+                index = row * 8 + col
+                lookup[(row, col)] = index
+        return lookup
+
+    def get_square_index(self, row, col):
+        """Returns the pre-calculated index for a given (row, col)."""
+        return self.board_index.get((row, col))
 
     def convert_u_to_i(self, token):
         if token in self.standard_pieces:
@@ -151,7 +219,6 @@ class ChessPosition:
         self.en_passant = None  # Reset en passant after the capture
         self.update_fen()
 
-
     def can_castle(self, side, kingside):
         if side == 'w':
             if kingside:
@@ -244,7 +311,6 @@ class ChessPosition:
         self.change_turn()
         self.update_fen()
 
-
     def promote_pawn(self, start, end, new_piece):
         '''
         new_piece is lower case of user defined name (not internal name)
@@ -275,11 +341,17 @@ class ChessPosition:
         else:
             raise ValueError("Promotion must happen on last rank")
 
-
     def get_piece(self, square):
         x, y = self.square_to_coords(square)
         p = self.board[y][x]
         return None if p == '1' else p
+
+    def square(self, col, row):
+        return row * 8 + col
+
+    def get_piece_at_coords(self, row, col):
+        """Get the piece at a specific square (row, col)."""
+        return self.board[self.get_square_index(row, col)]  # Return the piece at the specified square
 
     def is_empty(self, square):
         return self.get_piece(square) is None
@@ -350,7 +422,25 @@ class ChessPosition:
         else:
             return 'error unable to determine colour'
 
+    def toggle_legality(self):
+        #self.legal_moves_enabled = not self.legal_moves_enabled  # Toggle legality mode
+        # NO TOGGLE ANY MORE, ALWAYS OFF
+        self.legal_moves_enabled = False
 
+    def undo_move(self):
+        print("Not implemented how to undo moves yet")
+
+    def redefine_start(self):
+        """This forces the current board position to become the reset state"""
+        self.start_pos = self.fen
+
+    def reset_board(self):
+        self.set_fen(self.start_pos)
+        self.reset_move_history()
+        self.tree_position = 0
+
+    def reset_move_history(self):
+        self.move_history = []
 
 def print_board_matrix(board, empty_square_char='.'):
     for row in reversed(board):  # print rank 8 to 1

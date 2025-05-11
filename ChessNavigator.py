@@ -20,8 +20,6 @@ import sys
 import tkinter as tk
 import multiprocessing
 
-from collections import OrderedDict
-
 # Define the shutdown event
 shutdown_event = multiprocessing.Event()
 
@@ -662,7 +660,10 @@ class ChessGUI:
         self.PROBLEM_LIST_ingui = PROB_LIST # Passed old global here
         
         self.problem_container = PROB_LIST
-        self.problem_order = self.problem_container.problem_order # List of composition IDs
+        self.composition = self.problem_container.set_current(1)
+        self.composition = self.problem_container.get_current()
+        self.composition.create_position()
+        self.position = self.composition.get_position_object()
         
         self.MOVES_WINDOW_VERSION_ingui = MV_WIN_TRUE # Passed old global here
         self.shutdown_trigger_ingui = shutdown_trigger_ingui
@@ -678,7 +679,8 @@ class ChessGUI:
         self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
         pygame.display.set_caption(window_title_bar)
         self.pieces = load_images()
-        self.game = LiveGame(self.PROBLEM_LIST_ingui, self.MOVES_WINDOW_VERSION_ingui, fen, moves_window_queue)
+        #self.game = LiveGame(self.PROBLEM_LIST_ingui, self.MOVES_WINDOW_VERSION_ingui, fen, moves_window_queue)
+
         #self.moves_window_queue.put(("load moves grid", 0))  # Value passed is PROBLEM_LIST index of new game
         self.running = True
         self.dragging_piece = None
@@ -727,7 +729,7 @@ class ChessGUI:
 
                             # The passed message is the number of which entry of the fen_tree we want
                             #moveid_fen = PROBLEM_LIST[-1]['fen_tree'][int(message)-1]
-                            self.game.jump_tree_step(int(message))
+                            self.composition.jump_tree_step(int(message))
 
                             #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
                             #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
@@ -765,18 +767,18 @@ class ChessGUI:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_l:
                         #self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
-                        self.game.toggle_legality()
+                        self.position.toggle_legality()
                     elif event.key == pygame.K_u:
-                        self.game.undo_move() # Press u to undo last move
+                        self.position.undo_move() # Press u to undo last move
                     elif event.key == pygame.K_z:
-                        self.game.clear_board() # Press z to zero/clear the board
-                        self.game.legal_moves_enabled = False # Turn legality to false to allow placement
+                        self.position.clear() # Press z to zero/clear the board
+                        self.position.legal_moves_enabled = False # Turn legality to false to allow placement
                     elif event.key == pygame.K_INSERT:
-                        self.game.redefine_start() # Press INSERT to redefine root position
+                        self.position.redefine_start() # Press INSERT to redefine root position
                     elif event.key in (pygame.K_HOME, pygame.K_r):
-                        self.game.reset_board() # Press HOME to return to root position
+                        self.position.reset_board() # Press HOME to return to root position
                     elif event.key == pygame.K_t:
-                        self.game.toggle_turn()  # Toggle the turn on pressing 'T'
+                        self.position.change_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
                         self.show_help_popup() # Press H to pop-up shortcuts
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
@@ -788,13 +790,13 @@ class ChessGUI:
                     elif event.key == pygame.K_RIGHT:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
-                            self.game.advance_tree_step(+1)
+                            self.position.advance_tree_step(+1)
                     elif event.key == pygame.K_LEFT:
                         if self.fenlist:
-                            self.game.advance_tree_step(-1)
+                            self.position.advance_tree_step(-1)
                     elif event.key == pygame.K_END:
                         if self.fenlist:
-                            self.game.advance_tree_step(None)
+                            self.position.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if Config.SQUARE_SIZE > 40:
                             Config.set_square_size(Config.SQUARE_SIZE - 10)
@@ -822,7 +824,7 @@ class ChessGUI:
                             pygame.key.get_pressed()[pygame.K_LCTRL] or pygame.key.get_pressed()[pygame.K_RCTRL]):
                         # Get FEN from the board and copy it to clipboard
                         try:
-                            fen = self.game.board.fen()  # Call the board.fen() method from the LiveGame instance
+                            fen = self.position.fen  # Call the board.fen() method from the LiveGame instance
                             copy(fen)  # Copy the FEN to clipboard
                             print("FEN copied to clipboard:", fen)  # Optional: print to console for confirmation
                         except Exception as e:
@@ -871,8 +873,8 @@ class ChessGUI:
         """Returns the legality text surface and its rectangle for positioning."""
         font = pygame.font.Font(None, 24)  # Smaller text
         # text: str = "Legality: ON" # + str(self.target_fps)
-        text = "Legality: ON" if self.game.legal_moves_enabled else "Legality: OFF"
-        color = (0, 255, 0) if self.game.legal_moves_enabled else (255, 0, 0)
+        text = "Legality: ON" if self.position.legal_moves_enabled else "Legality: OFF"
+        color = (0, 255, 0) if self.position.legal_moves_enabled else (255, 0, 0)
 
         text_surface = font.render(text, True, color)
         text_x = Config.WIDTH - Config.MOVES_WIDTH - text_surface.get_width() - 10  # Align to top-right
@@ -895,13 +897,13 @@ class ChessGUI:
 
         if text_rect.collidepoint(pos):
             #self.game.legal_moves_enabled = not self.game.legal_moves_enabled
-            self.game.toggle_legality()
+            self.position.toggle_legality()
             
 
     def draw_turn_indicator(self):
         """Draws the turn indicator circle in the bottom-right corner."""
         # Determine whose turn it is (White or Black)
-        turn_color = Config.TURN_WHITE if self.game.board.turn else Config.TURN_BLACK  # True = White's turn, False = Black's turn
+        turn_color = Config.TURN_WHITE if self.position.turn else Config.TURN_BLACK  # True = White's turn, False = Black's turn
 
         # Coordinates for the bottom-right corner
         circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
@@ -919,7 +921,7 @@ class ChessGUI:
 
         if abs(pos[0]-circle_x) < 2 * circle_radius:
             if abs(pos[1]-circle_y) < 2 * circle_radius:
-                self.game.toggle_turn()
+                self.position.change_turn()
         
         # Don't bother with fancy measuring, just in the square containing the circle
         # Calculate distance from click position to the center of the turn indicator
@@ -967,10 +969,13 @@ class ChessGUI:
         _height_padding = Config.HEIGHT_PADDING
         for row in range(Config.BOARD_SIZE):
             for col in range(Config.BOARD_SIZE):
-                square = chess.square(col, 7 - row)
-                piece = self.game.board.piece_at(square)
+                #square = chess.square(col, 7 - row)
+                square = (7 - row) * 8 + col
+                #piece = self.position.get_piece(square)
+                piece = self.position.get_piece_at_coords(row, col)
                 if piece and (self.dragging_square != square):
-                    img = self.pieces[piece.symbol()]
+                    #img = self.pieces[piece.symbol()]
+                    img = self.pieces[piece]
                     self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
                                            _border_size + _height_padding + row * Config.SQUARE_SIZE))
 
@@ -1028,7 +1033,8 @@ class ChessGUI:
         if x < _board_width and y < _board_width:
             col = x // Config.SQUARE_SIZE
             row = y // Config.SQUARE_SIZE
-            return chess.square(col, 7 - row)  # Convert to chess square notation
+            #return chess.square(col, 7 - row)  # Convert to chess square notation
+            return (7-row) * 8 + col
 
         return None  # If outside the board
 
@@ -1067,7 +1073,7 @@ class ChessGUI:
             self.dragging_pos = pos
             self.dragging_square = panel_piece
         elif square is not None:
-            piece = self.game.board.piece_at(square)
+            piece = self.position.get_piece(square)
             if piece:
                 self.dragging_piece = self.pieces[piece.symbol()]
                 self.piece_source = "board"
@@ -1085,23 +1091,23 @@ class ChessGUI:
             # print(f"Dragged piece from {self.piece_source} to {new_square}")
             if self.piece_source == "board" and new_square is not None:
                 if new_square != self.dragging_square:  # Move only if dropped in a new square
-                    self.game.move_piece(chess.square_name(self.dragging_square), chess.square_name(new_square))
+                    self.position.move_piece(self.dragging_square, new_square)
 
 
             elif self.piece_source == "panel" and new_square is not None:
                 # Add the piece to the board and record the action for undo
                 # New logic: only allow adding pieces when legality is off
-                if not self.game.legal_moves_enabled:
+                if not self.position.legal_moves_enabled:
                     piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
-                    self.game.add_piece(piece_symbol, new_square)
+                    self.position.add_piece(new_square, piece_symbol)
                 else:
                     print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
 
             elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
                 # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
                 # Only allow removing a piece from board when legality is turned off
-                if not self.game.legal_moves_enabled:
-                    self.game.delete_piece_at(self.dragging_square)
+                if not self.position.legal_moves_enabled:
+                    self.position.remove_piece(self.dragging_square)
                     #self.board.remove_piece_at(self.dragging_square)
                 else:
                     print("Dropped piece off board, but it was illegal so not executed")
@@ -1114,87 +1120,52 @@ class ChessGUI:
 
     def reverse_cycle_fen(self):
         """Move back to the previous problem"""
-        # Clever logic says that if self = [C,D,E,F,A,B]... we are staring at B and rather than load C we want to load A
-        # So we remove A and B from the end, put tem on the front then do cycle_fen.
 
-        # Handle the 1-element case
-        #if len(self.PROBLEM_LIST_ingui) == 1:
-        if len(self.problem_order) == 1:    
-            print("Only one problem in the list, cannot go back.")
+        print("Moving to previous problem")
+
+        if self.problem_container.num_compositions == 1:
+            print("Only 1 composition, why are you trying to move?")
             return
 
-        print("Loading previous diagram from file")
-        # Step 1: Remove the last two elements
-        #last = self.PROBLEM_LIST_ingui.pop()     # B
-        #second_last = self.PROBLEM_LIST_ingui.pop()  # A
-        
-        # NEW
-        last = self.problem_order.pop()
-        second_last = self.problem_order.pop()
-
-        # Step 2: Put them at the front in reverse order (A, then B)
-        #self.PROBLEM_LIST_ingui.insert(0, last)        # [B, C, D, E, F]
-        #self.PROBLEM_LIST_ingui.insert(0, second_last) # [A, B, C, D, E, F]
-
-        # NEW
-        self.problem_order.insert(0, last)
-        self.problem_order.insert(0, second_last)
-
-        # Step 3: Load A using existing logic
-        self.cycle_fen()
+        self.problem_container.go_back_one()
+        self.update_after_cycle()
 
 
     def cycle_fen(self):
         """Cycle through the FEN list and update the game and window title."""
-        # What this does is take the list [C, D, E, F, A, B] loads C, and moves it to the end. Leaving [D, E, F, A, B, C]
 
-        # This also gets called at program start. So cannot bypass (currently) when list contains 1 element.
+        print("Moving to next problem")
 
-        print("Loading diagram from file")
+        if self.problem_container.num_compositions == 1:
+            print("Only 1 composition, why are you trying to move?")
+            return
 
-        # Get the current FEN and title
-        #current_fen_data = self.PROBLEM_LIST_ingui.pop(0)  # Remove the first element
-        #self.PROBLEM_LIST_ingui.append(current_fen_data)  # Move it to the end for the next cycle
+        self.problem_container.go_forward_one()
+        self.update_after_cycle()
 
-        # NEW Move first ID to the end
-        current_id = self.problem_order.pop(0)
-        self.problem_order.append(current_id)
-        
-        # NEW Make the one we just moved the current
-        self.problem_container.set_current(current_id)
-        current_comp = self.current.problem_container.get_current()
-        
-        # Old
-        #new_fen = current_fen_data["fen"]
-        #new_title = current_fen_data["title"]
-        #subtext = current_fen_data["stip"]
+    def update_after_cycle(self):
+        """Stuff to do after changing the current compositions pointed to by the container"""
 
-        # Update the game and window title
-        # self.game.set_new_fen(new_fen)
-        # self.custom_title = new_title
-        # self.custom_stip = subtext
-        # self.draw_custom_title()
-        # self.draw_custom_stip()
-        # self.game.tree_position = 0
+        self.composition = self.problem_container.get_current()
+        self.composition.create_position()  # fen set automatically by composition
+        self.position = self.composition.get_position_object()
 
-        # NEW Update game state 
-        self.game.set_new_fen(current_comp.fen)
-        self.custom_title = current_comp.title
-        self.custom_stip = current_comp.stipulation
+        # NEW Update game state
+        self.custom_title = self.composition.title
+        self.custom_stip = self.composition.stipulation
         self.draw_custom_title()
         self.draw_custom_stip()
-        self.game.tree_position = 0
-        
+        self.composition.tree_position = 0
 
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
         # Redraw tk moves_windows
-        if self.MOVES_WINDOW_VERSION_ingui == True:
+        if self.composition.move_window_version == True:
             self.moves_window_queue.put(
-            #   ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
-                #("load moves grid", current_fen_data["move_tree"])) # OLD
-                ("load moves grid", comp.move_tree)) # NEW
+                #   ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
+                # ("load moves grid", current_fen_data["move_tree"])) # OLD
+                ("load moves grid", comp.move_tree))  # NEW
             return
         else:
             return
@@ -1859,6 +1830,7 @@ if __name__ == "__main__":
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_list_loaded = load_problem_list_from_file(PROBLEM_LIST, passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
     # Return value is TRUE or FALSE based on success
+    problem_container = ProblemListContainer()
     if problem_list_loaded:
         # Here we generate move trees from the moves
         for fen_data in PROBLEM_LIST:
@@ -1878,7 +1850,6 @@ if __name__ == "__main__":
             #print("End of Debug")
             
         # Initialize the container
-        problem_container = ProblemListContainer()
         for fen_data in PROBLEM_LIST:
             comp = problem_container.add_composition(
                 title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
@@ -1898,9 +1869,6 @@ if __name__ == "__main__":
             comp.ids = fen_tree[1]
             comp.move_tree = move_tree
 
-            # Track order of problems
-            problem_container.problem_order.append(comp.id)   
-    
 
     #start_processes(MOVES_WINDOW_VERSION, PROBLEM_LIST)
     start_processes(MOVES_WINDOW_VERSION, problem_container)
