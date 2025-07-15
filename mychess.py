@@ -351,7 +351,7 @@ class ChessPosition:
 
     def get_piece_at_coords(self, row, col):
         """Get the piece at a specific square (row, col)."""
-        return self.board[self.get_square_index(row, col)]  # Return the piece at the specified square
+        return self.board[row][col]  # Return the piece at the specified square
 
     def is_empty(self, square):
         return self.get_piece(square) is None
