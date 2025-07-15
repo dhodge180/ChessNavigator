@@ -86,7 +86,7 @@ class Config:
     TURN_BLACK = (0, 0, 0) # Used for turn indicator
 
     # FEN position to start from
-    START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0"
+    START_FEN = "rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR w KQkq - 0 0"
     """Default starting position if no PROBLEM_LIST file is found, or specific FEN is passed at CMD line"""
 
     # Highlighting colours
@@ -566,6 +566,7 @@ class LiveGame:
             'Q': chess.QUEEN,
             'R': chess.ROOK,
             'B': chess.BISHOP,
+            'S': chess.KNIGHT,
             'N': chess.KNIGHT
         }
 
@@ -589,7 +590,7 @@ class LiveGame:
                         selected_piece = promotion_pieces['B']
                         running = False
                     elif event.key == pygame.K_n:
-                        selected_piece = promotion_pieces['N']
+                        selected_piece = promotion_pieces['S']
                         running = False
 
             self.clock.tick(30)
@@ -989,7 +990,7 @@ class ChessGUI:
         self.spare_pieces = []
         _panel_width = Config.PANEL_WIDTH
         x_offset_base = _panel_width * 0.1
-        piece_order = ['K', 'Q', 'R', 'B', 'N', 'P']  # Display order
+        piece_order = ['K', 'Q', 'R', 'B', 'S', 'P']  # Display order
 
         for i, piece in enumerate(piece_order):
             y = 50 + i * (Config.SQUARE_SIZE + 20) # y-coordinate of pieces, progressively
@@ -1264,7 +1265,7 @@ def load_images():
     """
     pieces = {}
     square_size: int = Config.SQUARE_SIZE
-    for piece in ['p', 'n', 'b', 'r', 'q', 'k', 'g']:
+    for piece in ['p', 's', 'b', 'r', 'q', 'k', 'g']:
         img_path = get_resource_path(f'images/b{piece.upper()}_{square_size}px.png')
         img_black = pygame.image.load(img_path)
         pieces[piece] = pygame.transform.scale(img_black, (square_size, square_size))  # Scale to fit squares
