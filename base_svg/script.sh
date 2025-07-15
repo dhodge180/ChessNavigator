@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 # Names of the chess pieces in order
-names=("wK" "wQ" "wB" "wN" "wR" "wP" "bK" "bQ" "bB" "bN" "bR" "bP")
+names=("wK" "wQ" "wB" "wS" "wR" "wP" "bK" "bQ" "bB" "bS" "bR" "bP")
 
 # Desired final sizes (in pixels)
 final_sizes=(40 50 60 70 80 90 100)
