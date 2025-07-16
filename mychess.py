@@ -1,3 +1,4 @@
+from mmap import PROT_WRITE
 from multiprocessing import Process, Queue
 from collections import OrderedDict
 from fen_mapper import load_existing_map
@@ -93,8 +94,8 @@ class ChessPosition:
         self.turn = 'w'
         self.en_passant = None
         self.king_pieces = ["K", "k"]  # Predefined list of king pieces
-        self.pawn_pieces = ["P", "p", "y"]  # Predefined list of en passant and promotion pieces (y is temp name for neutral pawn)
-        self.neutral_pieces = ["y", "z"]
+        self.pawn_pieces = ["P", "p", "=p"]  # Predefined list of en passant and promotion pieces (y is temp name for neutral pawn)
+        self.neutral_pieces = ["=p", "=b", "=s", "=q", "=k"]
         self.fen = None
         self.standard_pieces = set("KQRBSPkqrbsp")
         if fen:
@@ -120,6 +121,12 @@ class ChessPosition:
     def get_square_index(self, row, col):
         """Returns the pre-calculated index for a given (row, col)."""
         return self.board_index.get((row, col))
+
+    def get_coords_from_index(self, index):
+        """Returns (row, col) coordinates for a given flat index (0–63)."""
+        row = index // 8
+        col = index % 8
+        return (row, col)
 
     def convert_u_to_i(self, token):
         if token in self.standard_pieces:
@@ -171,11 +178,12 @@ class ChessPosition:
                 else:
                     board_row.append(char)
             board.append(board_row)
-        board.reverse()  # Flip so rank 1 is at index 0
+        #board.reverse()  # Flip so rank 1 is at index 0
         return board
 
     def board_to_fen(self):
         rows = list(reversed(self.board))  # Flip back to FEN order
+        rows = list(self.board)  # Flip back to FEN order
         fen_rows = []
         for row in rows:
             empty = 0
@@ -256,7 +264,7 @@ class ChessPosition:
         piece = self.board[start_y][start_x]
         target = self.board[end_y][end_x]
         if piece == 1:
-            # Start square is empty, no moe to make
+            # Start square is empty, no move to make
             return
 
         # Castling (execute as two moves)
@@ -318,16 +326,16 @@ class ChessPosition:
 
         start_x, start_y = self.square_to_coords(start)
         end_x, end_y = self.square_to_coords(end)
-        piece = self.board[start_y][start_x]
-        piece = self.convert_i_to_u(piece)
+        internal_piece = self.board[start_y][start_x]
+        piece = self.convert_i_to_u(internal_piece)
 
         if piece.lower() not in self.pawn_pieces:
             raise ValueError("Only pawns can be promoted")
 
-        if (piece == 'P' and end_y == 7) or (piece == 'p' and end_y == 0) or (piece == 'y' and end_y in [0,7]):
+        if (piece == 'P' and end_y == 7) or (piece == 'p' and end_y == 0) or (piece == '=p' and end_y in [0,7]):
             self.board[start_y][start_x] = '1'
              # Determine promoted piece with correct color
-            promoted = new_piece.upper() if self.turn == 'w' else new_piece.lower()
+            promoted = new_piece.upper() if end_y == 7 else new_piece.lower()
             
             # Keep '=' prefix if the original piece was marked as such
             if piece in self.neutral_pieces:
@@ -339,10 +347,21 @@ class ChessPosition:
             self.change_turn()
             self.update_fen()
         else:
-            raise ValueError("Promotion must happen on last rank")
+            # This indicated an attempt to promote a white pawn on the 1st rank, or black pawn on the 8th rank
+            raise ValueError("Promotion of this piece must happen on last rank")
 
-    def get_piece(self, square):
-        x, y = self.square_to_coords(square)
+    def get_piece(self, square_name):
+        x, y = self.square_to_coords(square_name)
+        p = self.board[y][x]
+        return None if p == '1' else p
+
+    def get_piece_at_square_num(self, square_num):
+        row = square_num // 8
+        col = square_num % 8
+
+        y = 7 - row
+        x = col
+
         p = self.board[y][x]
         return None if p == '1' else p
 
@@ -351,7 +370,8 @@ class ChessPosition:
 
     def get_piece_at_coords(self, row, col):
         """Get the piece at a specific square (row, col)."""
-        return self.board[row][col]  # Return the piece at the specified square
+        piece = self.board[row][col]
+        return None if piece == '1' else piece   # Return the piece at the specified square
 
     def is_empty(self, square):
         return self.get_piece(square) is None

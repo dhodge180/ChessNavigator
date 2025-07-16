@@ -791,13 +791,13 @@ class ChessGUI:
                     elif event.key == pygame.K_RIGHT:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
-                            self.position.advance_tree_step(+1)
+                            self.composition.advance_tree_step(+1)
                     elif event.key == pygame.K_LEFT:
                         if self.fenlist:
-                            self.position.advance_tree_step(-1)
+                            self.composition.advance_tree_step(-1)
                     elif event.key == pygame.K_END:
                         if self.fenlist:
-                            self.position.advance_tree_step(None)
+                            self.composition.advance_tree_step(None)
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if Config.SQUARE_SIZE > 40:
                             Config.set_square_size(Config.SQUARE_SIZE - 10)
@@ -813,10 +813,10 @@ class ChessGUI:
                     # Square highlighting
                     elif event.key in Config.KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
                         pos = pygame.mouse.get_pos()
-                        square = self.get_square_under_mouse(pos)
-                        #print(f"Square is {square}")
-                        if square is not None:
-                            self.change_square_color(square, Config.KEY_COLOR_MAP[event.key])
+                        square_num = self.get_square_under_mouse(pos)
+                        #print(f"Square is {square_tuple}")
+                        if square_num is not None:
+                            self.change_square_color(square_num, Config.KEY_COLOR_MAP[event.key])
                     elif event.key == pygame.K_DELETE: # Pressed 0 to clean all highlights
                         # Reset all colours, recopy from TRUE_COLORS
                         self.square_colors = [row [:] for row in self.TRUE_COLORS]
@@ -1035,7 +1035,8 @@ class ChessGUI:
             col = x // Config.SQUARE_SIZE
             row = y // Config.SQUARE_SIZE
             #return chess.square(col, 7 - row)  # Convert to chess square notation
-            return (7-row) * 8 + col
+            #return (7-row) * 8 + col
+            return row * 8 + col
 
         return None  # If outside the board
 
@@ -1043,6 +1044,7 @@ class ChessGUI:
         """Receives the square under the mouse (0 to 63) and changes colour in the colour vector"""
         row = 7 - chess.square_rank(chess_square)
         col = chess.square_file(chess_square)
+        row, col = self.position.get_coords_from_index(self, chess_square)
 
         if new_color is not None:
             self.square_colors[row][col] = new_color
@@ -1065,7 +1067,10 @@ class ChessGUI:
         self.check_legal_toggle_click(pos)
         self.check_turn_toggle_click(pos)
 
-        square = self.get_square_under_mouse(pos)
+        square_num = self.get_square_under_mouse(pos)
+        if square_num:
+            square_name = chr(ord('a') + (square_num % 8)) + str((square_num // 8) + 1)
+        print(f"SQUARE:{square_num}")
         panel_piece = self.get_piece_from_panel(pos)
 
         if panel_piece:
@@ -1073,12 +1078,12 @@ class ChessGUI:
             self.piece_source = "panel"
             self.dragging_pos = pos
             self.dragging_square = panel_piece
-        elif square is not None:
-            piece = self.position.get_piece(square)
+        elif square_num is not None:
+            piece = self.position.get_piece_at_square_num(square_num)
             if piece:
-                self.dragging_piece = self.pieces[piece.symbol()]
+                self.dragging_piece = self.pieces[piece]
                 self.piece_source = "board"
-                self.dragging_square = square
+                self.dragging_square = square_name
                 self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
     def handle_mouse_motion(self, pos):
@@ -1089,10 +1094,12 @@ class ChessGUI:
         """Handles dropping a piece, ensuring its color is preserved."""
         if self.dragging_piece:
             new_square = self.get_square_under_mouse(pos)
+            if new_square:
+                new_square_name = chr(ord('a') + (new_square % 8)) + str((new_square // 8) + 1)
             # print(f"Dragged piece from {self.piece_source} to {new_square}")
             if self.piece_source == "board" and new_square is not None:
                 if new_square != self.dragging_square:  # Move only if dropped in a new square
-                    self.position.move_piece(self.dragging_square, new_square)
+                    self.position.move_piece(self.dragging_square, new_square_name)
 
 
             elif self.piece_source == "panel" and new_square is not None:
@@ -1100,7 +1107,7 @@ class ChessGUI:
                 # New logic: only allow adding pieces when legality is off
                 if not self.position.legal_moves_enabled:
                     piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
-                    self.position.add_piece(new_square, piece_symbol)
+                    self.position.add_piece(new_square_name, piece_symbol)
                 else:
                     print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
 
