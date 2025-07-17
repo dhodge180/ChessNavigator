@@ -262,6 +262,8 @@ class ChessPosition:
         start_row, start_col = start.coord
         end_row, end_col = end.coord
         piece = self.board[start_row][start_col]
+        piece_colour = self.get_piece_colour(piece)
+
         # target = self.board[end_row][end_col]
 
         if piece == '1':
@@ -298,6 +300,22 @@ class ChessPosition:
         if piece.lower() in self.pawn_pieces and end == self.en_passant:
             self.capture_en_passant(start, end)
         else:
+            # Check here if it's a promotion attempt
+            if piece in self.pawn_pieces:
+                if (piece_colour == 'b' and end_row == 7) or \
+                        (piece_colour == 'w' and end_row == 0) or \
+                        (piece_colour == 'neutral' and end_row in [0, 7]):
+                    # Ask for promotion piece
+                    # promotion_piece = self.ask_for_promotion()  # Should return something like 'q', 'r', 'b', or 'n'
+                    promotion_piece = 'B'
+                    # Perform promotion move instead of normal move
+                    self.promote_pawn(start, end, promotion_piece)
+                    self.change_turn()
+                    self.en_passant = None
+                    self.update_fen()
+                    return
+
+
             # Normal move
             self.move_piece_internal(start, end)
 
@@ -723,9 +741,9 @@ class TempChessPosition(ChessPosition):
             # This matches a format like 'a1e5'
             return {'type': 'move', 'from': move[:2], 'to': move[2:]}
 
-        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbQPRNBQ
+        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prsbQPRSBQ
         # possibly ending +, ++ or #
-        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbnqkRBNQK](\+{1,2}|#)?$', move):
+        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbsqkRBSQK](\+{1,2}|#)?$', move):
             move = move.rstrip('+#')  # Strips any + or # at the end
             # This matches a format like 'a7a8Q' with a valid promotion piece
             return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
