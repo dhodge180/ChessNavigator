@@ -1,7 +1,7 @@
-from mmap import PROT_WRITE
 from multiprocessing import Process, Queue
 from collections import OrderedDict
 from fen_mapper import load_existing_map
+from square import Square
 
 ## Container for composition database
 
@@ -88,6 +88,30 @@ class ProblemListContainer:
 ## Chess Position handler (using FEN)
 
 class ChessPosition:
+    # Cached Square instances for castling and common usage
+    E1 = Square.get(alg="e1")
+    H1 = Square.get(alg="h1")
+    F1 = Square.get(alg="f1")
+    G1 = Square.get(alg="g1")
+    A1 = Square.get(alg="a1")
+    B1 = Square.get(alg="b1")
+    C1 = Square.get(alg="c1")
+    D1 = Square.get(alg="d1")
+
+    E8 = Square.get(alg="e8")
+    H8 = Square.get(alg="h8")
+    F8 = Square.get(alg="f8")
+    G8 = Square.get(alg="g8")
+    A8 = Square.get(alg="a8")
+    B8 = Square.get(alg="b8")
+    C8 = Square.get(alg="c8")
+    D8 = Square.get(alg="d8")
+
+    CASTLING_MOVES = {
+        E1: [G1, C1],
+        E8: [G8, C8],
+    }
+
     def __init__(self, fen=None):
         # Board is an 8x8 matrix from 00 to 77, with f2 equal to 15, i.e. [y-coord][x-coord] format
         self.board = []
@@ -109,24 +133,6 @@ class ChessPosition:
 
         self.board_index = self.create_index_lookup()
 
-    def create_index_lookup(self):
-        """Creates a lookup table for row, col -> index."""
-        lookup = {}
-        for row in range(8):
-            for col in range(8):
-                index = row * 8 + col
-                lookup[(row, col)] = index
-        return lookup
-
-    def get_square_index(self, row, col):
-        """Returns the pre-calculated index for a given (row, col)."""
-        return self.board_index.get((row, col))
-
-    def get_coords_from_index(self, index):
-        """Returns (row, col) coordinates for a given flat index (0–63)."""
-        row = index // 8
-        col = index % 8
-        return (row, col)
 
     def convert_u_to_i(self, token):
         if token in self.standard_pieces:
@@ -182,7 +188,7 @@ class ChessPosition:
         return board
 
     def board_to_fen(self):
-        rows = list(reversed(self.board))  # Flip back to FEN order
+        # rows = list(reversed(self.board))  # Flip back to FEN order
         rows = list(self.board)  # Flip back to FEN order
         fen_rows = []
         for row in rows:
@@ -205,23 +211,21 @@ class ChessPosition:
 
     # Move functions
 
-    def is_castling_move(self, start, end):
-        castling_moves = {
-            "e1": ["g1", "c1"],
-            "e8": ["g8", "c8"]
-        }
-        return end in castling_moves.get(start, [])
-    
-    def capture_en_passant(self, start, end):
-        start_x, start_y = self.square_to_coords(start)
-        end_x, end_y = self.square_to_coords(end)
-        piece = self.board[start_y][start_x]
+    def is_castling_move(self, start: Square, end: Square) -> bool:
+        return end in self.CASTLING_MOVES.get(start, [])
+
+    def capture_en_passant(self, start: Square, end: Square):
+        # start_row, start_col = start.coord
+        end_row, end_col = end.coord
+        # piece = self.board[start_row][start_col]
 
         # Remove the captured pawn from the en passant square
         if self.turn == 'w':
-            self.board[end_y - 1][end_x] = '1'  # Remove the black pawn captured en passant
+            # White captures black pawn which is below the end square
+            self.board[end_row + 1][end_col] = '1'
         else:
-            self.board[end_y + 1][end_x] = '1'  # Remove the white pawn captured en passant
+            # Black captures white pawn which is above the end square
+            self.board[end_row - 1][end_col] = '1'
 
         self.move_piece_internal(start, end)  # Move the pawn to the destination square
         self.en_passant = None  # Reset en passant after the capture
@@ -230,119 +234,112 @@ class ChessPosition:
     def can_castle(self, side, kingside):
         if side == 'w':
             if kingside:
-                # White kingside: e1 to g1 (king), rook at h1
-                return (self.get_piece("e1") == 'K' and
-                        self.get_piece("h1") == 'R' and
-                        all(self.is_empty(sq) for sq in ["f1", "g1"]))
+                return (self.get_piece(self.E1) == 'K' and
+                        self.get_piece(self.H1) == 'R' and
+                        all(self.is_empty(sq) for sq in [self.F1, self.G1]))
             else:
-                # White queenside: e1 to c1 (king), rook at a1
-                return (self.get_piece("e1") == 'K' and
-                        self.get_piece("a1") == 'R' and
-                        all(self.is_empty(sq) for sq in ["b1", "c1", "d1"]))
+                return (self.get_piece(self.E1) == 'K' and
+                        self.get_piece(self.A1) == 'R' and
+                        all(self.is_empty(sq) for sq in [self.B1, self.C1, self.D1]))
         else:
             if kingside:
-                # Black kingside: e8 to g8, rook at h8
-                return (self.get_piece("e8") == 'k' and
-                        self.get_piece("h8") == 'r' and
-                        all(self.is_empty(sq) for sq in ["f8", "g8"]))
+                return (self.get_piece(self.E8) == 'k' and
+                        self.get_piece(self.H8) == 'r' and
+                        all(self.is_empty(sq) for sq in [self.F8, self.G8]))
             else:
-                # Black queenside: e8 to c8, rook at a8
-                return (self.get_piece("e8") == 'k' and
-                        self.get_piece("a8") == 'r' and
-                        all(self.is_empty(sq) for sq in ["b8", "c8", "d8"]))
+                return (self.get_piece(self.E8) == 'k' and
+                        self.get_piece(self.A8) == 'r' and
+                        all(self.is_empty(sq) for sq in [self.B8, self.C8, self.D8]))
 
-    def move_piece_internal(self, start, end):
-        start_x, start_y = self.square_to_coords(start)
-        end_x, end_y = self.square_to_coords(end)
-        piece = self.board[start_y][start_x]
-        self.board[start_y][start_x] = '1'  # Remove piece from the start position
-        self.board[end_y][end_x] = piece  # Place piece at the end position
+    def move_piece_internal(self, start: Square, end: Square):
+        start_row, start_col = start.coord
+        end_row, end_col = end.coord
 
-    def move_piece(self, start, end):
-        start_x, start_y = self.square_to_coords(start)
-        end_x, end_y = self.square_to_coords(end)
-        piece = self.board[start_y][start_x]
-        target = self.board[end_y][end_x]
-        if piece == 1:
-            # Start square is empty, no move to make
+        piece = self.board[start_row][start_col]
+        self.board[start_row][start_col] = '1'  # Clear start square
+        self.board[end_row][end_col] = piece  # Move piece to end square
+
+    def move_piece(self, start: Square, end: Square):
+        start_row, start_col = start.coord
+        end_row, end_col = end.coord
+        piece = self.board[start_row][start_col]
+        # target = self.board[end_row][end_col]
+
+        if piece == '1':
+            # Start square empty, no move
             return
 
         # Castling (execute as two moves)
         if piece in self.king_pieces and self.is_castling_move(start, end):
-            if start == "e1":
-                if end == "g1" and self.can_castle('w', True):
-                    # White kingside castling (e1 -> g1, h1 -> f1)
-                    self.move_piece_internal("e1", "g1")
-                    self.move_piece_internal("h1", "f1")
-                elif end == "c1" and self.can_castle('w', False):
-                    # White queenside castling (e1 -> c1, a1 -> d1)
-                    self.move_piece_internal("e1", "c1")
-                    self.move_piece_internal("a1", "d1")
+            if start == self.E1:
+                if end == self.G1 and self.can_castle('w', True):
+                    self.move_piece_internal(self.E1, self.G1)
+                    self.move_piece_internal(self.H1, self.F1)
+                elif end == self.C1 and self.can_castle('w', False):
+                    self.move_piece_internal(self.E1, self.C1)
+                    self.move_piece_internal(self.A1, self.D1)
                 else:
-                    return  # Invalid castling attempt
-            elif start == "e8":
-                if end == "g8" and self.can_castle('b', True):
-                    # Black kingside castling (e8 -> g8, h8 -> f8)
-                    self.move_piece_internal("e8", "g8")
-                    self.move_piece_internal("h8", "f8")
-                elif end == "c8" and self.can_castle('b', False):
-                    # Black queenside castling (e8 -> c8, a8 -> d8)
-                    self.move_piece_internal("e8", "c8")
-                    self.move_piece_internal("a8", "d8")
+                    return  # Invalid castling
+            elif start == self.E8:
+                if end == self.G8 and self.can_castle('b', True):
+                    self.move_piece_internal(self.E8, self.G8)
+                    self.move_piece_internal(self.H8, self.F8)
+                elif end == self.C8 and self.can_castle('b', False):
+                    self.move_piece_internal(self.E8, self.C8)
+                    self.move_piece_internal(self.A8, self.D8)
                 else:
-                    return  # Invalid castling attempt
+                    return  # Invalid castling
 
             self.change_turn()
             self.en_passant = None
-            self.update_fen() # Castling move completed
+            self.update_fen()
             return
 
-        # Is it an en passant?      
-        # Yes case.
+        # En passant capture
         if piece.lower() in self.pawn_pieces and end == self.en_passant:
             self.capture_en_passant(start, end)
-        else: # No! Its a regular move
-            self.move_piece_internal(start, end)  # Move the piece to the target square    
+        else:
+            # Normal move
+            self.move_piece_internal(start, end)
 
-            # En passant logic: check if its a pawn moving two squares forward
+            # En passant target square logic for pawn double moves
             if piece.lower() in self.pawn_pieces:
-                if self.turn == 'w' and start_y == 1 and end_y == 3:  # X2 to X4
-                    if end_x == start_x:
-                        self.en_passant = self.coords_to_square(end_x, end_y - 1)  # Set en passant target for black pawn
-                elif self.turn == 'b' and start_y == 6 and end_y == 4:  # X7 to X5
-                    if end_x == start_x:
-                        self.en_passant = self.coords_to_square(end_x, end_y + 1)  # Set en passant target for white pawn
+                if self.turn == 'w' and start_row == 6 and end_row == 4 and end_col == start_col:
+                    self.en_passant = Square.get(coord=(5, end_col))  # rank 3 (index 5)
+                elif self.turn == 'b' and start_row == 1 and end_row == 3 and end_col == start_col:
+                    self.en_passant = Square.get(coord=(2, end_col))  # rank 6 (index 2)
                 else:
-                    self.en_passant = False # We're playing a pawn move, but it turned out not to be an en passant
+                    self.en_passant = None
             else:
-                self.en_passant = False # We're playing a move, but not by a pawn
+                self.en_passant = None
+
         self.change_turn()
         self.update_fen()
 
-    def promote_pawn(self, start, end, new_piece):
-        '''
-        new_piece is lower case of user defined name (not internal name)
-        '''
+    def promote_pawn(self, start: Square, end: Square, new_piece: str):
+        """
+        new_piece is lowercase user-defined piece symbol (e.g. 'q', 'r', 'n', 'b')
+        """
 
-        start_x, start_y = self.square_to_coords(start)
-        end_x, end_y = self.square_to_coords(end)
-        internal_piece = self.board[start_y][start_x]
+        start_row, start_col = start.coord
+        end_row, end_col = end.coord
+        internal_piece = self.board[start_row][start_col]
         piece = self.convert_i_to_u(internal_piece)
 
         if piece.lower() not in self.pawn_pieces:
             raise ValueError("Only pawns can be promoted")
 
-        if (piece == 'P' and end_y == 7) or (piece == 'p' and end_y == 0) or (piece == '=p' and end_y in [0,7]):
-            self.board[start_y][start_x] = '1'
+        if (piece == 'P' and end_row == 0) or (piece == 'p' and end_row == 7) or (piece == '=p' and end_row in [0,7]):
+            self.board[start_row][start_col] = '1'
              # Determine promoted piece with correct color
-            promoted = new_piece.upper() if end_y == 7 else new_piece.lower()
+            promoted = new_piece.upper() if end_row == 0 else new_piece.lower()
             
             # Keep '=' prefix if the original piece was marked as such
             if piece in self.neutral_pieces:
                 promoted = '=' + promoted.lower()
 
             internal_promoted = self.convert_u_to_i(promoted)
-            self.board[end_y][end_x] = internal_promoted
+            self.board[end_row][end_col] = internal_promoted
             self.en_passant = None
             self.change_turn()
             self.update_fen()
@@ -350,57 +347,31 @@ class ChessPosition:
             # This indicated an attempt to promote a white pawn on the 1st rank, or black pawn on the 8th rank
             raise ValueError("Promotion of this piece must happen on last rank")
 
-    def get_piece(self, square_name):
-        x, y = self.square_to_coords(square_name)
-        p = self.board[y][x]
-        return None if p == '1' else p
+    def get_piece(self, square_sing):
+        row, col = square_sing.coord
 
-    def get_piece_at_square_num(self, square_num):
-        row = square_num // 8
-        col = square_num % 8
-
-        y = 7 - row
-        x = col
-
-        p = self.board[y][x]
-        return None if p == '1' else p
-
-    def square(self, col, row):
-        return row * 8 + col
-
-    def get_piece_at_coords(self, row, col):
-        """Get the piece at a specific square (row, col)."""
         piece = self.board[row][col]
-        return None if piece == '1' else piece   # Return the piece at the specified square
+        return None if piece == '1' else p
 
-    def is_empty(self, square):
+    def is_empty(self, square: Square) -> bool:
         return self.get_piece(square) is None
 
-    def add_piece(self, square, piece):
-        x, y = self.square_to_coords(square)
+    def add_piece(self, square: Square, piece: str):
+        """Adds a piece to the board at the given square."""
+        row, col = square.coord
         internal_piece = self.convert_u_to_i(piece)
-        self.board[y][x] = internal_piece
+        self.board[row][col] = internal_piece
         self.update_fen()
-
-    def square_to_coords(self, square):
-        file = ord(square[0]) - ord('a')
-        rank = int(square[1]) - 1
-        return file, rank # Returns x value then y value. If passing to board it'll be board[y][x]
-
-    def coords_to_square(self, x, y):
-        file = chr(ord('a') + x)  # x = 0 → 'a', x = 1 → 'b', ..., x = 7 → 'h'
-        rank = str(y + 1)         # y = 0 → '1', y = 1 → '2', ..., y = 7 → '8'
-        return file + rank        # e.g., 'e4'
 
     def get_en_passant(self):
         return self.en_passant
 
     def get_turn(self):
         return self.turn
-    
+
     def remove_piece(self, square):
-        x, y = self.square_to_coords(square)
-        self.board[y][x] = '1'
+        col, row = square.coord
+        self.board[row][col] = '1'
         self.update_fen()
 
     def get_piece_colour(self, internal_token):
@@ -408,14 +379,13 @@ class ChessPosition:
         Determines the side (white, black, or neutral) of a piece based on its internal symbol.
 
         Args:
-            internal_symbol (str): A single-character internal symbol (Unicode).
-            internal_to_user_map (dict): Mapping from internal symbol to user token.
+            internal_token (str): A single-character internal symbol (Unicode).
 
         Returns:
             str: 'white', 'black', or 'neutral'
         """
-        if internal_token == None:
-            return None
+        if internal_token is None or internal_token == '1':
+            return None # Empty square
         
         reserved = set("PSBRQKpsbrqk12345678/")
         if internal_token in reserved:
@@ -463,7 +433,7 @@ class ChessPosition:
         self.move_history = []
 
 def print_board_matrix(board, empty_square_char='.'):
-    for row in reversed(board):  # print rank 8 to 1
+    for row in board:  # print rank 8 to 1
         print(' '.join(empty_square_char if cell == '1' else cell for cell in row))
     print()
 

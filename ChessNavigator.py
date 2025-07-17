@@ -8,6 +8,7 @@ import chess
 import argparse
 
 from mychess import ProblemListContainer
+from square import Square
 
 from pyperclip import copy
 import re
@@ -972,9 +973,10 @@ class ChessGUI:
             for col in range(Config.BOARD_SIZE):
                 #square = chess.square(col, 7 - row)
                 square = (7 - row) * 8 + col
+                sq = Square.get(coord=(row, col))
                 #piece = self.position.get_piece(square)
-                piece = self.position.get_piece_at_coords(row, col)
-                if piece and (self.dragging_square != square):
+                piece = self.position.get_piece(sq)
+                if piece and (self.dragging_square is not sq):
                     #img = self.pieces[piece.symbol()]
                     img = self.pieces[piece]
                     self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
@@ -1036,15 +1038,13 @@ class ChessGUI:
             row = y // Config.SQUARE_SIZE
             #return chess.square(col, 7 - row)  # Convert to chess square notation
             #return (7-row) * 8 + col
-            return row * 8 + col
+            return Square.get(coord=(row, col))
 
         return None  # If outside the board
 
-    def change_square_color(self, chess_square, new_color):
+    def change_square_color(self, square, new_color):
         """Receives the square under the mouse (0 to 63) and changes colour in the colour vector"""
-        row = 7 - chess.square_rank(chess_square)
-        col = chess.square_file(chess_square)
-        row, col = self.position.get_coords_from_index(self, chess_square)
+        row, col = square.coord
 
         if new_color is not None:
             self.square_colors[row][col] = new_color
@@ -1057,8 +1057,8 @@ class ChessGUI:
         panel_x = Config.MAIN_WIDTH
 
         for piece, piece_pos in self.spare_pieces:
-            px, py = piece_pos
-            if panel_x + px <= pos[0] <= panel_x + px + Config.SQUARE_SIZE and py <= pos[1] <= py + Config.SQUARE_SIZE:
+            piece_x, piece_y = piece_pos
+            if panel_x + piece_x <= pos[0] <= panel_x + piece_x + Config.SQUARE_SIZE and piece_y <= pos[1] <= piece_y + Config.SQUARE_SIZE:
                 return piece
         return None
 
@@ -1067,23 +1067,22 @@ class ChessGUI:
         self.check_legal_toggle_click(pos)
         self.check_turn_toggle_click(pos)
 
-        square_num = self.get_square_under_mouse(pos)
-        if square_num:
-            square_name = chr(ord('a') + (square_num % 8)) + str((square_num // 8) + 1)
-        print(f"SQUARE:{square_num}")
+        sq = self.get_square_under_mouse(pos)
+        print(f"SQUARE:{sq}")
         panel_piece = self.get_piece_from_panel(pos)
 
         if panel_piece:
             self.dragging_piece = self.pieces[panel_piece]
+            self.dragging_piece_symbol = panel_piece
             self.piece_source = "panel"
             self.dragging_pos = pos
-            self.dragging_square = panel_piece
-        elif square_num is not None:
-            piece = self.position.get_piece_at_square_num(square_num)
+            self.dragging_square = None
+        elif sq is not None:
+            piece = self.position.get_piece(sq)
             if piece:
                 self.dragging_piece = self.pieces[piece]
                 self.piece_source = "board"
-                self.dragging_square = square_name
+                self.dragging_square = sq
                 self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
     def handle_mouse_motion(self, pos):
@@ -1092,39 +1091,40 @@ class ChessGUI:
 
     def handle_mouse_up(self, pos):
         """Handles dropping a piece, ensuring its color is preserved."""
-        if self.dragging_piece:
-            new_square = self.get_square_under_mouse(pos)
-            if new_square:
-                new_square_name = chr(ord('a') + (new_square % 8)) + str((new_square // 8) + 1)
-            # print(f"Dragged piece from {self.piece_source} to {new_square}")
-            if self.piece_source == "board" and new_square is not None:
-                if new_square != self.dragging_square:  # Move only if dropped in a new square
-                    self.position.move_piece(self.dragging_square, new_square_name)
+        if not self.dragging_piece:
+            return
+
+        new_square = self.get_square_under_mouse(pos)
+
+        # print(f"Dragged piece from {self.piece_source} to {new_square}")
+        if self.piece_source == "board" and new_square is not None:
+            if new_square is not self.dragging_square:  # Move only if dropped in a new square
+                self.position.move_piece(self.dragging_square, new_square)
 
 
-            elif self.piece_source == "panel" and new_square is not None:
-                # Add the piece to the board and record the action for undo
-                # New logic: only allow adding pieces when legality is off
-                if not self.position.legal_moves_enabled:
-                    piece_symbol = self.dragging_square  # This is the symbol of the piece being dragged
-                    self.position.add_piece(new_square_name, piece_symbol)
-                else:
-                    print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
+        elif self.piece_source == "panel" and new_square is not None:
+            # Add the piece to the board and record the action for undo
+            # New logic: only allow adding pieces when legality is off
+            if not self.position.legal_moves_enabled:
+                piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
+                self.position.add_piece(new_square, piece_symbol)
+            else:
+                print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
 
-            elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
-                # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
-                # Only allow removing a piece from board when legality is turned off
-                if not self.position.legal_moves_enabled:
-                    self.position.remove_piece(self.dragging_square)
-                    #self.board.remove_piece_at(self.dragging_square)
-                else:
-                    print("Dropped piece off board, but it was illegal so not executed")
-                # self.game.delete_piece_at(self.dragging_square)
+        elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
+            # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
+            # Only allow removing a piece from board when legality is turned off
+            if not self.position.legal_moves_enabled:
+                self.position.remove_piece(self.dragging_square)
+                #self.board.remove_piece_at(self.dragging_square)
+            else:
+                print("Dropped piece off board, but it was illegal so not executed")
+            # self.game.delete_piece_at(self.dragging_square)
 
-            # Reset dragging state
-            self.dragging_piece = None
-            self.dragging_square = None
-            self.piece_source = None
+        # Reset dragging state
+        self.dragging_piece = None
+        self.dragging_square = None
+        self.piece_source = None
 
     def reverse_cycle_fen(self):
         """Move back to the previous problem"""
