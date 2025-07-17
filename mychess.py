@@ -2,6 +2,7 @@ from multiprocessing import Process, Queue
 from collections import OrderedDict
 from fen_mapper import load_existing_map
 from square import Square
+import re
 
 ## Container for composition database
 
@@ -130,8 +131,6 @@ class ChessPosition:
         self.legal_moves_enabled = False
         self.start_pos = fen
         self.move_history = []
-
-        self.board_index = self.create_index_lookup()
 
 
     def convert_u_to_i(self, token):
@@ -347,11 +346,11 @@ class ChessPosition:
             # This indicated an attempt to promote a white pawn on the 1st rank, or black pawn on the 8th rank
             raise ValueError("Promotion of this piece must happen on last rank")
 
-    def get_piece(self, square_sing):
+    def get_piece(self, square_sing) -> str:
         row, col = square_sing.coord
 
         piece = self.board[row][col]
-        return None if piece == '1' else p
+        return None if piece == '1' else piece
 
     def is_empty(self, square: Square) -> bool:
         return self.get_piece(square) is None
@@ -370,7 +369,7 @@ class ChessPosition:
         return self.turn
 
     def remove_piece(self, square):
-        col, row = square.coord
+        row, col = square.coord
         self.board[row][col] = '1'
         self.update_fen()
 
@@ -427,10 +426,342 @@ class ChessPosition:
     def reset_board(self):
         self.set_fen(self.start_pos)
         self.reset_move_history()
-        self.tree_position = 0
 
     def reset_move_history(self):
         self.move_history = []
+
+
+class TempChessPosition(ChessPosition):
+    """ This class is a copy of ChessPosition buth with additional functions for creating the fen tree """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # Initialize like ChessPosition
+        self.move_handlers: dict[str, callable] = {
+            'move': self.handle_move,
+            'promotion': self.handle_promotion,
+            'save': self.handle_save,
+            'home': self.handle_home,
+            'skipback': self.handle_skipback,
+            'player_turn': self.handle_set_whos_turn,
+            'add': self.handle_add,
+            'remove': self.handle_remove,
+            'and': self.handle_and
+        }
+        self.move_id = -1
+        self.id_record = []  # Vector storing (FEN position number in list, move_id) pairs
+
+        self.generated = []  # This will store the full fens and be returned at the end
+        self.add_this_fen()  # Start by adding the initial FEN. Will need to know this later with -> movements
+        self.checkpoints = []  # Create checkpoints list
+        self.current_checkpoint_index = 0
+        self.checkpoints.append(self.fen)  # Start with the home position (shouldn't be necessary)
+
+    # What follows now are operations for parsing the PROBLEM_LIST.txt file
+
+    def add_this_fen(self):
+        self.generated.append(self.fen)
+        self.move_id += 1
+        self.id_record.append(self.move_id)
+
+    def process_move(self, move_str):
+        # Global move id to pass around
+        # Increment self.move_id += 1 when a new fen is added.
+
+        # Convert the move string
+        converted_move = self.convert_move(move_str)
+        move_type = converted_move['type']
+
+        button_label = None
+        button_fen = None
+
+        # Call the corresponding handler function from the dictionary
+        if move_type in self.move_handlers:
+            button_label, button_fen = self.move_handlers[move_type](converted_move)
+
+        else:
+            print(f"Unknown move type: {move_type}")
+
+        return button_label, button_fen, self.move_id
+
+    def handle_move(self, move):
+        """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
+        If the move is of uci-format then:
+        perform it, and update the game
+        save the current FEN into the list"""
+
+        # Updated Square objects
+        from_square = Square.get(alg=move['from'])
+        to_square = Square.get(alg=move['to'])
+
+        # Move recorded
+        print(f"Regular move from {from_square} to {to_square}")
+
+        piece = self.get_piece(from_square)
+        target_piece = self.get_piece(to_square)
+
+        if piece is None:
+            print("Uhm, there was meant to be a piece here!")
+            return None, None
+
+        piece_color = self.get_piece_colour(piece)
+        target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
+
+        if piece_color != self.turn:
+            print("You moved out of turn, but I'll allow it.")
+            self.change_turn()  # Swap player to move
+
+        if target_piece is not None:
+            if piece_color == target_piece_color:
+                print("You're trying to consume one of your own pieces. I'll allow it.")
+                deletion_move = self.convert_move("-" + to_square.alg)
+                and_move = self.convert_move("&")
+                self.move_handlers['remove'](deletion_move)
+                self.move_handlers['and'](and_move)
+
+        # Implement the logic for handling regular moves
+        # mv = chess.Move.from_uci(from_square + to_square)
+
+        # Move recorded 2
+        # san_version = self.board.san(mv)
+        # print(f"This move is called {san_version}")
+        # button_label = str(san_version)
+        # print(f"BUTTON: {button_label}")
+
+        #self.board.push(mv)
+
+        self.move_piece(from_square, to_square)
+        self.add_this_fen()
+
+        fake_san_version = move['from']+move['to']
+
+        return fake_san_version, self.fen
+
+    def handle_promotion(self, move):
+        """e.g. {'type': 'promotion', 'from': 'a7', 'to': 'a8', 'promotion_piece': 'Q'}
+        If move is promotion do same as move but add all three parts
+        """
+
+        from_square = Square.get(alg=move['from'])
+        to_square = Square.get(alg=move['to'])
+
+        promotion_piece = move['promotion_piece'].upper() # Standardize always to uppercase
+
+        # Move recorded
+        print(f"Promotion move from {from_square} to {to_square} promoting to {promotion_piece}")
+
+        # Implement the logic for handling promotion
+
+        piece = self.get_piece(from_square)
+        target_piece = self.get_piece(to_square)
+
+        if piece is None:
+            print("Uhm, there was meant to be a piece here!")
+            return None, None
+
+        piece_color = self.get_piece_colour(piece)
+        target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
+
+        if piece_color != self.turn:
+            print("You moved out of turn, but I'll allow it.")
+            self.change_turn()
+
+        if target_piece is not None:
+            if piece_color == target_piece_color:
+                print("You're trying to consume one of your own pieces. I'll allow it.")
+                deletion_move = self.convert_move("-" + to_square.alg)
+                and_move = self.convert_move("&")
+                self.move_handlers['remove'](deletion_move)
+                self.move_handlers['and'](and_move)
+
+        #mv = chess.Move.from_uci(from_square + to_square + promotion_piece.lower())
+
+        # Move recorded 2
+        #san_version = self.board.san(mv)
+        # print(f"This move is called {san_version}")
+        #button_label = str(san_version)
+        # print(f"BUTTON: {button_label}")
+        #self.board.push(mv)
+
+        self.promote_pawn(from_square, to_square, promotion_piece)
+        self.add_this_fen()
+
+        fake_san_version = move['from'] + move['to'] + promotion_piece.lower()
+
+        return fake_san_version, self.fen
+
+    def handle_save(self, _):
+        """ e.g. {'type': 'save'}
+        elif the move is to add a checkpoint then:
+            add locally save the checkpoint FEN (and keep previous checkpoint)
+            save "SaveCheckpoint" into the list
+            also save current FEN into the list
+        """
+
+        # Move recorded
+        print("Saving current position")
+        # Implement the logic for saving the current position
+
+        # Remove any future checkpoints if we are not at the end
+        self.checkpoints = self.checkpoints[:self.current_checkpoint_index + 1]
+
+        # Save the current position
+        self.checkpoints.append(self.fen)
+
+        # Update the current checkpoint index
+        self.current_checkpoint_index = len(self.checkpoints) - 1
+
+        # Won't store facts about checkpoints into generated for now, just fens
+        # self.generated.append("SaveCheckPoint")
+        # Don't need to add a FEN since we already added it? could revisit
+
+        return "*", self.current_checkpoint_index
+
+    def handle_home(self, _):
+        """ e.g. {'type': 'home'} """
+
+        # Move recorded
+        print("Returning to home position")
+        # Implement the logic for returning to the home position
+        self.current_checkpoint_index = 0
+        self.set_fen(self.checkpoints[self.current_checkpoint_index])
+        self.add_this_fen()  # Save the fen to the generated list
+
+        return "H", self.current_checkpoint_index
+
+    def handle_skipback(self, move):
+        """ e.g. {'type': 'skipback', 'steps': n} """
+
+        distance = move['steps']
+        # Move recorded
+        print(f"Skipping back {distance} level(s)")
+        # Implement the logic for skipping back
+        self.current_checkpoint_index = max(0, self.current_checkpoint_index - distance + 1)
+        self.set_fen(self.checkpoints[self.current_checkpoint_index])
+        self.add_this_fen()  # Save the fen to the generated list
+        # print(self.board)
+
+        return "back", self.current_checkpoint_index
+
+    def handle_and(self, _):
+        """{'type': 'and'} """
+        # Move recorded
+        print(f"...playing another move at the same time...")
+        print(f"BUTTON: save current button text for appending next move")
+        self.generated.pop()  # This should remove the last element
+        self.id_record.pop()  # Copy same behaviour on move_id
+        self.move_id -= 1
+
+        return "&", None
+
+    def handle_add(self, move):
+        """ {'type': 'add', 'piece': 'B', 'to': 'e5'} """
+        to_square = Square.get(alg=move['to'])
+        added_piece_symbol = move['piece']
+
+        # Move recorded
+        print(f"Add piece ({added_piece_symbol}) to {to_square.alg}")
+        button_label = "+" + str(added_piece_symbol) + str(to_square.alg)
+        print(f"BUTTON: {button_label}")
+
+        # Implement the logic for handling capture
+        #self.board.set_piece_at(chess.parse_square(to_square), chess.Piece.from_symbol(added_piece))
+        self.add_piece(to_square, added_piece_symbol)
+        self.add_this_fen()  # Save the fen to the generated list
+
+        return button_label, self.fen
+
+    def handle_remove(self, move):
+        """ {'type': 'remove', 'from': 'a1'} """
+
+        from_square = Square.get(alg=move['from'])
+
+        piece_there = self.get_piece(from_square)
+
+        if piece_there is None:
+            print(f"No piece found at {from_square} to remove!")
+            return None, None
+
+        # Move recorded
+        print(f"Removing piece from {from_square.alg}")
+        button_label = "-" + str(piece_there) + str(from_square)
+        print(f"BUTTON: {button_label}")
+
+        # Implement the logic for removing a piece
+        #self.board.remove_piece_at(chess.parse_square(from_square))
+
+        self.remove_piece(from_square)
+        self.add_this_fen()
+
+        return button_label, self.fen
+
+    def handle_set_whos_turn(self, move):
+        """e.g. {'type': 'player_turn', 'player': 'B'}
+        Request to set whose turn it is
+        """
+        player_to_move = move['player']
+        current_turn = "W" if self.turn == 'w' else "B"  # Find whos turn it current is
+        if player_to_move != current_turn:
+            # Target player to move means we need to change
+            self.change_turn()
+            self.add_this_fen()
+
+        return str(player_to_move), None
+
+    def result(self):
+        return self.generated, self.id_record
+
+    @staticmethod
+    def convert_move(move: str) -> dict[str, str | int]:
+        """
+        Function to convert different types of move strings to a structured representation.
+        Each case will be converted into an appropriate format (e.g., tuple or dict).
+        """
+
+        # Case a: letter-number-letter-number (e.g. a1e5) possibly ending +, ++ or #
+        if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1,2}|#)?$', move):
+            move = move.rstrip('+#')  # Strips any + or # at the end
+            # This matches a format like 'a1e5'
+            return {'type': 'move', 'from': move[:2], 'to': move[2:]}
+
+        # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prnbQPRNBQ
+        # possibly ending +, ++ or #
+        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbnqkRBNQK](\+{1,2}|#)?$', move):
+            move = move.rstrip('+#')  # Strips any + or # at the end
+            # This matches a format like 'a7a8Q' with a valid promotion piece
+            return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
+
+        # Case c: the string "*" means save checkpoint
+        elif move == "*":
+            return {'type': 'save'}
+
+        # This case allow multiple moves to be simultaneous
+        elif move == "&":
+            return {'type': 'and'}  # Plan is to read next move and overwrite, not advancing the tree
+
+        # Case d: the string "H" means return to home
+        elif move == "H":
+            return {'type': 'home'}
+
+        # Case: setting whose turn it is to move
+        elif move in ("W", "B"):
+            return {'type': 'player_turn', 'player': move}
+
+        # Case e: a string of consecutive < symbols, e.g. <<< or <
+        elif re.fullmatch(r'<+', move):  # any number of < symbols
+            return {'type': 'skipback', 'steps': len(move)}
+
+        # Case f: string "+letter-letter-number" (e.g. +Rb2)
+        elif re.fullmatch(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
+            # This matches a format like '+Rb2'
+            return {'type': 'add', 'piece': move[1], 'to': move[2:]}
+
+        # Case g: string "-letter-number" (e.g. -e4)
+        elif re.fullmatch(r'^-[a-h][1-8]$', move):
+            # This matches a format like '-e4'
+            return {'type': 'remove', 'from': move[1:]}
+
+        else:
+            return {'type': 'invalid', 'move': move}
 
 def print_board_matrix(board, empty_square_char='.'):
     for row in board:  # print rank 8 to 1
@@ -454,7 +785,7 @@ if __name__ == '__main__':
     container.add_composition("Silly problem", "8/8/8/8/8/8/8/K6k", [], "mate in 1")
     container.add_composition("Silly problem", "8/8/8/8/8/R7/8/K6k", [], "mate in 2")
     container.add_composition("Silly problem", "8/8/1ppppp1p/8/8/8/8/K6k", [], "mate in 3")
-    container.set_current(f"{3:03}")
+    container.set_current(3)
 
     result_q = Queue()
     p = Process(target=worker, args=(container, result_q))

@@ -7,7 +7,7 @@ import chess
 #import chess.pgn
 import argparse
 
-from mychess import ProblemListContainer
+from mychess import ProblemListContainer, ChessPosition, TempChessPosition
 from square import Square
 
 from pyperclip import copy
@@ -779,6 +779,7 @@ class ChessGUI:
                         self.position.redefine_start() # Press INSERT to redefine root position
                     elif event.key in (pygame.K_HOME, pygame.K_r):
                         self.position.reset_board() # Press HOME to return to root position
+                        self.composition.tree_position = 0
                     elif event.key == pygame.K_t:
                         self.position.change_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
@@ -1068,7 +1069,7 @@ class ChessGUI:
         self.check_turn_toggle_click(pos)
 
         sq = self.get_square_under_mouse(pos)
-        print(f"SQUARE:{sq}")
+        print(f"Move clicked on {sq}")
         panel_piece = self.get_piece_from_panel(pos)
 
         if panel_piece:
@@ -1594,7 +1595,8 @@ def generate_fen_path(beginning, moves):
     # Already done, in moves
 
     # Load the starting FEN into a chess object, i.e. create a temporary game e.g. via a chess.board(START)
-    temp_game = TempGame(beginning)
+    # temp_game = TempGame(beginning)
+    temp_game = TempChessPosition(beginning)
 
     # Create the move_tree already in finished arrangement
     grid_data = [] # 2D grid of (label, fen) data

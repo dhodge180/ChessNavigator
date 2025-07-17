@@ -68,7 +68,8 @@ class Square:
 
 for index in range(64):
     row, col = divmod(index, 8)
-    alg = f"{Square.files[col]}{row + 1}"
+    rank = 8 - row
+    alg = f"{Square.files[col]}{rank}"
     coord = (row, col)
 
     Square.index_to_alg[index] = alg
