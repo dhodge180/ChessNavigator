@@ -30,7 +30,7 @@ class Composition:
     def get_position_object(self):
         return self.position
 
-    def advance_tree_step(self, direction):
+    def advance_tree_step(self, direction, callback_queue=None):
         """Move through current fen tree. Forwards, backwards or jump to end."""
         current_fen_tree = self.fen_tree
 
@@ -47,8 +47,21 @@ class Composition:
         # Move to next position (might be same position if at an end already)
         self.position.set_fen(current_fen_tree[self.tree_position])
         # Could now send news to move window to move highlight marker
-        if self.move_window_version == True:
-            self.move_window_queue.put(('state', self.tree_position))
+        if callback_queue:
+            callback_queue.put(('state', self.tree_position))
+        #if self.move_window_version == True:
+        #    self.move_window_queue.put(('state', self.tree_position))
+
+    def jump_tree_step(self, target, callback_queue=None):
+
+        """Jumps to a specific node of the tree and remembers for future arrow navigation"""
+        current_fen_tree = self.fen_tree
+
+        self.tree_position = target
+        self.position.set_fen(current_fen_tree[self.tree_position])
+        # Could now send news to move window to move highlight marker
+        if callback_queue:
+            callback_queue.put(('state', self.tree_position))
 
 class ProblemListContainer:
     def __init__(self):
