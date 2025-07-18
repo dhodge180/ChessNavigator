@@ -1,7 +1,7 @@
 import os
 # import chess
-from mychess import ChessPosition, Composition, ProblemListContainer, print_board_matrix
-from fen_mapper import load_and_update_mapping, load_existing_map, MAP_FILE, convert_fen_board_section
+from djhchess.mychess import ChessPosition
+from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
 import re
 
 def print_mapping(title, mapping):

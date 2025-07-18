@@ -3,12 +3,17 @@ This is the main Chess Navigator program
 """
 
 import pygame
-import chess
+# import chess
 #import chess.pgn
 import argparse
 
-from mychess import ProblemListContainer, ChessPosition, TempChessPosition
-from square import Square
+# Needed
+from djhchess.square import Square
+from djhchess.mychess import ProblemListContainer, TempChessPosition
+
+# Maybe not needed, as they're loaded by mychess when needed
+#from djhchess.mychess import ChessPosition, print_board_matrix
+# from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, load_existing_map
 
 from pyperclip import copy
 import re
@@ -1100,7 +1105,7 @@ class ChessGUI:
         # print(f"Dragged piece from {self.piece_source} to {new_square}")
         if self.piece_source == "board" and new_square is not None:
             if new_square is not self.dragging_square:  # Move only if dropped in a new square
-                self.position.move_piece(self.dragging_square, new_square)
+                self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
 
 
         elif self.piece_source == "panel" and new_square is not None:
@@ -1126,6 +1131,31 @@ class ChessGUI:
         self.dragging_piece = None
         self.dragging_square = None
         self.piece_source = None
+
+    def gui_ask_for_promotion(self):
+        """Waits for the user to press a key to select a promotion piece."""
+
+        # Available pieces for promotion
+        valid_choices = ['Q', 'R', 'B', 'S']
+
+        pygame.display.flip()  # Update the display
+
+        running = True
+        selected_piece = None
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    key = pygame.key.name(event.key).upper()
+                    if key in valid_choices:
+                        selected_piece = key
+                        running = False
+
+            self.clock.tick(30)
+
+        return selected_piece
 
     def reverse_cycle_fen(self):
         """Move back to the previous problem"""
