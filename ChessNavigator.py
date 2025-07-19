@@ -753,7 +753,7 @@ class ChessGUI:
                 self.draw_pieces()
                 self.draw_panel()
                 self.setup_spare_pieces()
-                self.draw_legality_mode()  # Show legality mode status
+                #self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
                 # self.draw_pgn_panel()
                 self.draw_custom_title()
@@ -913,7 +913,7 @@ class ChessGUI:
     def draw_turn_indicator(self):
         """Draws the turn indicator circle in the bottom-right corner."""
         # Determine whose turn it is (White or Black)
-        turn_color = Config.TURN_WHITE if self.position.turn else Config.TURN_BLACK  # True = White's turn, False = Black's turn
+        turn_color = Config.TURN_WHITE if self.position.turn == 'w' else Config.TURN_BLACK  # 'w' = White's turn, 'b' = Black's turn
 
         # Coordinates for the bottom-right corner
         circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
