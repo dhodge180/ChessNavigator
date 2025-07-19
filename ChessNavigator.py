@@ -986,6 +986,8 @@ class ChessGUI:
                 piece = self.position.get_piece(sq)
                 if piece and (self.dragging_square is not sq):
                     #img = self.pieces[piece.symbol()]
+                    if piece == "=":
+                        print("Neutral piece in fen, need to use internals")
                     img = self.pieces[piece]
                     self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
                                            _border_size + _height_padding + row * Config.SQUARE_SIZE))
