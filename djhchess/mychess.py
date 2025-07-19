@@ -569,8 +569,9 @@ class TempChessPosition(ChessPosition):
 
         self.move_piece(from_square, to_square)
         self.add_this_fen()
+        prefix = piece.upper() if piece not in self.pawn_pieces else ""
 
-        fake_san_version = move['from']+move['to']
+        fake_san_version = prefix+move['from']+move['to']
 
         return fake_san_version, self.fen
 

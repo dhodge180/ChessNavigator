@@ -1205,7 +1205,7 @@ class ChessGUI:
             self.moves_window_queue.put(
                 #   ("load moves grid", self.PROBLEM_LIST_ingui[-1]["move_tree"]))  # Value passed is PROBLEM_LIST index of new game
                 # ("load moves grid", current_fen_data["move_tree"])) # OLD
-                ("load moves grid", comp.move_tree))  # NEW
+                ("load moves grid", self.composition.move_tree))  # NEW
             return
         else:
             return
