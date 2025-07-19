@@ -713,6 +713,7 @@ class ChessGUI:
 
         # If no fen was passed but a PROBLEM_LIST exists. Then start the F1 cycle early
         if fen is None and self.fenlist:
+            self.reverse_cycle_fen()
             self.cycle_fen()
 
     def run(self):

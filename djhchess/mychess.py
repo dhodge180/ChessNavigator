@@ -543,7 +543,7 @@ class ChessPosition:
         """
         Determine if `piece` at `from_square` can move to `to_square` assuming no board constraints.
         For pawns or 'g' pieces, always return True to force disambiguation.
-        For sliding pieces, check if path is clear.
+        For sliding pieces, check if path is clear and move type is legal.
         For knights ('s'), check if move matches knight pattern.
         """
 
@@ -559,22 +559,34 @@ class ChessPosition:
             row_diff = abs(end_row - start_row)
             col_diff = abs(end_col - start_col)
 
-            # Knight moves: 2 by 1 or 1 by 2
-            if (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2):
-                return True
-            else:
-                return False
+            return (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2)
 
         # Handle sliding pieces (rook, bishop, queen)
         if piece.lower() in ['r', 'b', 'q']:
+            start_row, start_col = from_square.coord
+            end_row, end_col = to_square.coord
+
+            delta_row = end_row - start_row
+            delta_col = end_col - start_col
+
+            # Check move legality first (before path check)
+            if piece.lower() == 'r' and (delta_row != 0 and delta_col != 0):
+                return False  # Rook must move straight
+
+            if piece.lower() == 'b' and abs(delta_row) != abs(delta_col):
+                return False  # Bishop must move diagonally
+
+            # Path clearance
             path_squares = self.squares_in_path(from_square, to_square)
             for sq in path_squares:
                 if self.get_piece(sq) != '1':  # '1' means empty square
                     return False  # blocked path
+
             return True
 
         # For kings or others, return True (or add logic later if needed)
         return True
+
 
 class TempChessPosition(ChessPosition):
     """ This class is a copy of ChessPosition buth with additional functions for creating the fen tree """
@@ -731,10 +743,13 @@ class TempChessPosition(ChessPosition):
         # print(f"BUTTON: {button_label}")
         #self.board.push(mv)
 
+        prefix = self.to_san(from_square, to_square)
+        fake_san_version = prefix + promotion_piece.upper()
+
         self.promote_pawn(from_square, to_square, promotion_piece)
         self.add_this_fen()
 
-        fake_san_version = move['from'] + move['to'] + promotion_piece.lower()
+        #fake_san_version = move['from'] + move['to'] + promotion_piece.lower()
 
         return fake_san_version, self.fen
 
