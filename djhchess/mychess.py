@@ -468,6 +468,113 @@ class ChessPosition:
     def reset_move_history(self):
         self.move_history = []
 
+    def to_san(self, from_square, to_square):
+        """Convert a move to SAN notation, disambiguating if needed (same piece, same colour)."""
+
+        moving_piece = self.get_piece(from_square)
+        target_piece = self.get_piece(to_square)
+
+        # Determine prefix: blank for pawns, piece letter for others
+        prefix = "" if moving_piece in self.pawn_pieces else moving_piece.upper()
+
+        # Check for ambiguity: same piece, same colour can reach to_square
+        ambiguous = False
+
+        for rank in range(8):
+            for file in range(8):
+                other_sq = Square.get(coord=(rank, file))
+                if other_sq is from_square:
+                    continue  # Skip the moving piece
+
+                other_piece = self.get_piece(other_sq)
+                if other_piece == moving_piece and self.can_reach(moving_piece, other_sq, to_square):
+                    ambiguous = True
+                    break
+            if ambiguous:
+                break
+
+        # Determine capture symbol
+        capture = 'x' if target_piece is not None else ''
+
+        if prefix == "":  # Pawn move
+            if capture:
+                # Pawn capture includes file of from_square + 'x' + destination square
+                move_str = f"{from_square.alg[0]}{capture}{to_square.alg}"
+            else:
+                # Normal pawn move, just the destination square
+                move_str = to_square.alg
+        else:
+            if ambiguous:
+                # Disambiguation required: prefix + from_square + 'x' (if capture) + destination square
+                move_str = f"{prefix}{from_square.alg}{capture}{to_square.alg}"
+            else:
+                # Standard piece move with optional 'x'
+                move_str = f"{prefix}{capture}{to_square.alg}"
+
+        return move_str
+
+    def squares_in_path(self, start: Square, end: Square):
+        """Generate squares strictly between start and end (exclusive) in a straight line (rook, bishop, queen)."""
+        start_row, start_col = start.coord
+        end_row, end_col = end.coord
+
+        delta_row = end_row - start_row
+        delta_col = end_col - start_col
+
+        step_row = 0 if delta_row == 0 else (1 if delta_row > 0 else -1)
+        step_col = 0 if delta_col == 0 else (1 if delta_col > 0 else -1)
+
+        path = []
+        current_row = start_row + step_row
+        current_col = start_col + step_col
+
+        while (current_row, current_col) != (end_row, end_col):
+            # Check for valid board coordinates
+            if not (0 <= current_row <= 7 and 0 <= current_col <= 7):
+                break  # or raise error if you want strict validation
+
+            path.append(Square.get(coord=(current_row, current_col)))
+            current_row += step_row
+            current_col += step_col
+
+        return path
+
+    def can_reach(self, piece, from_square: Square, to_square: Square):
+        """
+        Determine if `piece` at `from_square` can move to `to_square` assuming no board constraints.
+        For pawns or 'g' pieces, always return True to force disambiguation.
+        For sliding pieces, check if path is clear.
+        For knights ('s'), check if move matches knight pattern.
+        """
+
+        # Handle pawns or 'g' pieces — always True for disambiguation
+        if piece.lower() in ['p', 'g']:
+            return True
+
+        # Handle knights ('s')
+        if piece.lower() == 's':
+            start_row, start_col = from_square.coord
+            end_row, end_col = to_square.coord
+
+            row_diff = abs(end_row - start_row)
+            col_diff = abs(end_col - start_col)
+
+            # Knight moves: 2 by 1 or 1 by 2
+            if (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2):
+                return True
+            else:
+                return False
+
+        # Handle sliding pieces (rook, bishop, queen)
+        if piece.lower() in ['r', 'b', 'q']:
+            path_squares = self.squares_in_path(from_square, to_square)
+            for sq in path_squares:
+                if self.get_piece(sq) != '1':  # '1' means empty square
+                    return False  # blocked path
+            return True
+
+        # For kings or others, return True (or add logic later if needed)
+        return True
 
 class TempChessPosition(ChessPosition):
     """ This class is a copy of ChessPosition buth with additional functions for creating the fen tree """
@@ -567,11 +674,14 @@ class TempChessPosition(ChessPosition):
 
         #self.board.push(mv)
 
+        # prefix = piece.upper() if piece not in self.pawn_pieces else ""
+        prefix = self.to_san(from_square, to_square)
+        fake_san_version = prefix
+
         self.move_piece(from_square, to_square)
         self.add_this_fen()
-        prefix = piece.upper() if piece not in self.pawn_pieces else ""
 
-        fake_san_version = prefix+move['from']+move['to']
+        #fake_san_version = prefix+move['from']+move['to']
 
         return fake_san_version, self.fen
 
