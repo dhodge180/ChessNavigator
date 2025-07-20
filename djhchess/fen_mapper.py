@@ -11,7 +11,7 @@ import unicodedata
 #i_to_u(token, int_to_user_map)
 #load_and_update_mappings(fens, MAPFILE)
 
-MAP_FILE = "../piece_map.json"
+MAP_FILE = "./piece_map.json"
 
 def generate_unicode_symbols(n=512):
     reserved = set("PSBRQKpsbrqk12345678/")
@@ -200,6 +200,11 @@ def load_and_update_mapping(fens, map_file=MAP_FILE):
         Example:
             user_to_internal, internal_to_user, custom_tokens = load_and_update_mapping(fens)
         """
+
+    # If passed a single fen string, convert to a list first
+    if isinstance(fens, str):
+        fens = [fens]
+
     symbol_pool = generate_unicode_symbols()
     user_to_internal = load_existing_map(map_file)
     existing_symbols = set(user_to_internal.values())

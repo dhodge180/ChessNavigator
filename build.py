@@ -21,8 +21,9 @@ else:
 def build_executable():
     cmd = [
         "pyinstaller",
-        "--onefile",
+        "--clean",
         "--noconsole",  # Hide terminal (for GUI apps)
+        "--noupx",
         f"--name={EXE_NAME}",
         f"--icon={icon_path}",
         add_data_option,

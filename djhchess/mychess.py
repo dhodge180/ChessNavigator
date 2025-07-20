@@ -3,7 +3,7 @@ from collections import OrderedDict
 import re
 
 from djhchess.square import Square
-from djhchess.fen_mapper import load_existing_map
+from djhchess.fen_mapper import load_existing_map, load_and_update_mapping
 
 ## Container for composition database
 
@@ -20,12 +20,15 @@ class Composition:
         self.tree_position = 0
         self.position = None
         self.move_window_version = False
+        self.u_to_i_map = None # Added at composition level (previously only in chessposition)
+        self.i_to_u_map = None # Added at composition level (previously only in chessposition)
 
     def turn_on_move_windows_messaging(self):
         self.move_window_version = True
 
     def create_position(self):
-        self.position = ChessPosition(self.fen)
+        # Now passing self to copy the fen maps
+        self.position = ChessPosition(parent_comp=self, fen=self.fen)
 
     def get_position_object(self):
         return self.position
@@ -127,10 +130,11 @@ class ChessPosition:
         E8: [G8, C8],
     }
 
-    def __init__(self, fen=None):
+    def __init__(self, parent_comp=None, fen=None):
         # Board is an 8x8 matrix from 00 to 77, with f2 equal to 15, i.e. [y-coord][x-coord] format
         self.board = []
         self.turn = 'w'
+        self.parent_composition = parent_comp
         self.en_passant = None
         self.king_pieces = ["K", "k"]  # Predefined list of king pieces
         self.pawn_pieces = ["P", "p", "=p"]  # Predefined list of en passant and promotion pieces (y is temp name for neutral pawn)
@@ -139,23 +143,29 @@ class ChessPosition:
         self.standard_pieces = set("KQRBSPkqrbsp")
         if fen:
             self.set_fen(fen)
+
+        # Currently not used. Not sure the load_existing_map() is working. It's global.
         self.user_to_internal_map = load_existing_map()
         self.internal_to_user_map = {v: k for k, v in self.user_to_internal_map.items()}
 
         self.legal_moves_enabled = False
         self.start_pos = fen
-        self.move_history = []
-
+        self.move_history = [fen]
+        self.move_index: int = 0 # Which fen are we on
 
     def convert_u_to_i(self, token):
         if token in self.standard_pieces:
             return token
+        if self.parent_composition:
+            return self.parent_composition.u_to_i_map.get(token, '?')
         else:
             return self.user_to_internal_map.get(token, "?")
 
     def convert_i_to_u(self, token):
         if token in self.standard_pieces:
             return token
+        if self.parent_composition:
+            return self.parent_composition.i_to_u_map.get(token, "!")
         else:
             return self.internal_to_user_map.get(token, "!")
 
@@ -185,6 +195,48 @@ class ChessPosition:
 
     def update_fen(self):
         self.fen = self.board_to_fen()
+
+        print("##################################")
+        print("Before doing anything")
+        self.print_hist()
+
+        # History tracking
+        if hasattr(self, 'move_history') and hasattr(self, 'move_index'):
+            # If we did some undo before this update, remove future FENs
+            if self.move_index < len(self.move_history) - 1:
+                self.move_history = self.move_history[:self.move_index + 1]
+
+            self.move_history.append(self.fen)
+            self.move_index += 1
+
+        else:
+            # First time setup if not initialized yet
+            self.move_history = [self.fen]
+            self.move_index = 0
+
+        print("After adding one?")
+        self.print_hist()
+        print("##################################")
+
+    def print_hist(self):
+        # Print the last 5 FENs for debugging
+        print("Last 5 FENs in history:")
+        for i, fen_str in enumerate(self.move_history[-5:], start=max(0, self.move_index - 4)):
+            marker = "->" if i == self.move_index else "  "
+            print(f"{marker} [{i}] {fen_str}")
+        print("-" * 40)
+
+    def undo(self):
+        if self.move_index > 0:
+            self.move_index -= 1
+            self.fen = self.move_history[self.move_index]
+            self.set_fen(self.fen)
+
+    def redo(self):
+        if self.move_index < len(self.move_history) - 1:
+            self.move_index += 1
+            self.fen = self.move_history[self.move_index]
+            self.set_fen(self.fen)
 
     def fen_to_board(self, placement):
         rows = placement.split('/')
@@ -276,7 +328,8 @@ class ChessPosition:
         start_row, start_col = start.coord
         end_row, end_col = end.coord
         piece = self.board[start_row][start_col]
-        piece_colour = self.get_piece_colour(piece)
+        internal_piece = self.convert_u_to_i(piece)
+        piece_colour = self.get_piece_colour(internal_piece)
 
         # target = self.board[end_row][end_col]
 
@@ -330,9 +383,9 @@ class ChessPosition:
                     # promotion_piece = 'B'
                     # Perform promotion move instead of normal move
                     self.promote_pawn(start, end, promotion_piece)
-                    self.change_turn()
-                    self.en_passant = None
-                    self.update_fen()
+                    #self.change_turn()
+                    #self.en_passant = None
+                    #self.update_fen()
                     return
 
 
@@ -423,14 +476,14 @@ class ChessPosition:
         """
         if internal_token is None or internal_token == '1':
             return None # Empty square
-        
+
         reserved = set("PSBRQKpsbrqk12345678/")
         if internal_token in reserved:
             user_token = internal_token
         else:
-            user_token = self.internal_to_user_map.get(internal_token)
+            user_token = self.convert_i_to_u(internal_token)
 
-        if user_token is None:
+        if user_token in (None, '!'):
             raise ValueError(f"Internal symbol '{internal_token}' not found in mapping.")
 
         if user_token.startswith('='):
@@ -466,7 +519,8 @@ class ChessPosition:
         self.reset_move_history()
 
     def reset_move_history(self):
-        self.move_history = []
+        self.move_history = [self.start_pos]
+        self.move_index = 0
 
     def to_san(self, from_square, to_square):
         """Convert a move to SAN notation, disambiguating if needed (same piece, same colour)."""
@@ -589,7 +643,7 @@ class ChessPosition:
 
 
 class TempChessPosition(ChessPosition):
-    """ This class is a copy of ChessPosition buth with additional functions for creating the fen tree """
+    """ This class is a copy of ChessPosition both with additional functions for creating the fen tree """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # Initialize like ChessPosition
@@ -660,12 +714,13 @@ class TempChessPosition(ChessPosition):
             print("Uhm, there was meant to be a piece here!")
             return None, None
 
-        piece_color = self.get_piece_colour(piece)
+        internal_piece = self.convert_u_to_i(piece)
+        piece_color = self.get_piece_colour(internal_piece)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 
         if piece_color != self.turn:
             print("You moved out of turn, but I'll allow it.")
-            self.change_turn()  # Swap player to move
+            #self.change_turn()  # Swap player to move
 
         if target_piece is not None:
             if piece_color == target_piece_color:

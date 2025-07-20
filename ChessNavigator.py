@@ -5,12 +5,15 @@ This is the main Chess Navigator program
 import pygame
 import argparse
 
+from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
+from djhchess.fen_test import print_mapping
 # No longer needed
 # import chess
 # import chess.pgn
 
 # Needed (my new modules)
 from djhchess.square import Square
+from djhchess.pieces import Piece, PieceBox
 from djhchess.mychess import ProblemListContainer, TempChessPosition
 
 # Maybe not needed, as they're loaded by mychess when needed
@@ -72,8 +75,8 @@ class Config:
     title_x = 0
     title_y = 0
     TITLE_COORDS = (title_x, title_y)
-    title_font_size = 10
-    stip_font_size = 10
+    TITLE_FONT_SIZE = 10
+    STIP_FONT_SIZE = 10
 
     # Customizable
     WHITE_SQUARES = (238, 238, 210)
@@ -143,18 +146,18 @@ class Config:
             print(f"No config file found at '{cls.config_path}'. Using default settings.")
 
         # Validate and apply values from the loaded config
-        Config.white_squares = Config.validate_rgb(local_config.get("white_squares"))
+        Config.WHITE_SQUARES = Config.validate_rgb(local_config.get("white_squares"))
         """Colour of white squares"""
-        Config.black_squares = Config.validate_rgb(local_config.get("black_squares"))
+        Config.BLACK_SQUARES = Config.validate_rgb(local_config.get("black_squares"))
         """Colour of black squares"""
-        Config.panel_colour = Config.validate_rgb(local_config.get("panel_colour"))
+        Config.PANEL_COLOUR = Config.validate_rgb(local_config.get("panel_colour"))
         """Background colour of panel"""
-        Config.square_size = Config.validate_square_size(local_config.get("square_size"))
+        Config.SQUARE_SIZE = Config.validate_square_size(local_config.get("square_size"))
         """Starting square size"""
 
-        Config.title_font_size = Config.validate_font_size(local_config.get("title_font_size"), min_size=10, max_size=45, font_type="title")
+        Config.TITLE_FONT_SIZE= Config.validate_font_size(local_config.get("title_font_size"), min_size=10, max_size=45, font_type="title")
         """For title font size validation"""
-        Config.stip_font_size = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
+        Config.STIP_FONT_SIZE = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
         """For stip font size validation (example if you have stip_font_size in your config)"""
 
         # STAGE 2
@@ -249,7 +252,7 @@ class Config:
         #for key in config_keys:
         for key, default_value in cls.DEFAULTS.items():
             #default_value = cls.DEFAULTS[key]
-            current_value = getattr(cls, key)
+            current_value = getattr(cls, key.upper())
 
             # If current value differs from the default, add it to the overridden settings
             if current_value != default_value:
@@ -706,15 +709,16 @@ class ChessGUI:
         self.TRUE_COLORS = [row[:] for row in self.square_colors] # New copy of list
 
         # Add custom title inside the window
-        self.title_font = pygame.font.SysFont("Arial", Config.title_font_size)  # Change font and size here
-        self.stip_font = pygame.font.SysFont("Arial", Config.stip_font_size)  # Change font and size here
+        self.title_font = pygame.font.SysFont("Arial", Config.TITLE_FONT_SIZE)  # Change font and size here
+        self.stip_font = pygame.font.SysFont("Arial", Config.STIP_FONT_SIZE)  # Change font and size here
         self.custom_title = title  # Or any other dynamic title based on your logic
         self.custom_stip = stip
 
         # If no fen was passed but a PROBLEM_LIST exists. Then start the F1 cycle early
         if fen is None and self.fenlist:
-            self.reverse_cycle_fen()
-            self.cycle_fen()
+            #self.reverse_cycle_fen()
+            #self.cycle_fen()
+            self.update_after_cycle()
 
     def run(self):
         """Main loop of the GUI."""
@@ -778,7 +782,9 @@ class ChessGUI:
                         #self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
                         self.position.toggle_legality()
                     elif event.key == pygame.K_u:
-                        self.position.undo_move() # Press u to undo last move
+                        self.position.undo() # Press u move backwards in the board history
+                    elif event.key == pygame.K_i:
+                        self.position.redo()  # Press i move forwards in board history
                     elif event.key == pygame.K_z:
                         self.position.clear() # Press z to zero/clear the board
                         self.position.legal_moves_enabled = False # Turn legality to false to allow placement
@@ -1106,7 +1112,7 @@ class ChessGUI:
 
         new_square = self.get_square_under_mouse(pos)
 
-        # print(f"Dragged piece from {self.piece_source} to {new_square}")
+        print(f"Dragged piece from {self.piece_source} to {new_square}")
         if self.piece_source == "board" and new_square is not None:
             if new_square is not self.dragging_square:  # Move only if dropped in a new square
                 self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
@@ -1234,7 +1240,7 @@ class ChessGUI:
             ("INSERT", "Save current position as home position"),
             ("Z", "Zero the board (clear all pieces)"),
             ("F1", "Cycle to next FEN in the loaded file"),
-            ("U", "Undo last move (not fully functional)"),
+            ("U/I", "Undo/Redo last move (not fully functional)"),
             ("L", "Toggle Legality"),
             ("T", "Toggle whose turn it is"),
             ("1/2/3", "Highlight square RED/YELLOW/GREEN"),
@@ -1630,7 +1636,7 @@ def generate_fen_path(beginning, moves):
 
     # Load the starting FEN into a chess object, i.e. create a temporary game e.g. via a chess.board(START)
     # temp_game = TempGame(beginning)
-    temp_game = TempChessPosition(beginning)
+    temp_game = TempChessPosition(fen=beginning)
 
     # Create the move_tree already in finished arrangement
     grid_data = [] # 2D grid of (label, fen) data
@@ -1868,23 +1874,48 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
-    problem_list_loaded = load_problem_list_from_file(PROBLEM_LIST, passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
-    # Return value is TRUE or FALSE based on success
     problem_container = ProblemListContainer()
+    problem_list_loaded =  False # Have we loaded problems from a file yet?
+
+    if passed_fen:
+        # Passing a fen via --fen should override PROBLEM_LIST
+        comp = problem_container.add_composition(
+                title=args.title,
+                fen=passed_fen,
+                moves=None,
+                stipulation=args.stip
+            )
+    else:
+        # Not passed a fen, so look for file to load
+        problem_list_loaded = load_problem_list_from_file(PROBLEM_LIST, passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
+        if not problem_list_loaded:
+            # No passed_fen and no passed_fen: need to set a default board
+            comp = problem_container.add_composition(
+                title=None,
+                fen='rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR',
+                moves=None,
+                stipulation=None
+            )
+        # Return value is TRUE or FALSE based on success
+    
     if problem_list_loaded:
         # Here we generate move trees from the moves
+        """ OLD METHOD
         for fen_data in PROBLEM_LIST:
             given_fen = fen_data['fen']
             move_list = fen_data['moves'].split()
             print("\n*** Analysing given moves for a position ***\n")
+            
+            ## CORE FUNCTIONS, NOW MOVED TO BELOW
             fen_tree, move_tree = generate_fen_path(given_fen, move_list)
             fen_data['fen_tree'] = fen_tree[0]
             fen_data['ids'] = fen_tree[1]
             fen_data['move_tree'] = move_tree
+            
             #print("Debug print:")
             #print(f"fen_tree[0] is length {len(fen_tree[0])}")
             #print(f"fen_tree[1] is length {len(fen_tree[1])}")
@@ -1892,8 +1923,9 @@ if __name__ == "__main__":
             #    print(item)
             #print(fen_tree[1])
             #print("End of Debug")
-            
-        # Initialize the container
+        """
+
+        # Put the problem skeletons into the contained
         for fen_data in PROBLEM_LIST:
             comp = problem_container.add_composition(
                 title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
@@ -1902,7 +1934,7 @@ if __name__ == "__main__":
                 stipulation=fen_data.get('stipulation', '')
             )
             
-            # NEW
+            # NEW - Generate fen_tree and move tree (used to happen above)
             
             # Generate trees
             move_list = comp.moves.split()
@@ -1912,6 +1944,21 @@ if __name__ == "__main__":
             comp.fen_tree = fen_tree[0]
             comp.ids = fen_tree[1]
             comp.move_tree = move_tree
+
+            # New fen unicode stuff
+            full_fen = comp.fen
+            comp.u_to_i_map, comp.i_to_u_map, _temp = load_and_update_mapping(fens=full_fen)
+            print(_temp)
+            # Test it
+            print(f"\nOriginal FEN:  {full_fen}")
+            converted = convert_fen_board_section(full_fen, comp.u_to_i_map)
+            print(f"Internal FEN:  {converted}")
+            restored = convert_fen_board_section(converted, comp.i_to_u_map)
+            print(f"Restored FEN:  {restored}")
+
+            # Show mappings
+            print_mapping("User → Internal Mapping", comp.u_to_i_map)
+            print_mapping("Internal → User Mapping", comp.i_to_u_map)
 
             # If moves_window is asked for, enable for this composition
             if MOVES_WINDOW_VERSION:
@@ -1925,7 +1972,7 @@ if __name__ == "__main__":
     MWV = MOVES_WINDOW_VERSION
     PL = problem_container
 
-    if MWV == True:
+    if MWV:
     # Communication method
         main_window_queue = multiprocessing.Queue()
         moves_window_queue = multiprocessing.Queue()
