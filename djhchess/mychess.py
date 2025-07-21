@@ -4,6 +4,7 @@ import re
 
 from djhchess.square import Square
 from djhchess.fen_mapper import load_existing_map, load_and_update_mapping
+from djhchess.pieces import Piece, PieceBox
 
 ## Container for composition database
 
@@ -328,8 +329,10 @@ class ChessPosition:
         start_row, start_col = start.coord
         end_row, end_col = end.coord
         piece = self.board[start_row][start_col]
-        internal_piece = self.convert_u_to_i(piece)
-        piece_colour = self.get_piece_colour(internal_piece)
+        #internal_piece = self.convert_u_to_i(piece)
+        internal_piece = Piece.get(piece) # Get the true piece from the internal char stored in the board matrix
+        #piece_colour = self.get_piece_colour(internal_piece)
+        piece_colour = internal_piece.colour
 
         # target = self.board[end_row][end_col]
 
@@ -529,7 +532,10 @@ class ChessPosition:
         target_piece = self.get_piece(to_square)
 
         # Determine prefix: blank for pawns, piece letter for others
-        prefix = "" if moving_piece in self.pawn_pieces else moving_piece.upper()
+        # Convert to user first
+        true_piece = Piece.get(moving_piece) # Use internal name to find Piece singleton
+        prefix = "" if true_piece.is_pawn else true_piece.user_char.upper()
+        #prefix = "" if moving_piece in self.pawn_pieces else moving_piece.upper()
 
         # Check for ambiguity: same piece, same colour can reach to_square
         ambiguous = False
@@ -554,9 +560,13 @@ class ChessPosition:
             if capture:
                 # Pawn capture includes file of from_square + 'x' + destination square
                 move_str = f"{from_square.alg[0]}{capture}{to_square.alg}"
+            elif true_piece.is_neutral and ambiguous:
+                # Neutral pawn ambiguous move
+                move_str = f"{from_square.alg}{to_square.alg}"
             else:
                 # Normal pawn move, just the destination square
                 move_str = to_square.alg
+
         else:
             if ambiguous:
                 # Disambiguation required: prefix + from_square + 'x' (if capture) + destination square
@@ -714,7 +724,8 @@ class TempChessPosition(ChessPosition):
             print("Uhm, there was meant to be a piece here!")
             return None, None
 
-        internal_piece = self.convert_u_to_i(piece)
+        #internal_piece = self.convert_u_to_i(piece)
+        internal_piece = piece # This is already internal nowadays
         piece_color = self.get_piece_colour(internal_piece)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 

@@ -13,7 +13,7 @@ from djhchess.fen_test import print_mapping
 
 # Needed (my new modules)
 from djhchess.square import Square
-from djhchess.pieces import Piece, PieceBox
+from djhchess.pieces import Piece, PieceBox, create_extra_pieces
 from djhchess.mychess import ProblemListContainer, TempChessPosition
 
 # Maybe not needed, as they're loaded by mychess when needed
@@ -992,7 +992,8 @@ class ChessGUI:
                 piece = self.position.get_piece(sq)
                 if piece and (self.dragging_square is not sq):
                     #img = self.pieces[piece.symbol()]
-                    if piece == "=":
+                    user_piece = self.composition.position.convert_i_to_u(piece)
+                    if user_piece == "=":
                         print("Neutral piece in fen, need to use internals")
                     img = self.pieces[piece]
                     self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
@@ -1034,7 +1035,8 @@ class ChessGUI:
         # Draw spare pieces in the new panel position
         for piece, pos in self.spare_pieces:
             # Draw the piece at the correct adjusted position inside the panel
-            img = self.pieces[piece]
+            internal_piece = self.composition.position.convert_u_to_i(piece)
+            img = self.pieces[internal_piece]
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
     def get_square_under_mouse(self, pos):
@@ -1086,9 +1088,10 @@ class ChessGUI:
         sq = self.get_square_under_mouse(pos)
         print(f"Move clicked on {sq}")
         panel_piece = self.get_piece_from_panel(pos)
+        true_piece = Piece.get_user(panel_piece)
 
         if panel_piece:
-            self.dragging_piece = self.pieces[panel_piece]
+            self.dragging_piece = self.pieces[true_piece.internal_char]
             self.dragging_piece_symbol = panel_piece
             self.piece_source = "panel"
             self.dragging_pos = pos
@@ -1306,7 +1309,7 @@ class ChessGUI:
                     waiting = False
 
 # Load chess pieces
-def load_images():
+def old_load_images():
     """
     Loads the png images of all pieces into a vector
     These pngs are available in sizes 40x40 up to 100x100 and were generated from an SVG
@@ -1322,6 +1325,32 @@ def load_images():
         img_white =  pygame.image.load(img_path)
         pieces[piece.upper()] = pygame.transform.scale(img_white, (square_size, square_size))  # Scale for white pieces
     return pieces
+
+def load_images():
+    """
+    Loads PNG images for all registered pieces using their internal_char and colour.
+    Returns a dict mapping internal_char -> pygame Surface.
+    """
+    pieces_images = {}
+    square_size = Config.SQUARE_SIZE
+
+    for piece in Piece.all():
+        img_path = get_resource_path(f'images/{piece.image_filename(square_size)}')
+
+        try:
+            image = pygame.image.load(img_path)
+        except pygame.error as e:
+            print(f"Failed to load image for {piece}: {img_path}\n{e}")
+            continue
+
+        image = pygame.transform.scale(image, (square_size, square_size))
+
+        if piece.rotation != 0:
+            image = pygame.transform.rotate(image, -piece.rotation)  # pygame rotates counter-clockwise by default
+
+        pieces_images[piece.internal_char] = image
+
+    return pieces_images
 
 
 # class TempGame:
@@ -1874,7 +1903,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
@@ -1933,10 +1962,32 @@ if __name__ == "__main__":
                 moves=fen_data.get('moves', ''),
                 stipulation=fen_data.get('stipulation', '')
             )
-            
+
+            # New fen unicode stuff
+            full_fen = comp.fen
+            comp.u_to_i_map, comp.i_to_u_map, new_tokens = load_and_update_mapping(fens=full_fen)
+            # new_tokens contains all the new-ish pieces we have just seen
+            print(new_tokens)
+            # Create singletons for all the pieces
+            create_extra_pieces(comp.u_to_i_map)
+
+            # Test it
+            print(f"\nOriginal FEN:  {full_fen}")
+            converted = convert_fen_board_section(full_fen, comp.u_to_i_map)
+            print(f"Internal FEN:  {converted}")
+            restored = convert_fen_board_section(converted, comp.i_to_u_map)
+            print(f"Restored FEN:  {restored}")
+
+            # Overwrite the fen with internal version
+            comp.fen = converted
+
+            # Show mappings
+            print_mapping("User → Internal Mapping", comp.u_to_i_map)
+            print_mapping("Internal → User Mapping", comp.i_to_u_map)
+
             # NEW - Generate fen_tree and move tree (used to happen above)
             
-            # Generate trees
+            # Generate trees (using new internal fen)
             move_list = comp.moves.split()
             fen_tree, move_tree = generate_fen_path(comp.fen, move_list)
 
@@ -1945,20 +1996,7 @@ if __name__ == "__main__":
             comp.ids = fen_tree[1]
             comp.move_tree = move_tree
 
-            # New fen unicode stuff
-            full_fen = comp.fen
-            comp.u_to_i_map, comp.i_to_u_map, _temp = load_and_update_mapping(fens=full_fen)
-            print(_temp)
-            # Test it
-            print(f"\nOriginal FEN:  {full_fen}")
-            converted = convert_fen_board_section(full_fen, comp.u_to_i_map)
-            print(f"Internal FEN:  {converted}")
-            restored = convert_fen_board_section(converted, comp.i_to_u_map)
-            print(f"Restored FEN:  {restored}")
 
-            # Show mappings
-            print_mapping("User → Internal Mapping", comp.u_to_i_map)
-            print_mapping("Internal → User Mapping", comp.i_to_u_map)
 
             # If moves_window is asked for, enable for this composition
             if MOVES_WINDOW_VERSION:
