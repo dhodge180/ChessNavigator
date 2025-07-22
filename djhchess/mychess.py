@@ -72,6 +72,8 @@ class ProblemListContainer:
         self.compositions = OrderedDict()
         self.current_index = 0
         self.num_compositions = 0
+        self.u_to_i_dict = None
+        self.i_to_u_dict = None
 
     def add_composition(self, title: str, fen: str, moves: str, stipulation: str):
         """Add a new composition and return it."""
@@ -788,7 +790,7 @@ class TempChessPosition(ChessPosition):
         piece_color = self.get_piece_colour(piece)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 
-        if piece_color != self.turn:
+        if piece_color != self.turn and piece_color != 'neutral':
             print("You moved out of turn, but I'll allow it.")
             self.change_turn()
 
@@ -906,6 +908,8 @@ class TempChessPosition(ChessPosition):
         from_square = Square.get(alg=move['from'])
 
         piece_there = self.get_piece(from_square)
+        # this is the internal piece name     
+        true_piece = Piece.get(piece_there)  # This is the piece (so we can use user_char later)
 
         if piece_there is None:
             print(f"No piece found at {from_square} to remove!")
@@ -913,7 +917,7 @@ class TempChessPosition(ChessPosition):
 
         # Move recorded
         print(f"Removing piece from {from_square.alg}")
-        button_label = "-" + str(piece_there) + str(from_square)
+        button_label = "-" + str(true_piece.user_char) + str(from_square.alg)
         print(f"BUTTON: {button_label}")
 
         # Implement the logic for removing a piece
@@ -984,6 +988,13 @@ class TempChessPosition(ChessPosition):
         elif re.fullmatch(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
             # This matches a format like '+Rb2'
             return {'type': 'add', 'piece': move[1], 'to': move[2:]}
+        
+        # Case f SPECIAL NEW: '+ANYTHINGa1' format (e.g. +Rb2, +=qh5, +.l2g4
+        elif re.fullmatch(r'^\+.+[a-h][1-8]$', move):
+            # Extract piece and destination square -- allows for multicharacter pieces
+            square = move[-2:]           # Last two chars are the square
+            piece = move[1:-2]           # All between '+' and square is the piece
+            return {'type': 'add', 'piece': piece, 'to': square}
 
         # Case g: string "-letter-number" (e.g. -e4)
         elif re.fullmatch(r'^-[a-h][1-8]$', move):

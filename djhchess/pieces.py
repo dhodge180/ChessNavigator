@@ -137,22 +137,6 @@ def _load_standard_pieces():
     Piece('s', 's', 'Knight', 'black', 'knight')
     Piece('p', 'p', 'Pawn', 'black', 'pawn')
 
-def create_extra_pieces(u_to_i_map):
-    for user_char, internal_char in u_to_i_map.items():
-        # Find the extra piece data by matching user_char
-        for piece_data in EXTRA_PIECES.values():
-            if piece_data['user_char'] == user_char:
-                Piece(
-                    internal_char=internal_char,
-                    user_char=piece_data['user_char'],
-                    long_name=piece_data['long_name'],
-                    colour=piece_data['colour'],
-                    type_=piece_data['type'],
-                    base_type=piece_data.get('base_type'), # will return None if not present
-                    rotation=piece_data.get('rotation', 0) # will return 0 by default
-                )
-                break
-
 
 STANDARD_PIECES = {
     'WhiteKing':   { 'user_char': 'K', 'long_name': 'King',   'colour': 'white', 'type': 'king',   'rotation': 0 },
@@ -168,21 +152,6 @@ STANDARD_PIECES = {
     'BlackBishop': { 'user_char': 'b', 'long_name': 'Bishop', 'colour': 'black', 'type': 'bishop', 'rotation': 0 },
     'BlackKnight': { 'user_char': 's', 'long_name': 'Knight', 'colour': 'black', 'type': 'knight', 'rotation': 0 },
     'BlackPawn':   { 'user_char': 'p', 'long_name': 'Pawn',   'colour': 'black', 'type': 'pawn',   'rotation': 0 }
-}
-
-EXTRA_PIECES = {
-    'NeutralBishop': { 'user_char': '=b', 'long_name': 'Neutral Bishop', 'colour': 'neutral', 'type': 'bishop', 'rotation': 0 },
-    'NeutralPawn':   { 'user_char': '=p', 'long_name': 'Neutral Pawn',   'colour': 'neutral', 'type': 'pawn',   'rotation': 0 },
-    'NeutralRook':   { 'user_char': '=r', 'long_name': 'Neutral Rook',   'colour': 'neutral', 'type': 'rook',   'rotation': 0 },
-    'NeutralQueen':  { 'user_char': '=q', 'long_name': 'Neutral Queen',  'colour': 'neutral', 'type': 'queen',  'rotation': 0 },
-    'NeutralKing':   { 'user_char': '=k', 'long_name': 'Neutral King',   'colour': 'neutral', 'type': 'king',   'rotation': 0 },
-    'NeutralKnight': { 'user_char': '=s', 'long_name': 'Neutral Knight', 'colour': 'neutral', 'type': 'knight', 'rotation': 0 },
-
-    'BlackGrasshopper': { 'user_char': 'g', 'long_name': 'Grasshopper', 'colour': 'black', 'type': 'grasshopper', 'base_type': 'queen', 'rotation': 180 },
-    'WhiteGrasshopper': { 'user_char': 'G', 'long_name': 'Grasshopper', 'colour': 'white', 'type': 'grasshopper', 'base_type': 'queen', 'rotation': 180 },
-
-    'EastQueen': { 'user_char': '.eq', 'long_name': 'East Queen', 'colour': 'black', 'type': 'Bob', 'base_type': 'queen', 'rotation': 90 }
-
 }
 
 # This defines all the standard pieces, assuming they will never get other internal names

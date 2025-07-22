@@ -9,12 +9,22 @@ zFEN: "rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR w KQkq - 0 1"
 zSubtext: "Mate in none"
 zMoves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5
 
-zTitle: Fairy pieces
-zFEN: 8/g8/6p1/8/G8/k6K/8/g7
-zSubtext: rgbqk=bsr/pppppppp/8/8/8/8/PP=pPPPPP/RSB=qKBSR
-zMoves: a1g7 g7f2
+Title: Fairy pieces
+FEN: 8/g8/6p1/8/G8/k6K/8/g7
+Subtext: rgbqk=bsr/pppppppp/8/8/8/8/PP=pPPPPP/RSB=qKBSR
+Moves: a1g7 g7f2
 
 Title: Neutrals
 FEN: .eq7/8/8/8/8/7Q/8/=b=p=r=q=k=sqQ
 Subtext: Just neutral bishop
 Moves: b1b8 c1c8 d1d8 e1e8 f1f8 g1g8 h1h8 a1f8 a8h8
+
+Title: Amazing new problem
+FEN: 8/8/8/8/.l17/8/8/8
+Subtext: Brand new never before seen pieces
+Moves: +Bb3 +Rb4 +=pb7 b7b8S
+
+Title: Dirk Borst (original for The Problemist?)
+FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4
+Subtext: H#3 (2 solutions)
+Moves: d7d5 c8d8 -b3 & d1b3 c1g1 e7e5 -e5 & d5e6 H e7e5 d1h5 f7e7 d7d5 -d5 & e5d6 H d7d8Q

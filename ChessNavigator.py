@@ -13,7 +13,8 @@ from djhchess.fen_test import print_mapping
 
 # Needed (my new modules)
 from djhchess.square import Square
-from djhchess.pieces import Piece, PieceBox, create_extra_pieces
+from djhchess.pieces import Piece, PieceBox
+from djhchess.custom_pieces import create_extra_pieces
 from djhchess.mychess import ProblemListContainer, TempChessPosition
 
 # Maybe not needed, as they're loaded by mychess when needed
@@ -375,7 +376,7 @@ def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
 
 # Redirect print statements to a file (optional)
 if getattr(sys, 'frozen', False):  # Only when running as an executable
-    sys.stdout = open('output.log', 'w')
+    sys.stdout = open('output.log', 'w', encoding='utf-8')
     sys.stderr = sys.stdout
 
 def get_resource_path(relative_path):
@@ -689,7 +690,6 @@ class ChessGUI:
         pygame.display.set_icon(icon)
         self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
         pygame.display.set_caption(window_title_bar)
-        self.pieces = load_images()
         #self.game = LiveGame(self.PROBLEM_LIST_ingui, self.MOVES_WINDOW_VERSION_ingui, fen, moves_window_queue)
 
         #self.moves_window_queue.put(("load moves grid", 0))  # Value passed is PROBLEM_LIST index of new game
@@ -703,6 +703,9 @@ class ChessGUI:
         self.target_fps = None
         self.redraw = None
         #self.set_window_title('Chess Navigator')
+
+        # Blank list of piece images. Will be populated in run() once we have loaded fairy pieces.
+        self.pieces = []
 
         # Calculate board colours initially
         self.square_colors = self.precalculate_square_colors()
@@ -722,6 +725,16 @@ class ChessGUI:
 
     def run(self):
         """Main loop of the GUI."""
+        # Start by recreating the fairy piece singletons once (needed in Windows as spawn lost the ones made earlier)
+        # Check what pieces
+        print("Inside the GUI process, first lets see what pieces exist:")
+        print(Piece.all())
+        print("Now we recreate the singletons.")
+        create_extra_pieces(self.problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
+        print("Now we see what pieces exist,")
+        print(Piece.all())
+        self.pieces = load_images()
+
         # global SQUARE_SIZE
         low_fps = 10
         high_fps = 60
@@ -798,6 +811,7 @@ class ChessGUI:
                     elif event.key == pygame.K_h:
                         self.show_help_popup() # Press H to pop-up shortcuts
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
+                        print("F1 pressed!")
                         if self.fenlist:
                             self.cycle_fen()
                     elif event.key == pygame.K_F3:
@@ -994,7 +1008,8 @@ class ChessGUI:
                     #img = self.pieces[piece.symbol()]
                     user_piece = self.composition.position.convert_i_to_u(piece)
                     if user_piece == "=":
-                        print("Neutral piece in fen, need to use internals")
+                        print("ERROR! Piece called = detected in internal fen, need to use internals")
+                    #print(f"Being asked to draw a {user_piece} known internally as {piece}")
                     img = self.pieces[piece]
                     self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
                                            _border_size + _height_padding + row * Config.SQUARE_SIZE))
@@ -1903,24 +1918,29 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_container = ProblemListContainer()
     problem_list_loaded =  False # Have we loaded problems from a file yet?
 
+    # Read all the fens passed and find fairy pieces
     if passed_fen:
+        # Case 1: Passed a single FEN directly
+        all_fens = [passed_fen]
         # Passing a fen via --fen should override PROBLEM_LIST
         comp = problem_container.add_composition(
                 title=args.title,
                 fen=passed_fen,
                 moves=None,
                 stipulation=args.stip
-            )
+        )
     else:
         # Not passed a fen, so look for file to load
         problem_list_loaded = load_problem_list_from_file(PROBLEM_LIST, passed_fenlist) # default is PROBLEM_LIST.txt but user could customize
+        # Return value is TRUE or FALSE based on success in finding file.
+
         if not problem_list_loaded:
             # No passed_fen and no passed_fen: need to set a default board
             comp = problem_container.add_composition(
@@ -1929,10 +1949,30 @@ if __name__ == "__main__":
                 moves=None,
                 stipulation=None
             )
-        # Return value is TRUE or FALSE based on success
+            all_fens = ['rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR']
+        else: # Here we have filled PROBLEM_LIST will all passed fens from file.
+            # Case 3: Loaded multiple problems from file, extract their FENs
+            all_fens = [fen_data['fen'] for fen_data in PROBLEM_LIST]     
     
+    # full_fenlist contains all fens to be studied
+    # so we can create the extra mapping and extra pieces now
+    
+    # New fen unicode stuff
+
+    # Create global piece_map.json and list new tokens
+    problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens)
+    #comp.u_to_i_map, comp.i_to_u_map, new_tokens = load_and_update_mapping(fens=all_fens)
+    # new_tokens contains all the new-ish pieces we have just seen
+    print(new_tokens)
+    # Create singletons for all the pieces
+    print(Piece.all())
+    create_extra_pieces(problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
+    print(Piece.all())
+
+
     if problem_list_loaded:
         # Here we generate move trees from the moves
+        # This is only Case 3 above
         """ OLD METHOD
         for fen_data in PROBLEM_LIST:
             given_fen = fen_data['fen']
@@ -1954,7 +1994,7 @@ if __name__ == "__main__":
             #print("End of Debug")
         """
 
-        # Put the problem skeletons into the contained
+        # Put the problem skeletons into the container
         for fen_data in PROBLEM_LIST:
             comp = problem_container.add_composition(
                 title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
@@ -1962,24 +2002,21 @@ if __name__ == "__main__":
                 moves=fen_data.get('moves', ''),
                 stipulation=fen_data.get('stipulation', '')
             )
-
-            # New fen unicode stuff
-            full_fen = comp.fen
-            comp.u_to_i_map, comp.i_to_u_map, new_tokens = load_and_update_mapping(fens=full_fen)
-            # new_tokens contains all the new-ish pieces we have just seen
-            print(new_tokens)
-            # Create singletons for all the pieces
-            create_extra_pieces(comp.u_to_i_map)
-
-            # Test it
-            print(f"\nOriginal FEN:  {full_fen}")
-            converted = convert_fen_board_section(full_fen, comp.u_to_i_map)
+        
+            # Test the internal conversion for this fen works
+            print("This fen will be converted to internal format:")
+            print(f"\nOriginal FEN:  {comp.fen}")
+            converted = convert_fen_board_section(comp.fen, problem_container.u_to_i_dict)
             print(f"Internal FEN:  {converted}")
-            restored = convert_fen_board_section(converted, comp.i_to_u_map)
+            restored = convert_fen_board_section(converted, problem_container.i_to_u_dict)
             print(f"Restored FEN:  {restored}")
 
             # Overwrite the fen with internal version
             comp.fen = converted
+            # Save the global dictionary lookup into the composition
+            # (for consistency with existing later code which looks for it there)
+            comp.u_to_i_map = problem_container.u_to_i_dict
+            comp.i_to_u_map = problem_container.i_to_u_dict
 
             # Show mappings
             print_mapping("User → Internal Mapping", comp.u_to_i_map)
