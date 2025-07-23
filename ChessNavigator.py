@@ -5,6 +5,22 @@ This is the main Chess Navigator program
 import pygame
 import argparse
 
+import os
+import sys
+
+# For moves window
+import tkinter as tk
+import multiprocessing
+
+# For help window
+from tkinter import messagebox
+
+# For FEN copying
+from pyperclip import copy
+
+# For config file management
+import json
+
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
 from djhchess.fen_test import print_mapping
 # No longer needed
@@ -14,24 +30,16 @@ from djhchess.fen_test import print_mapping
 # Needed (my new modules)
 from djhchess.square import Square
 from djhchess.pieces import Piece, PieceBox
-from djhchess.custom_pieces import create_extra_pieces
 from djhchess.mychess import ProblemListContainer, TempChessPosition
+
+# To allow user-defined pieces
+from custom_pieces import create_extra_pieces
 
 # Maybe not needed, as they're loaded by mychess when needed
 # from djhchess.mychess import ChessPosition, print_board_matrix
 # from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, load_existing_map
 
-from pyperclip import copy
-import json
-
-import os
-import sys
-
-# For moves window
-import tkinter as tk
-import multiprocessing
-
-# Define the shutdown event
+# Define the shutdown event (to allow one window to close another)
 shutdown_event = multiprocessing.Event()
 
 # Passable references to windows
@@ -400,6 +408,34 @@ def test_image_location():
 
 # test_image_location()
 
+def show_help_text(title, text):
+    root = tk.Tk()
+    root.title(title)
+    root.geometry("1100x250")  # Set a reasonable default size
+    root.resizable(True, True)
+
+    # Create scrollable text widget
+    text_widget = tk.Text(root, wrap="none", font=("Courier", 10))
+    text_widget.insert("1.0", text)
+    text_widget.config(state="disabled")  # Read-only
+
+    # Add scrollbars
+    y_scroll = tk.Scrollbar(root, orient="vertical", command=text_widget.yview)
+    x_scroll = tk.Scrollbar(root, orient="horizontal", command=text_widget.xview)
+    text_widget.configure(yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
+
+    # Layout
+    text_widget.grid(row=0, column=0, sticky="nsew")
+    y_scroll.grid(row=0, column=1, sticky="ns")
+    x_scroll.grid(row=1, column=0, sticky="ew")
+
+    # Make window expandable
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_columnconfigure(0, weight=1)
+
+    root.mainloop()
+
+
 def parse_arguments():
     """
     Parses command-line arguments for optional customizations.
@@ -409,13 +445,20 @@ def parse_arguments():
     Specify a full problem database file (default = PROBLEM_LIST.txt) --fenlist
     Specify overall title of game window with --window (useful for screensharing)
     """
-    parser = argparse.ArgumentParser(description="Chess game with optional FEN input and Window title.")
-    parser.add_argument("--fen", type=str, help="Custom starting position in FEN format.")
-    parser.add_argument("--title", type=str, default="", help="Set the problem title")
-    parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation")
-    parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM list file", default="PROBLEM_LIST.txt")
-    parser.add_argument("--window", type=str, help="Window name")
-    parser.add_argument("--movewindow", action="store_true", help="Launch parallel moves window")
+    parser = argparse.ArgumentParser(description="Allows direct loading a single fen, custom database filename, "
+                                                 "window renaming and launching of a separate move navigation window")
+    parser.add_argument("--fen", type=str, help="Custom starting position in FEN format (for a single problem)")
+    parser.add_argument("--title", type=str, default="", help="Set the problem title (for a single problem)")
+    parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation (for a single problem)")
+    parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM_LIST.txt file to load any number of problems", default="PROBLEM_LIST.txt")
+    parser.add_argument("--window", type=str, help="Set the Window titlebar")
+    parser.add_argument("--movewindow", action="store_true", help="Launch the additional 'moves' window for each navigation")
+
+    # ✅ Add this to show help popup if requested
+    if '--help' in sys.argv or '-h' in sys.argv:
+        show_help_text("Help - Chess GUI", parser.format_help())
+        sys.exit(0)
+
     return parser.parse_args()
 
 # class LiveGame:
@@ -727,12 +770,12 @@ class ChessGUI:
         """Main loop of the GUI."""
         # Start by recreating the fairy piece singletons once (needed in Windows as spawn lost the ones made earlier)
         # Check what pieces
-        print("Inside the GUI process, first lets see what pieces exist:")
-        print(Piece.all())
-        print("Now we recreate the singletons.")
+        #print("Inside the GUI process, first lets see what pieces exist:")
+        #print(Piece.all())
+        #print("Now we recreate the singletons.")
         create_extra_pieces(self.problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
-        print("Now we see what pieces exist,")
-        print(Piece.all())
+        #print("Now we see what pieces exist,")
+        #print(Piece.all())
         self.pieces = load_images()
 
         # global SQUARE_SIZE
@@ -1918,7 +1961,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
@@ -1963,11 +2006,11 @@ if __name__ == "__main__":
     problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens)
     #comp.u_to_i_map, comp.i_to_u_map, new_tokens = load_and_update_mapping(fens=all_fens)
     # new_tokens contains all the new-ish pieces we have just seen
-    print(new_tokens)
+    #print(new_tokens)
     # Create singletons for all the pieces
-    print(Piece.all())
+    #print(Piece.all())
     create_extra_pieces(problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
-    print(Piece.all())
+    #print(Piece.all())
 
 
     if problem_list_loaded:
@@ -2004,12 +2047,12 @@ if __name__ == "__main__":
             )
         
             # Test the internal conversion for this fen works
-            print("This fen will be converted to internal format:")
-            print(f"\nOriginal FEN:  {comp.fen}")
+            #print("This fen will be converted to internal format:")
+            #print(f"\nOriginal FEN:  {comp.fen}")
             converted = convert_fen_board_section(comp.fen, problem_container.u_to_i_dict)
-            print(f"Internal FEN:  {converted}")
-            restored = convert_fen_board_section(converted, problem_container.i_to_u_dict)
-            print(f"Restored FEN:  {restored}")
+            #print(f"Internal FEN:  {converted}")
+            #restored = convert_fen_board_section(converted, problem_container.i_to_u_dict)
+            #print(f"Restored FEN:  {restored}")
 
             # Overwrite the fen with internal version
             comp.fen = converted
@@ -2019,8 +2062,8 @@ if __name__ == "__main__":
             comp.i_to_u_map = problem_container.i_to_u_dict
 
             # Show mappings
-            print_mapping("User → Internal Mapping", comp.u_to_i_map)
-            print_mapping("Internal → User Mapping", comp.i_to_u_map)
+            #print_mapping("User → Internal Mapping", comp.u_to_i_map)
+            #print_mapping("Internal → User Mapping", comp.i_to_u_map)
 
             # NEW - Generate fen_tree and move tree (used to happen above)
             

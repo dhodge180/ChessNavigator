@@ -25,6 +25,6 @@ Subtext: Brand new never before seen pieces
 Moves: +Bb3 +Rb4 +=pb7 b7b8S
 
 Title: Dirk Borst (original for The Problemist?)
-FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4
+FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b - - 0 1
 Subtext: H#3 (2 solutions)
-Moves: d7d5 c8d8 -b3 & d1b3 c1g1 e7e5 -e5 & d5e6 H e7e5 d1h5 f7e7 d7d5 -d5 & e5d6 H d7d8Q
+Moves: d7d5 c8d8 d1b3 c1g1 e7e5 d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 e5d6 H d7d8Q

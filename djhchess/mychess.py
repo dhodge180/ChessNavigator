@@ -199,9 +199,9 @@ class ChessPosition:
     def update_fen(self):
         self.fen = self.board_to_fen()
 
-        print("##################################")
-        print("Before doing anything")
-        self.print_hist()
+        #print("##################################")
+        #print("Before doing anything")
+        #self.print_hist()
 
         # History tracking
         if hasattr(self, 'move_history') and hasattr(self, 'move_index'):
@@ -217,9 +217,9 @@ class ChessPosition:
             self.move_history = [self.fen]
             self.move_index = 0
 
-        print("After adding one?")
-        self.print_hist()
-        print("##################################")
+        #print("After adding one?")
+        #self.print_hist()
+        #print("##################################")
 
     def print_hist(self):
         # Print the last 5 FENs for debugging
@@ -336,6 +336,10 @@ class ChessPosition:
         #piece_colour = self.get_piece_colour(internal_piece)
         piece_colour = internal_piece.colour
 
+        # Debugging neutral pawn moves from rank 7 to 5 to look for enpassant
+        #if start_row == 1 and end_row == 3 and piece_colour == 'neutral':
+        #    print("DEBUG ME!")
+
         # target = self.board[end_row][end_col]
 
         if piece == '1':
@@ -369,11 +373,11 @@ class ChessPosition:
             return
 
         # En passant capture
-        if piece.lower() in self.pawn_pieces and end == self.en_passant:
+        if internal_piece.is_pawn and end == self.en_passant:
             self.capture_en_passant(start, end)
         else:
             # Check here if it's a promotion attempt
-            if piece in self.pawn_pieces:
+            if internal_piece.is_pawn:
                 is_promotion = (piece_colour == 'b' and end_row == 7) or \
                         (piece_colour == 'w' and end_row == 0) or \
                         (piece_colour == 'neutral' and end_row in [0, 7])
@@ -398,7 +402,7 @@ class ChessPosition:
             self.move_piece_internal(start, end)
 
             # En passant target square logic for pawn double moves
-            if piece.lower() in self.pawn_pieces:
+            if internal_piece.is_pawn:
                 if self.turn == 'w' and start_row == 6 and end_row == 4 and end_col == start_col:
                     self.en_passant = Square.get(coord=(5, end_col))  # rank 3 (index 5)
                 elif self.turn == 'b' and start_row == 1 and end_row == 3 and end_col == start_col:
@@ -717,7 +721,7 @@ class TempChessPosition(ChessPosition):
         to_square = Square.get(alg=move['to'])
 
         # Move recorded
-        print(f"Regular move from {from_square} to {to_square}")
+        print(f"Regular move from {from_square.alg} to {to_square.alg}")
 
         piece = self.get_piece(from_square)
         target_piece = self.get_piece(to_square)
@@ -731,12 +735,12 @@ class TempChessPosition(ChessPosition):
         piece_color = self.get_piece_colour(internal_piece)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 
-        if piece_color != self.turn:
-            print("You moved out of turn, but I'll allow it.")
-            #self.change_turn()  # Swap player to move
+        if piece_color not in  (self.turn, 'neutral'):
+            print("You moved out of turn, but I'll allow it [1].")
+            self.change_turn()  # Swap player to move
 
         if target_piece is not None:
-            if piece_color == target_piece_color:
+            if piece_color == target_piece_color and target_piece_color != 'neutral':
                 print("You're trying to consume one of your own pieces. I'll allow it.")
                 deletion_move = self.convert_move("-" + to_square.alg)
                 and_move = self.convert_move("&")
@@ -776,7 +780,7 @@ class TempChessPosition(ChessPosition):
         promotion_piece = move['promotion_piece'].upper() # Standardize always to uppercase
 
         # Move recorded
-        print(f"Promotion move from {from_square} to {to_square} promoting to {promotion_piece}")
+        #print(f"Promotion move from {from_square.alg} to {to_square.alg} promoting to {promotion_piece}")
 
         # Implement the logic for handling promotion
 
@@ -893,7 +897,7 @@ class TempChessPosition(ChessPosition):
         # Move recorded
         print(f"Add piece ({added_piece_symbol}) to {to_square.alg}")
         button_label = "+" + str(added_piece_symbol) + str(to_square.alg)
-        print(f"BUTTON: {button_label}")
+        #print(f"BUTTON: {button_label}")
 
         # Implement the logic for handling capture
         #self.board.set_piece_at(chess.parse_square(to_square), chess.Piece.from_symbol(added_piece))
@@ -918,7 +922,7 @@ class TempChessPosition(ChessPosition):
         # Move recorded
         print(f"Removing piece from {from_square.alg}")
         button_label = "-" + str(true_piece.user_char) + str(from_square.alg)
-        print(f"BUTTON: {button_label}")
+        #print(f"BUTTON: {button_label}")
 
         # Implement the logic for removing a piece
         #self.board.remove_piece_at(chess.parse_square(from_square))
