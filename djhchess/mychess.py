@@ -619,7 +619,7 @@ class ChessPosition:
         """
 
         # Handle pawns or 'g' pieces — always True for disambiguation
-        if piece.user_char in ['p', 'g']:
+        if piece.is_pawn or piece.is_grasshopper:
             return True
 
         # Handle knights ('s')

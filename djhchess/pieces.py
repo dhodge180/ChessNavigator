@@ -40,6 +40,7 @@ class Piece:
         self.is_rook = (type_ == 'rook')
         self.is_queen = (type_ == 'queen')
         self.is_king = (type_ == 'king')
+        self.is_grasshopper = (type_ == 'grasshopper')
 
         self.is_white = (colour == 'white')
         self.is_black = (colour == 'black')
