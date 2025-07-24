@@ -21,14 +21,6 @@ from pyperclip import copy
 # For config file management
 import json
 
-# For click management
-from dataclasses import dataclass
-
-@dataclass
-class ClickResult:
-    type: str                 # "board", "panel", "none", "toggle"
-    target: object = None     # Square or Piece
-
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
 from djhchess.fen_test import print_mapping
 # No longer needed
@@ -42,6 +34,14 @@ from djhchess.mychess import ProblemListContainer, TempChessPosition
 
 # To allow user-defined pieces
 from custom_pieces import create_extra_pieces
+
+# For click management
+from dataclasses import dataclass
+
+@dataclass
+class ClickResult:
+    type: str                 # "board", "panel", "none", "toggle"
+    target: Square | Piece | None = None     # Square or Piece
 
 # Maybe not needed, as they're loaded by mychess when needed
 # from djhchess.mychess import ChessPosition, print_board_matrix
@@ -1221,7 +1221,8 @@ class ChessGUI:
             # Clicked the turn toggle button
             self.position.change_turn()
         elif result.type == "none":
-            print("You clicked nowhere interesting")
+            # print("You clicked nowhere interesting")
+            return
         else:
             print("Shouldn't get here.")
 
@@ -1254,7 +1255,7 @@ class ChessGUI:
             return
 
         destination = self.identify_click_target(pos)
-        added_a_piece_from_panel = False
+        added_a_piece_from_panel_with_right_click = False
 
         if self.piece_source == "board" and destination.type == "board":
             new_square = destination.target
@@ -1264,7 +1265,7 @@ class ChessGUI:
             new_square = destination.target
             piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
             self.position.add_piece(new_square, piece_symbol)
-            added_a_piece_from_panel = (button == 3)  # If using secondary mouse button keep piece in hand
+            added_a_piece_from_panel_with_right_click = (button == 3)  # If using secondary mouse button keep piece in hand
         elif self.piece_source == "board" and destination.type != "board":
             self.position.remove_piece(self.dragging_square)
 
@@ -1295,13 +1296,13 @@ class ChessGUI:
         #         print("Dropped piece off board, but it was illegal so not executed")
         #     # self.game.delete_piece_at(self.dragging_square)
 
-        # Reset dragging state
-        if added_a_piece_from_panel:
+        if added_a_piece_from_panel_with_right_click:
             # Don't reset anything if we dropped a piece from the panel with our right mouse button
-            # Keep fps_high
+            # Set fps_high
             self.adjust_fps(self.high_fps)
             return
 
+        # Reset dragging state
         self.dragging_piece = None
         self.dragging_square = None
         self.piece_source = None
