@@ -21,6 +21,14 @@ from pyperclip import copy
 # For config file management
 import json
 
+# For click management
+from dataclasses import dataclass
+
+@dataclass
+class ClickResult:
+    type: str                 # "board", "panel", "none"
+    target: object = None     # Square or Piece
+
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
 from djhchess.fen_test import print_mapping
 # No longer needed
@@ -740,7 +748,9 @@ class ChessGUI:
         self.dragging_piece = None
         self.dragging_pos = (0, 0)
         self.setup_spare_pieces()
+        self.clickable_pieces = []
         self.dragging_square = None
+        self.dragging_piece_symbol = None
         self.piece_source = None  # Track if dragging from board or panel
         self.clock = pygame.time.Clock()
         self.target_fps = None
@@ -777,11 +787,12 @@ class ChessGUI:
         #print("Now we see what pieces exist,")
         #print(Piece.all())
         self.pieces = load_images()
+        self.clickable_pieces = self.build_clickable_pieces(self.spare_pieces)  # New ClickResult
 
         # global SQUARE_SIZE
-        low_fps = 10
-        high_fps = 60
-        self.target_fps = high_fps
+        self.low_fps = 10
+        self.high_fps = 60
+        self.target_fps = self.high_fps
         self.redraw = True # should we draw the next frame?
 
         loop_counter = 0
@@ -826,13 +837,13 @@ class ChessGUI:
                     self.running = False
                     self.shutdown_trigger_ingui.set()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.adjust_fps(high_fps)
+                    self.adjust_fps(self.high_fps)
                     self.handle_mouse_down(event.pos)
                 elif event.type == pygame.MOUSEMOTION:
                     self.handle_mouse_motion(event.pos)
                 elif event.type == pygame.MOUSEBUTTONUP:
-                    self.adjust_fps(low_fps)
-                    self.handle_mouse_up(event.pos)
+                    self.adjust_fps(self.low_fps)
+                    self.handle_mouse_up(event.pos, event.button)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_l:
                         #self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
@@ -1084,6 +1095,18 @@ class ChessGUI:
         #         # Custom pieces in a third column
         #         self.spare_pieces.append((piece, (x_offset_base + 2 * Config.SQUARE_SIZE, y)))
 
+    def build_clickable_pieces(self, spare_pieces):
+        clickable = []
+        for user_char, (x, y) in spare_pieces:
+            piece_instance = Piece.get_user(user_char)
+            rect = pygame.Rect(Config.MAIN_WIDTH + x, y, Config.SQUARE_SIZE, Config.SQUARE_SIZE)
+
+            clickable.append({
+                'piece': piece_instance,
+                'rect': rect,
+            })
+
+        return clickable
 
     def draw_panel(self):
         # Move the panel to the right to avoid overlapping with the board
@@ -1096,6 +1119,11 @@ class ChessGUI:
             internal_piece = self.composition.position.convert_u_to_i(piece)
             img = self.pieces[internal_piece]
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
+
+        # Show clickable areas
+        for entry in self.clickable_pieces:
+            pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
+
 
     def get_square_under_mouse(self, pos):
         """Converts the mouse click position to a square on the board."""
@@ -1143,65 +1171,132 @@ class ChessGUI:
         self.check_legal_toggle_click(pos)
         self.check_turn_toggle_click(pos)
 
-        sq = self.get_square_under_mouse(pos)
-        print(f"Move clicked on {sq}")
-        panel_piece = self.get_piece_from_panel(pos)
-        true_piece = Piece.get_user(panel_piece)
+        # New Clickable handler -- multi type return ClickResult
+        result = self.identify_click_target(pos)
+        # result.target is the Square or Piece
 
-        if panel_piece:
-            self.dragging_piece = self.pieces[true_piece.internal_char]
-            self.dragging_piece_symbol = panel_piece
-            self.piece_source = "panel"
-            self.dragging_pos = pos
-            self.dragging_square = None
-        elif sq is not None:
-            piece = self.position.get_piece(sq)
+        # if result.type == "board":
+        #     print("****Clicked board square:", result.target)
+        # elif result.type == "panel":
+        #     print("****Clicked panel piece:", result.target.internal_char)
+        # else:
+        #     print("****Clicked nothing relevant")
+
+        if result.type == "board":
+            piece = self.position.get_piece(result.target)
             if piece:
                 self.dragging_piece = self.pieces[piece]
                 self.piece_source = "board"
-                self.dragging_square = sq
+                self.dragging_square = result.target # Square object
                 self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
+        elif result.type == "panel":
+            self.dragging_piece = self.pieces[result.target.internal_char] # result.char = a Piece
+            self.dragging_piece_symbol = result.target.user_char # result.chat = a Piece
+            self.piece_source = "panel"
+            self.dragging_pos = pos
+            self.dragging_square = None
+        elif result.type == "none":
+            print("You clicked nowhere interesting")
+        else:
+            print("Shouldn't get here.")
+
+        # sq = self.get_square_under_mouse(pos)
+        # print(f"Move clicked on {sq}")
+        # panel_piece = self.get_piece_from_panel(pos)
+        # true_piece = Piece.get_user(panel_piece)
+        #
+        # if panel_piece:
+        #     self.dragging_piece = self.pieces[true_piece.internal_char]
+        #     self.dragging_piece_symbol = panel_piece
+        #     self.piece_source = "panel"
+        #     self.dragging_pos = pos
+        #     self.dragging_square = None
+        # elif sq is not None:
+        #     piece = self.position.get_piece(sq)
+        #     if piece:
+        #         self.dragging_piece = self.pieces[piece]
+        #         self.piece_source = "board"
+        #         self.dragging_square = sq
+        #         self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
     def handle_mouse_motion(self, pos):
         if self.dragging_piece:
             self.dragging_pos = (pos[0] - Config.SQUARE_SIZE // 2, pos[1] - Config.SQUARE_SIZE // 2)
 
-    def handle_mouse_up(self, pos):
+    def handle_mouse_up(self, pos, button):
         """Handles dropping a piece, ensuring its color is preserved."""
         if not self.dragging_piece:
             return
 
-        new_square = self.get_square_under_mouse(pos)
+        destination = self.identify_click_target(pos)
+        added_a_piece_from_panel = False
 
-        print(f"Dragged piece from {self.piece_source} to {new_square}")
-        if self.piece_source == "board" and new_square is not None:
-            if new_square is not self.dragging_square:  # Move only if dropped in a new square
+        if self.piece_source == "board" and destination.type == "board":
+            new_square = destination.target
+            if new_square is not self.dragging_square: # i.e. new square release
                 self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
+        elif self.piece_source == "panel" and destination.type == "board":
+            new_square = destination.target
+            piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
+            self.position.add_piece(new_square, piece_symbol)
+            added_a_piece_from_panel = (button == 3)  # If using secondary mouse button keep piece in hand
+        elif self.piece_source == "board" and destination.type != "board":
+            self.position.remove_piece(self.dragging_square)
 
-
-        elif self.piece_source == "panel" and new_square is not None:
-            # Add the piece to the board and record the action for undo
-            # New logic: only allow adding pieces when legality is off
-            if not self.position.legal_moves_enabled:
-                piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
-                self.position.add_piece(new_square, piece_symbol)
-            else:
-                print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
-
-        elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
-            # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
-            # Only allow removing a piece from board when legality is turned off
-            if not self.position.legal_moves_enabled:
-                self.position.remove_piece(self.dragging_square)
-                #self.board.remove_piece_at(self.dragging_square)
-            else:
-                print("Dropped piece off board, but it was illegal so not executed")
-            # self.game.delete_piece_at(self.dragging_square)
+        # new_square = self.get_square_under_mouse(pos)
+        #
+        # print(f"Dragged piece from {self.piece_source} to {new_square}")
+        # if self.piece_source == "board" and new_square is not None:
+        #     if new_square is not self.dragging_square:  # Move only if dropped in a new square
+        #         self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
+        #
+        #
+        # elif self.piece_source == "panel" and new_square is not None:
+        #     # Add the piece to the board and record the action for undo
+        #     # New logic: only allow adding pieces when legality is off
+        #     if not self.position.legal_moves_enabled:
+        #         piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
+        #         self.position.add_piece(new_square, piece_symbol)
+        #     else:
+        #         print("You tried to drop a piece on the board, but legality was turned off. Turn it off first")
+        #
+        # elif self.piece_source == "board" and new_square is None: # Dropped piece off the board
+        #     # print(f"You dropped the piece from {self.dragging_square} off the board! It will be removed")
+        #     # Only allow removing a piece from board when legality is turned off
+        #     if not self.position.legal_moves_enabled:
+        #         self.position.remove_piece(self.dragging_square)
+        #         #self.board.remove_piece_at(self.dragging_square)
+        #     else:
+        #         print("Dropped piece off board, but it was illegal so not executed")
+        #     # self.game.delete_piece_at(self.dragging_square)
 
         # Reset dragging state
+        if added_a_piece_from_panel:
+            # Don't reset anything if we dropped a piece from the panel with our right mouse button
+            # Keep fps_high
+            self.adjust_fps(self.high_fps)
+            return
+
         self.dragging_piece = None
         self.dragging_square = None
         self.piece_source = None
+
+    def identify_click_target(self, pos):
+        """
+        Returns a ClickResult: type = 'board', 'panel', or 'none'
+        target = Square instance or Piece instance
+        pos = (row, col) for board, or None
+        """
+        square = self.get_square_under_mouse(pos)
+        if square:
+            return ClickResult(type="board", target=square)
+
+        print(f"Clickable pieces before we check to see if we clicked on a panel one are {self.clickable_pieces}")
+        for entry in self.clickable_pieces:
+            if entry['rect'].collidepoint(pos):
+                return ClickResult(type="panel", target=entry['piece'])
+
+        return ClickResult(type="none")
 
     def gui_ask_for_promotion(self):
         """Waits for the user to press a key to select a promotion piece."""
@@ -1267,6 +1362,10 @@ class ChessGUI:
         self.draw_custom_stip()
         self.composition.tree_position = 0
 
+        # Fairy piece panel
+        # WE MAY WANT TO RECALC THE CLICKABLE PIECES AND REDO THE setup_panel_pieces here
+        # and self.build_clickable_pieces()
+
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
 
@@ -1282,6 +1381,7 @@ class ChessGUI:
 
     def adjust_fps(self, new_fps):
         self.target_fps = new_fps
+        #print(f"New fps if {new_fps}")
 
     def show_help_popup(self):
         """Displays a scalable help popup without cutting any lines, even for small board sizes."""

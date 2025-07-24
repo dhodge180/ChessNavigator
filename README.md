@@ -32,6 +32,8 @@ Adding new pieces by dragging them from the extra pieces panel requires first to
 
 Removing pieces by dragging them from the board and dropping them off the board requires first toggling "Legality" off.
 
+If we add pieces from the panel using the right-mouse-button we can keep adding more pieces of the same type without returning to the panel.
+
 ## For pre-stored analysis
 
 ### Predefined tree file
