@@ -26,7 +26,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ClickResult:
-    type: str                 # "board", "panel", "none"
+    type: str                 # "board", "panel", "none", "toggle"
     target: object = None     # Square or Piece
 
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
@@ -748,7 +748,7 @@ class ChessGUI:
         self.dragging_piece = None
         self.dragging_pos = (0, 0)
         self.setup_spare_pieces()
-        self.clickable_pieces = []
+        self.clickable_objects = []
         self.dragging_square = None
         self.dragging_piece_symbol = None
         self.piece_source = None  # Track if dragging from board or panel
@@ -787,7 +787,7 @@ class ChessGUI:
         #print("Now we see what pieces exist,")
         #print(Piece.all())
         self.pieces = load_images()
-        self.clickable_pieces = self.build_clickable_pieces(self.spare_pieces)  # New ClickResult
+        self.clickable_objects = self.build_clickable_objects(self.spare_pieces)  # New ClickResult
 
         # global SQUARE_SIZE
         self.low_fps = 10
@@ -1095,16 +1095,36 @@ class ChessGUI:
         #         # Custom pieces in a third column
         #         self.spare_pieces.append((piece, (x_offset_base + 2 * Config.SQUARE_SIZE, y)))
 
-    def build_clickable_pieces(self, spare_pieces):
+    def build_clickable_objects(self, spare_pieces):
         clickable = []
+        panel_x = Config.MAIN_WIDTH
+
+        # Add panel pieces
         for user_char, (x, y) in spare_pieces:
             piece_instance = Piece.get_user(user_char)
-            rect = pygame.Rect(Config.MAIN_WIDTH + x, y, Config.SQUARE_SIZE, Config.SQUARE_SIZE)
+            rect = pygame.Rect(panel_x + x, y, Config.SQUARE_SIZE, Config.SQUARE_SIZE)
 
             clickable.append({
+                'location': 'panel',
                 'piece': piece_instance,
                 'rect': rect,
             })
+
+        # Add toggle turning button
+        radius = 2 * (Config.SQUARE_SIZE + 20) / 10
+        circle_x = panel_x + radius + 5
+        circle_y = Config.HEIGHT - radius - Config.SQUARE_SIZE / 10
+        toggle_rect = pygame.Rect(
+            circle_x - radius,
+            circle_y - radius,
+            2 * radius,
+            2 * radius
+        )
+
+        clickable.append({
+            'location': 'toggle',
+            'rect': toggle_rect,
+        })
 
         return clickable
 
@@ -1121,7 +1141,7 @@ class ChessGUI:
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
         # Show clickable areas
-        for entry in self.clickable_pieces:
+        for entry in self.clickable_objects:
             pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
 
 
@@ -1168,11 +1188,13 @@ class ChessGUI:
 
     def handle_mouse_down(self, pos):
 
-        self.check_legal_toggle_click(pos)
-        self.check_turn_toggle_click(pos)
+        #self.check_legal_toggle_click(pos)
+        #self.check_turn_toggle_click(pos)
 
         # New Clickable handler -- multi type return ClickResult
         result = self.identify_click_target(pos)
+        #print(f"You just clicked {result}")
+
         # result.target is the Square or Piece
 
         # if result.type == "board":
@@ -1195,6 +1217,9 @@ class ChessGUI:
             self.piece_source = "panel"
             self.dragging_pos = pos
             self.dragging_square = None
+        elif result.type == "toggle":
+            # Clicked the turn toggle button
+            self.position.change_turn()
         elif result.type == "none":
             print("You clicked nowhere interesting")
         else:
@@ -1283,18 +1308,18 @@ class ChessGUI:
 
     def identify_click_target(self, pos):
         """
-        Returns a ClickResult: type = 'board', 'panel', or 'none'
+        Returns a ClickResult: type = 'board', 'panel', 'toggle', or 'none'
         target = Square instance or Piece instance
-        pos = (row, col) for board, or None
         """
         square = self.get_square_under_mouse(pos)
         if square:
             return ClickResult(type="board", target=square)
 
-        print(f"Clickable pieces before we check to see if we clicked on a panel one are {self.clickable_pieces}")
-        for entry in self.clickable_pieces:
+        #print(f"Clickable pieces/objects before we check to see if we clicked on a panel one are {self.clickable_objects}")
+        for entry in self.clickable_objects:
             if entry['rect'].collidepoint(pos):
-                return ClickResult(type="panel", target=entry['piece'])
+                return ClickResult(type=entry['location'],
+                                   target=entry.get('piece'))
 
         return ClickResult(type="none")
 
@@ -1364,7 +1389,7 @@ class ChessGUI:
 
         # Fairy piece panel
         # WE MAY WANT TO RECALC THE CLICKABLE PIECES AND REDO THE setup_panel_pieces here
-        # and self.build_clickable_pieces()
+        # and self.build_clickable_objects()
 
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
