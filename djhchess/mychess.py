@@ -553,7 +553,7 @@ class ChessPosition:
                     continue  # Skip the moving piece
 
                 other_piece = self.get_piece(other_sq)
-                if other_piece == moving_piece and self.can_reach(moving_piece, other_sq, to_square):
+                if other_piece == moving_piece and self.can_reach(true_piece, other_sq, to_square):
                     ambiguous = True
                     break
             if ambiguous:
@@ -615,14 +615,16 @@ class ChessPosition:
         For pawns or 'g' pieces, always return True to force disambiguation.
         For sliding pieces, check if path is clear and move type is legal.
         For knights ('s'), check if move matches knight pattern.
+        piece will be genuine Piece object
         """
 
         # Handle pawns or 'g' pieces — always True for disambiguation
-        if piece.lower() in ['p', 'g']:
+        if piece.user_char in ['p', 'g']:
             return True
 
         # Handle knights ('s')
-        if piece.lower() == 's':
+        #if piece.lower() == 's':
+        if piece.is_knight:
             start_row, start_col = from_square.coord
             end_row, end_col = to_square.coord
 
@@ -632,7 +634,8 @@ class ChessPosition:
             return (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2)
 
         # Handle sliding pieces (rook, bishop, queen)
-        if piece.lower() in ['r', 'b', 'q']:
+        #if piece.lower() in ['r', 'b', 'q']:
+        if piece.is_rook or piece.is_bishop or piece.is_queen:
             start_row, start_col = from_square.coord
             end_row, end_col = to_square.coord
 
@@ -640,10 +643,12 @@ class ChessPosition:
             delta_col = end_col - start_col
 
             # Check move legality first (before path check)
-            if piece.lower() == 'r' and (delta_row != 0 and delta_col != 0):
+            #if piece.lower() == 'r' and (delta_row != 0 and delta_col != 0):
+            if piece.is_rook and (delta_row != 0 and delta_col != 0):
                 return False  # Rook must move straight
 
-            if piece.lower() == 'b' and abs(delta_row) != abs(delta_col):
+            #if piece.lower() == 'b' and abs(delta_row) != abs(delta_col):
+            if piece.is_bishop and abs(delta_row) != abs(delta_col):
                 return False  # Bishop must move diagonally
 
             # Path clearance

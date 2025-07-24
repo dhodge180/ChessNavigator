@@ -2130,6 +2130,16 @@ if __name__ == "__main__":
 
     # Create global piece_map.json and list new tokens
     problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens)
+
+    if passed_fen: # Special case of command_line fen need to do the conversion for single item
+        problem_container.set_current(1)
+        only_comp = problem_container.get_current()
+        converted = convert_fen_board_section(only_comp.fen, problem_container.u_to_i_dict)
+        only_comp.fen = converted
+        only_comp.u_to_i_map = problem_container.u_to_i_dict
+        only_comp.i_to_u_map = problem_container.i_to_u_dict
+
+
     #comp.u_to_i_map, comp.i_to_u_map, new_tokens = load_and_update_mapping(fens=all_fens)
     # new_tokens contains all the new-ish pieces we have just seen
     #print(new_tokens)

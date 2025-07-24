@@ -15,6 +15,11 @@ EXTRA_PIECES = {
     'BlackSideRook' : { 'user_char': '.l1', 'long_name': 'Side Rook', 'colour': 'black', 'type': 'rook', 'base_type': 'rook', 'rotation': 90 },
     'WhiteSideRook' : { 'user_char': '.L1', 'long_name': 'Side Rook', 'colour': 'white', 'type': 'rook', 'base_type': 'rook', 'rotation': 90 },
 
+    # If you wish to use 'N' and 'n' in your fens for knights just ensure these next two lines are uncommented
+    # This creates two 'fairy' pieces called 'N' and 'n' which look like knights!
+    'WhiteNKnight': { 'user_char': 'N', 'long_name': 'White Knight', 'colour': 'white', 'type': 'knight', 'rotation': 0 },
+    'BlackNKnight': { 'user_char': 'n', 'long_name': 'Black Knight', 'colour': 'black', 'type': 'knight', 'rotation': 0 },
+
 }
 
 def create_extra_pieces(u_to_i_map):

@@ -20,11 +20,15 @@ Subtext: Just neutral bishop
 Moves: b1b8 c1c8 d1d8 e1e8 f1f8 g1g8 h1h8 a1f8 a8h8
 
 Title: Amazing new problem
-FEN: 8/8/8/8/.l17/8/8/8
+FEN: 8/s3s3/8/8/.l17/8/8/8
 Subtext: Brand new never before seen pieces
-Moves: +Bb3 +Rb4 +=pb7 b7b8S
+Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8
 
 Title: Dirk Borst (original for The Problemist?)
 FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b - - 0 1
 Subtext: H#3 (2 solutions)
 Moves: d7d5 c8d8 d1b3 c1g1 e7e5 d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 e5d6 H d7d8Q
+
+Title: All knights?
+FEN: 8/8/8/8/8/8/8/nnNNssSS
+Subtext: nnNNssSS
