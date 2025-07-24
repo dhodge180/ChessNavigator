@@ -865,7 +865,7 @@ class ChessGUI:
                     elif event.key == pygame.K_h:
                         self.show_help_popup() # Press H to pop-up shortcuts
                     elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
-                        print("F1 pressed!")
+                        #print("F1 pressed!")
                         if self.fenlist:
                             self.cycle_fen()
                     elif event.key == pygame.K_F3:
