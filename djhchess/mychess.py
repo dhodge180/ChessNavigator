@@ -75,7 +75,7 @@ class ProblemListContainer:
         self.u_to_i_dict = None
         self.i_to_u_dict = None
 
-    def add_composition(self, title: str, fen: str, moves: str, stipulation: str):
+    def add_composition(self, title: str, fen: str, moves: str | None, stipulation: str):
         """Add a new composition and return it."""
         # Use the number of compositions as the index (1-based)
         comp_id = self.num_compositions + 1
