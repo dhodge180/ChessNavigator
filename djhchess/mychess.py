@@ -347,7 +347,7 @@ class ChessPosition:
             return
 
         # Castling (execute as two moves)
-        if piece in self.king_pieces and self.is_castling_move(start, end):
+        if internal_piece.is_king and self.is_castling_move(start, end):
             if start == self.E1:
                 if end == self.G1 and self.can_castle('w', True):
                     self.move_piece_internal(self.E1, self.G1)
@@ -378,9 +378,9 @@ class ChessPosition:
         else:
             # Check here if it's a promotion attempt
             if internal_piece.is_pawn:
-                is_promotion = (piece_colour == 'b' and end_row == 7) or \
-                        (piece_colour == 'w' and end_row == 0) or \
-                        (piece_colour == 'neutral' and end_row in [0, 7])
+                is_promotion = (internal_piece.is_black and end_row == 7) or \
+                        (internal_piece.is_white and end_row == 0) or \
+                        (internal_piece.is_neutral and end_row in [0, 7])
                 if is_promotion:
                     # Only get here if it's a promotion move
                     if promotion_callback:
@@ -423,28 +423,28 @@ class ChessPosition:
         start_row, start_col = start.coord
         end_row, end_col = end.coord
         internal_piece = self.board[start_row][start_col]
-        piece = self.convert_i_to_u(internal_piece)
+        piece = Piece.get(internal_piece)
 
-        if piece.lower() not in self.pawn_pieces:
+        if not piece.is_pawn:    
             raise ValueError("Only pawns can be promoted")
 
-        if (piece == 'P' and end_row == 0) or (piece == 'p' and end_row == 7) or (piece == '=p' and end_row in [0,7]):
-            self.board[start_row][start_col] = '1'
-             # Determine promoted piece with correct color
-            promoted = new_piece.upper() if end_row == 0 else new_piece.lower()
-            
-            # Keep '=' prefix if the original piece was marked as such
-            if piece in self.neutral_pieces:
-                promoted = '=' + promoted.lower()
-
-            internal_promoted = self.convert_u_to_i(promoted)
-            self.board[end_row][end_col] = internal_promoted
-            self.en_passant = None
-            self.change_turn()
-            self.update_fen()
+        if (piece.is_white and end_row == 0):
+            promoted = new_piece.upper()
+        elif (piece.is_black and end_row == 7):
+            promoted = new_piece.lower()
+        elif (piece.is_neutral and end_row in [0,7]):
+            promoted = "=" + new_piece.lower()
         else:
-            # This indicated an attempt to promote a white pawn on the 1st rank, or black pawn on the 8th rank
+            print("Something wrong. Couldn't identify the validity of promotion")
             raise ValueError("Promotion of this piece must happen on last rank")
+    
+        self.board[start_row][start_col] = '1' # Remove pawn from starting square
+
+        internal_promoted = self.convert_u_to_i(promoted)
+        self.board[end_row][end_col] = internal_promoted
+        self.en_passant = None
+        self.change_turn()
+        self.update_fen()
 
     def get_piece(self, square_sing) -> str:
         row, col = square_sing.coord

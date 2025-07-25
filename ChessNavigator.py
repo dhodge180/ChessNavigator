@@ -885,13 +885,13 @@ class ChessGUI:
                         if Config.SQUARE_SIZE > 40:
                             Config.set_square_size(Config.SQUARE_SIZE - 10)
                             Config.update_derived_sizes()
-                            self.pieces = load_images()
+                            self.resize_elements_after_resize()
                             self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
                     elif event.key in (pygame.K_KP_PLUS, pygame.K_EQUALS):
                         if Config.SQUARE_SIZE < 100:
                             Config.set_square_size(Config.SQUARE_SIZE + 10)
                             Config.update_derived_sizes()
-                            self.pieces = load_images()
+                            self.resize_elements_after_resize()
                             self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
                     # Square highlighting
                     elif event.key in Config.KEY_COLOR_MAP: # Presses 1 or 2 or 3 to add a square highlight
@@ -935,6 +935,11 @@ class ChessGUI:
         title_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
         title_rect = title_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
+
+    def resize_elements_after_resize(self):
+        self.pieces = load_images()
+        self.setup_spare_pieces()
+        self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
 
     def draw_pgn_panel(self): #Unused
         # Plan was to draw moves on far right panel
