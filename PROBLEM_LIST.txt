@@ -1,3 +1,7 @@
+Title: Amazing new problem
+FEN: 8/s3s3/8/8/G7/8/8/7.zz
+Subtext: Brand new never before seen pieces
+Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8 +Bd3 +bd3 +Qe3 +=pf3 +.ZZg3
 
 zTitle: Tree training
 zFEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
@@ -15,14 +19,9 @@ Subtext: rgbqk=bsr/pppppppp/8/8/8/8/PP=pPPPPP/RSB=qKBSR
 Moves: a1h8 h8f6 a4a2
 
 Title: Neutrals
-FEN: .eq7/8/8/8/8/7Q/8/=b=p=r=q=k=sqQ
+FEN: G7/8/8/8/8/7Q/8/=b=p=r=q=k=sqQ
 Subtext: Just neutral bishop
 Moves: b1b8 c1c8 d1d8 e1e8 f1f8 g1g8 h1h8 a1f8 a8h8
-
-Title: Amazing new problem
-FEN: 8/s3s3/8/8/.l17/8/8/8
-Subtext: Brand new never before seen pieces
-Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8
 
 Title: Dirk Borst (original for The Problemist?)
 FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b - - 0 1

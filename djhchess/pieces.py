@@ -155,6 +155,34 @@ STANDARD_PIECES = {
     'BlackPawn':   { 'user_char': 'p', 'long_name': 'Pawn',   'colour': 'black', 'type': 'pawn',   'rotation': 0 }
 }
 
+def create_extra_pieces(u_to_i_map, EXTRA_PIECES):
+    """
+    This creates the extra pieces defined below and used in the FENs provided.
+    This function needs to be run once to initialize all the identified pieces.
+    (In Windows the spawn in multiprocessing means it need to be run after the spawn too)
+    EXTRA_PIECES is the full database of fairy pieces that it knows about
+    EXTRA_PIECES was defined in the custom_piece.yml file
+    Every piece present in any of the given FENs will search for a definition here
+    Then Piece() is called to actually create the object, which will use the unicode name
+    already assigned in the u_to_i_map
+    """
+    for user_char, internal_char in u_to_i_map.items():
+        # Find the extra piece data by matching user_char
+        for piece_data in EXTRA_PIECES.values():
+            if piece_data['user_char'] == user_char:
+                Piece(
+                    internal_char=internal_char,
+                    user_char=piece_data['user_char'],
+                    long_name=piece_data['long_name'],
+                    colour=piece_data['colour'],
+                    type_=piece_data['type'],
+                    base_type=piece_data.get('base_type'), # will return None if not present
+                    rotation=piece_data.get('rotation', 0) # will return 0 by default
+                )
+                break
+
 # This defines all the standard pieces, assuming they will never get other internal names
+
 _load_standard_pieces()
+
 # Extra pieces will only be loaded later when we know their internal names

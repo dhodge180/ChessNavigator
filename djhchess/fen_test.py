@@ -133,14 +133,15 @@ if __name__ == "__main__":
     test_fens = [
         "r1bqkbsr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBSR w KQkq - 0 1",  # Standard starting position
         "r1bqkbsr/=p=p=p=p=p=p=p=p/8/8/8/8/=p=p=p=p=p=p=p=p/R1BQKBSR w KQkq - 0 1",  # Standard neutral position
+        "8/s3s3/8/8/G7/8/8/7.11 w KQkq - 0 1" # Position with a weird piece
         #"r1b.rokbsr/ppppp1pp/8/8/8/8/PPP2PPP/R1BQKBSR w KQkq - 0 1",  # Mid-game example
         #"r2gkbsr/ppp=.ro1ppp/3s4/8/8/8/PPP2PPP/R1BQKBSR w KQkq - 0 1",  # Endgame example
         #"r1bGkbsr/pppPpppp/8/8/8/8/PPPPPPPP/R1BQKBSR w KQkq - 0 1",  # Custom middle game
         #"r2.mak1sr/ppp1pppp/8/8/8/8/PPP2PPP/R1BQKBSR w KQkq - 0 1"  # Checkmate in 1 move position
     ]
     #test_fens = ["rgbqk=bsr/pppppppp/8/8/8/8/PP=pPPPPP/RSB=qKBSR w KQkq - 0 1"]
-    test_conversion_to_unicode()
+    #test_conversion_to_unicode()
     #test_valid_fens()
     #test_list_of_fens_to_list_of_fairy_pieces()
-    #test_new_token_extractor()
+    test_new_token_extractor()
     #test_token_translation_roundtrip()

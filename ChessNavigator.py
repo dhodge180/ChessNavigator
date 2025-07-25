@@ -20,23 +20,26 @@ from pyperclip import copy
 
 # For config file management
 import json
+import yaml
 
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
-from djhchess.fen_test import print_mapping
+# from djhchess.fen_test import print_mapping
+
 # No longer needed
 # import chess
 # import chess.pgn
 
 # Needed (my new modules)
 from djhchess.square import Square
-from djhchess.pieces import Piece, PieceBox
+from djhchess.pieces import Piece, PieceBox, create_extra_pieces
 from djhchess.mychess import ProblemListContainer, TempChessPosition
-
-# To allow user-defined pieces
-from custom_pieces import create_extra_pieces
 
 # For click management
 from dataclasses import dataclass
+
+# Code to load Fairy pieces saved in the custom_pieces.yaml file
+from djhchess.custom_piece_load import EXTRA_PIECES
+# EXTRA_PIECES is a dictionary of bonus fairy pieces, not yet given internal names.
 
 @dataclass
 class ClickResult:
@@ -176,6 +179,8 @@ class Config:
         """For title font size validation"""
         Config.STIP_FONT_SIZE = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
         """For stip font size validation (example if you have stip_font_size in your config)"""
+
+        # STAGE 1B: load custom pieces
 
         # STAGE 2
 
@@ -783,7 +788,7 @@ class ChessGUI:
         #print("Inside the GUI process, first lets see what pieces exist:")
         #print(Piece.all())
         #print("Now we recreate the singletons.")
-        create_extra_pieces(self.problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
+        create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES) # This needs to be run again later after a Windows spawn
         #print("Now we see what pieces exist,")
         #print(Piece.all())
         self.pieces = load_images()
@@ -2092,7 +2097,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
@@ -2150,7 +2155,7 @@ if __name__ == "__main__":
     #print(new_tokens)
     # Create singletons for all the pieces
     #print(Piece.all())
-    create_extra_pieces(problem_container.u_to_i_dict) # This needs to be run again later after a Windows spawn
+    create_extra_pieces(problem_container.u_to_i_dict, EXTRA_PIECES) # This needs to be run again later after a Windows spawn
     #print(Piece.all())
 
 
