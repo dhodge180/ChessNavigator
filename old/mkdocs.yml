@@ -1,0 +1,10 @@
+site_name: Chess Navigator docs
+
+plugins:
+  - search
+  - mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - codehilite
+
