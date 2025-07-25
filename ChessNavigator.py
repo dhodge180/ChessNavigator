@@ -937,6 +937,7 @@ class ChessGUI:
 
     def draw_custom_stip(self):
         """Draw the custom title at the top of the window."""
+intentinally breakijg code. to do this function right
         title_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
         title_rect = title_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
