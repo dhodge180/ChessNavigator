@@ -365,6 +365,7 @@ class ChessPosition:
                     self.move_piece_internal(self.E8, self.C8)
                     self.move_piece_internal(self.A8, self.D8)
                 else:
+                    self.move_piece_internal(start, end) # move just e1 to g1
                     return  # Invalid castling
 
             self.change_turn()
