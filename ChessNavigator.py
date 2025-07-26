@@ -102,6 +102,9 @@ class Config:
     BLACK_SQUARES = (118, 150, 86)
     PANEL_COLOUR = (20, 60, 60)
     SQUARE_SIZE = 70
+    original_size = None # Used to record what original size upon opening was
+    original_font = None
+    original_stip = None
 
     # Genuine fixed
     HEIGHT_PADDING = 5
@@ -179,7 +182,13 @@ class Config:
         Config.STIP_FONT_SIZE = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
         """For stip font size validation (example if you have stip_font_size in your config)"""
 
+        Config.original_size = Config.SQUARE_SIZE
+        Config.original_font = Config.TITLE_FONT_SIZE
+        Config.original_stip = Config.STIP_FONT_SIZE
+
         # STAGE 1B: load custom pieces
+
+
 
         # STAGE 2
 
@@ -259,6 +268,12 @@ class Config:
         cls.title_x = cls.BOARD_WIDTH // 2 + cls.BORDER_SIZE
         cls.title_y = cls.BORDER_SIZE // 2
         cls.TITLE_COORDS = (cls.title_x, cls.title_y)
+
+        multiplier = 1 + 0.1 * (cls.SQUARE_SIZE - cls.original_size) / 10 # Increase/decrease font by 10% per 10 pixels
+        cls.TITLE_FONT_SIZE = Config.validate_font_size(cls.original_font * multiplier, min_size=10,
+                                                           max_size=45, font_type="title")
+        cls.STIP_FONT_SIZE = Config.validate_font_size(cls.original_stip * multiplier, min_size=10, max_size=45,
+                                                          font_type="stip")
 
     @classmethod
     def check_and_notify_defaults(cls):
@@ -945,6 +960,10 @@ class ChessGUI:
     def resize_elements_after_resize(self):
         self.pieces = load_images()
         self.setup_spare_pieces()
+        self.title_font = pygame.font.SysFont("Arial", Config.TITLE_FONT_SIZE)  # Change font and size here
+        self.stip_font = pygame.font.SysFont("Arial", Config.STIP_FONT_SIZE)  # Change font and size here
+        self.draw_custom_stip()
+        self.draw_custom_title()
         self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
 
     def draw_pgn_panel(self): #Unused
@@ -1152,8 +1171,8 @@ class ChessGUI:
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
         # Show clickable areas
-        for entry in self.clickable_objects:
-            pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
+        #for entry in self.clickable_objects:
+        #    pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
 
 
     def get_square_under_mouse(self, pos):
