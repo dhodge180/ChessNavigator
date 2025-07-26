@@ -20,7 +20,6 @@ from pyperclip import copy
 
 # For config file management
 import json
-import yaml
 
 from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
 # from djhchess.fen_test import print_mapping
@@ -1436,9 +1435,8 @@ class ChessGUI:
             ("HOME or R", "Return to home position"),
             ("INSERT", "Save current position as home position"),
             ("Z", "Zero the board (clear all pieces)"),
-            ("F1", "Cycle to next FEN in the loaded file"),
-            ("U/I", "Undo/Redo last move (not fully functional)"),
-            ("L", "Toggle Legality"),
+            ("F1/F3", "Cycle to next/previous FEN in the loaded file"),
+            ("U", "Undo last action/move"),
             ("T", "Toggle whose turn it is"),
             ("1/2/3", "Highlight square RED/YELLOW/GREEN"),
             ("0", "Remove hovered square's highlighting"),
@@ -1448,7 +1446,8 @@ class ChessGUI:
             ("-", "Decrease board size"),
             ("LEFT/RIGHT", "Navigate through pre-loaded sequence"),
             ("END", "Jump to end of pre-loaded sequence"),
-            ("H", "Show/Hide this help window")
+            ("H", "Show/Hide this help window"),
+            ("Q/R/S/N", "Choose promotion piece during promotion attempt")
         ]
 
         total_lines = len(shortcuts)

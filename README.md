@@ -16,23 +16,22 @@ New move entry is by dragging the mouse.
 
 Various shortcuts are currently implemented but not documented.
 
-| Key  | Action                                                     |
-|------|------------------------------------------------------------|
+| Key       | Action                                                     |
+|-----------|------------------------------------------------------------|
 | HOME or R | Return to home position                               |
-| INSERT | Save current position as home position                   |
-| Z    | Zero the board (and turn off legality to allow adding)     |
-| F1/F3| Cycle to next/previous FEN in the loaded file              |
-| U    | Undo last move (cannot currently undo after add/remove)    |
-| L    | Toggle Legality (also clickable)                           |
-| T    | Toggle whose turn it is (also clickable)                   |
+| INSERT    | Save current position as home position                   |
+| Z         | Zero the board     |
+| F1/F3     | Cycle to next/previous FEN in the loaded file              |
+| U         | Undo last move (cannot currently undo after add/remove)    |
+| T         | Toggle whose turn it is (also clickable)                   |
 | (1,2,3,0) | Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT |
-| Ctrl + C | Copy current position to clipboard as FEN                  |
-| +/-  | Decrease/Increase window size                              |
-| DELETE | Clear all highlighting                                     |
-| ➡    | Step into predefined move tree                             |
-| ⬅    | Step back along predefined move tree                       |
-| END  | Jump to end of predefined move tree                        |
-| rnbq | Select promotion piece  (during promotion attempt)         |
+| Ctrl + C  | Copy current position to clipboard as FEN                  |
+| +/-       | Decrease/Increase window size                              |
+| DELETE    | Clear all highlighting                                     |
+| ➡         | Step into predefined move tree                             |
+| ⬅         | Step back along predefined move tree                       |
+| END       | Jump to end of predefined move tree                        |
+| rsbq      | Select promotion piece  (during promotion attempt)         |
 
 ### Adding and removing pieces
 
