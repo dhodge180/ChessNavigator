@@ -356,7 +356,8 @@ class ChessPosition:
                     self.move_piece_internal(self.E1, self.C1)
                     self.move_piece_internal(self.A1, self.D1)
                 else:
-                    return  # Invalid castling
+                    self.move_piece_internal(start, end)  # move just e1 to c1/g1 but not the rook
+                    #return  # Invalid castling
             elif start == self.E8:
                 if end == self.G8 and self.can_castle('b', True):
                     self.move_piece_internal(self.E8, self.G8)
@@ -365,8 +366,8 @@ class ChessPosition:
                     self.move_piece_internal(self.E8, self.C8)
                     self.move_piece_internal(self.A8, self.D8)
                 else:
-                    self.move_piece_internal(start, end) # move just e1 to g1
-                    return  # Invalid castling
+                    self.move_piece_internal(start, end) # move just e8 to g8/c8 but not the rook
+                    #return  # Invalid castling
 
             self.change_turn()
             self.en_passant = None

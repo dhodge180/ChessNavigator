@@ -15,7 +15,7 @@ zMoves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d
 
 Title: Fairy pieces
 FEN: 8/g5p1/6p1/8/G8/k6K/8/g7
-Subtext: rgbqk=bsr/pppppppp/8/8/8/8/PP=pPPPPP/RSB=qKBSR
+Subtext: Grasshoppers
 Moves: a1h8 h8f6 a4a2
 
 Title: Neutrals

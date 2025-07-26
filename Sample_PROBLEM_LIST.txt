@@ -1,0 +1,16 @@
+# This is a sample database of problems. 
+# If you delete this file or remove all FENs from it then the program will just launch with the start position.
+# You can also call the executable with --fen 8/8/8/8/8/8/8/8 to specify a single diagram.
+# Or with --fenlist filename.txt to load from a custom file not this one.
+
+# Here is a sample entry:
+
+Title: This is the Title
+FEN: KB6/b7/1kPP4/1Pp5/2p5/2Pr4/8/7r
+Subtext: This appears below (Draw)
+Moves: c6c7 h1h8 d6d7 a7b8 * d7d8q b8c7 d8h8 d3d8 < d7d8b * b8c7 < b8a7 c7c8b b6b5 c8d7 * d3d7 < b5a6 d7c8 a6b5 c8d7
+
+Title: The Start position
+FEN: rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR w KQkq - 0 1
+Subtext: Unknown
+Moves: e2e4 e7e5 d1f3 g8f6 f1c4 f6e4 f3f7

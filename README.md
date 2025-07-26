@@ -1,11 +1,3 @@
-TODO:
-Allow Kg1 when not castling, just don't move the rook?
-Stip printing borked.
-F1/F3 in help popup?
-Remove green boxes
-_internal folder maintain in .iss file in TempChessNav
-Sample PROBLEM_LIST.txt provided (see TempChessNav)
-
 My Chess Navigator program for showing chess problems.
 
 The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
