@@ -936,10 +936,11 @@ class ChessGUI:
 
     def draw_custom_stip(self):
         """Draw the custom title at the top of the window."""
-intentinally breakijg code. to do this function right
-        title_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
-        title_rect = title_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
-        self.screen.blit(title_surface, title_rect)
+        #print("HELP FIX THIS!!!")
+        stip_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
+        stip_rect = stip_surface.get_rect(center=Config.STIP_COORDS)  # Adjust position as needed
+        self.screen.blit(stip_surface, stip_rect)
+        #print("Did it work?")
 
     def resize_elements_after_resize(self):
         self.pieces = load_images()
@@ -2189,7 +2190,7 @@ if __name__ == "__main__":
                 title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
                 fen=fen_data['fen'],
                 moves=fen_data.get('moves', ''),
-                stipulation=fen_data.get('stipulation', '')
+                stipulation=fen_data.get('stip', '')
             )
         
             # Test the internal conversion for this fen works
