@@ -9,7 +9,6 @@ import os
 files = [
     "build.py",
     "ChessNavigator.py",
-    "InstallerCreatorScript.iss",
     "LICENSES.txt",
     "README.md",
     "Sample_PROBLEM_LIST.txt",
