@@ -58,6 +58,12 @@ def write_default_yaml():
         else:
             f.write(f"  # base_type: queen  # (Optional) Piece to use as base for image and rotation\n")
 
+        # Optional mirror
+        if 'mirror' in first_piece:
+            f.write(f"  mirror: {first_piece['mirror']}  # (Optional) Mirror (horizontal flip) of the image\n")
+        else:
+            f.write(f"  # mirror: false  # (Optional) Mirror (horizontal flip) of the image\n")
+
         f.write("\n")  # <-- blank line after first piece
 
         # Rest of the pieces with spacing between them

@@ -9,7 +9,7 @@ class Piece:
     _char_map = {}       # Maps internal_char -> Piece
     _user_char_map = {}  # Maps user_char -> Piece
 
-    def __new__(cls, internal_char, user_char, long_name, colour, type_, base_type=None, rotation=0):
+    def __new__(cls, internal_char, user_char, long_name, colour, type_, base_type=None, rotation=0, mirror=False):
         if internal_char in cls._char_map:
             return cls._char_map[internal_char]
 
@@ -18,7 +18,7 @@ class Piece:
         cls._user_char_map[user_char] = self
         return self
 
-    def __init__(self, internal_char, user_char, long_name, colour, type_, base_type=None, rotation=0):
+    def __init__(self, internal_char, user_char, long_name, colour, type_, base_type=None, rotation=0, mirror=False):
         # Avoid re-initializing singletons
         if hasattr(self, 'initialized'):
             return
@@ -32,6 +32,7 @@ class Piece:
         # For images
         self.base_type = base_type if base_type else type_
         self.rotation = rotation
+        self.mirror = mirror
 
         # Precomputed flags for speed
         self.is_pawn = (type_ == 'pawn')
@@ -49,7 +50,7 @@ class Piece:
         self.initialized = True
 
     def __repr__(self):
-        return f"<{self.long_name} ({self.user_char}), rot={self.rotation}>"
+        return f"<{self.long_name} ({self.user_char}), rot={self.rotation}>, mirror={self.mirror}>"
 
     def image_filename(self, square_size):
         """
@@ -177,7 +178,8 @@ def create_extra_pieces(u_to_i_map, EXTRA_PIECES):
                     colour=piece_data['colour'],
                     type_=piece_data['type'],
                     base_type=piece_data.get('base_type'), # will return None if not present
-                    rotation=piece_data.get('rotation', 0) # will return 0 by default
+                    rotation=piece_data.get('rotation', 0), # will return 0 by default
+                    mirror=piece_data.get('mirror', False) # will return False by default
                 )
                 break
 

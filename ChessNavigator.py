@@ -1560,6 +1560,9 @@ def load_images():
 
         image = pygame.transform.scale(image, (square_size, square_size))
 
+        if piece.mirror:
+            image = pygame.transform.flip(image, flip_x=True, flip_y=False)  # flip horizontally (before any rotation)
+
         if piece.rotation != 0:
             image = pygame.transform.rotate(image, -piece.rotation)  # pygame rotates counter-clockwise by default
 

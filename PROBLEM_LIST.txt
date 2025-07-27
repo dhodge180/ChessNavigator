@@ -1,7 +1,10 @@
+Title: Moa and Mao then Rose
+FEN: .mo.MO6/.ma.MA6/8/8/8/8/8/.ro.RO6
+
 Title: Amazing new problem
-FEN: 8/s3s3/8/8/G7/8/8/7.zz
+FEN: 8/s3s3/8/8/G7/8/8/7.ro
 Subtext: Brand new never before seen pieces
-Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8 +Bd3 +bd3 +Qe3 +=pf3 +.ZZg3
+Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8 +Bd3 +bd3 +Qe3 +=pf3 +.rog3
 
 zTitle: Tree training
 zFEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
