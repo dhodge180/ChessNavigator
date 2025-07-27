@@ -1,3 +1,0 @@
-# Global variables
-
-::: ChessNavigator.Config
