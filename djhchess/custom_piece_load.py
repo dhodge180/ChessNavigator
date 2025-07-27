@@ -28,6 +28,7 @@ YAML_HEADER = """# ==============================
 # - type: The piece type (pawn, rook, etc.) for logic
 # - base_type: Piece to use as base for image and rotation.
 # - rotation: Rotation of the image in degrees (clockwise).
+# - mirror: Mirroring of piece, likely before rotation (true/false).
 # ==============================
 """
 
