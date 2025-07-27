@@ -479,7 +479,8 @@ def parse_arguments():
     parser.add_argument("--stip", type=str, default="", help="Set the problem stipulation (for a single problem)")
     parser.add_argument("--fenlist", type=str, help="Path to the PROBLEM_LIST.txt file to load any number of problems", default="PROBLEM_LIST.txt")
     parser.add_argument("--window", type=str, help="Set the Window titlebar")
-    parser.add_argument("--movewindow", action="store_true", help="Launch the additional 'moves' window for each navigation")
+    #parser.add_argument("--movewindow", action="store_true", help="Launch the additional 'moves' window for each navigation")
+    parser.add_argument("--nomoves", action="store_true", help="Don't show the additional 'moves' window for each navigation")
 
     # ✅ Add this to show help popup if requested
     if '--help' in sys.argv or '-h' in sys.argv:
@@ -2117,7 +2118,7 @@ if __name__ == "__main__":
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
-    MOVES_WINDOW_VERSION = not args.movewindow # True if passed --movewindow else False. Default set in arg.parse code.
+    MOVES_WINDOW_VERSION = not args.nomoves # Changed to make --nowindow required to disable
     window_title = args.window if args.window else "Chess Navigator" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None

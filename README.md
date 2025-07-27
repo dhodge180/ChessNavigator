@@ -89,7 +89,7 @@ Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased pie
 ## Command line options: examples
 
 --window "New title"     : Specifies window title (used for screen capture)
---movewindow             : Loads the pop-up move window
+--nomoves                : Disables loading of the 'moves' navigation pop-up window
 
 --fen "8/7R/2K4k/..."    : Passes a single FEN position
 --title "My Problem"     : Forces a title for the single FEN passed
