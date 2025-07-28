@@ -175,12 +175,13 @@ class ChessPosition:
     def parse_fen(self, fen):
         parts = fen.split()
         board = self.fen_to_board(parts[0])
-        if len(parts) == 1:
-            # Only been passed the board bit
-            parts.append('w') # turn
-            parts.append('-') # castling
-            parts.append('-') # en passant
+        # Fill missing parts with defaults
+        while len(parts) < 4:
+            defaults = ['w', '-', '-']
+            parts.append(defaults[len(parts) - 1])
+
         turn = parts[1]
+        #castling = parts[2] if parts[2] != '-' else ''
         en_passant = parts[3] if parts[3] != '-' else None
         return board, turn, en_passant
 
