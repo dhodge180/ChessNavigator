@@ -302,6 +302,30 @@ class Config:
         if not overridden_settings:
             print("All configuration settings were successfully loaded and validated with default values.\n")
 
+## Calculate screen sizes
+# Position calculation
+pygame_width, pygame_height = 960, 690
+tk_width, tk_height = 1100, 150
+
+# Get screen size once
+root_temp = tk.Tk()
+screen_w = root_temp.winfo_screenwidth()
+screen_h = root_temp.winfo_screenheight()
+root_temp.destroy()
+
+center_x = (screen_w - pygame_width) // 2
+pygame_x = center_x
+pygame_y = 50
+tk_x = center_x
+tk_y = pygame_y + pygame_height + 50
+
+# Export values so the rest of your code can use them
+PYGAME_POS = f"{pygame_x},{pygame_y}"
+TK_GEOMETRY = f"{tk_width}x{tk_height}+{tk_x}+{tk_y}"
+
+# Initialize before loading pygame
+os.environ['SDL_VIDEO_WINDOW_POS'] = PYGAME_POS
+
 def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
@@ -2007,6 +2031,7 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
                     tk.Label(frame, text="").grid(row=i, column=j)
 
     root = tk.Tk()
+    root.geometry(TK_GEOMETRY)
     #moves_window = root
     root.title("Moves")
 
