@@ -788,27 +788,45 @@ class TempChessPosition(ChessPosition):
 
     def handle_promotion(self, move):
         """e.g. {'type': 'promotion', 'from': 'a7', 'to': 'a8', 'promotion_piece': 'Q'}
-        If move is promotion do same as move but add all three parts
+        If move is promotion do same as move but add all three parts.
+        promotion_piece is drawn from the full database of Piece.user_char values
         """
 
         from_square = Square.get(alg=move['from'])
         to_square = Square.get(alg=move['to'])
 
-        promotion_piece = move['promotion_piece'].upper() # Standardize always to uppercase
+        # What piece is moving?
+        from_piece_internal = self.get_piece(from_square)
+        from_piece = Piece.get(from_piece_internal)
+
+        # Obtain Piece user described
+        promotion_piece_user = move['promotion_piece'] # String name of piece given by user
+        true_promotion_piece = Piece.get_user(promotion_piece_user) # Piece object for promotion piece described
+
+        # Check planned promotion Piece matches colour of moving piece
+        # If not, then override user provided name using CASE CHANGING - better version may be to search
+        # for piece of similar type and long_name but of different colour, but not bothering
+        if from_piece.colour != true_promotion_piece.colour: # Moving piece and given promotion piece not same colour
+            if from_piece.colour == 'white':
+                true_promotion_piece = Piece.get_user(promotion_piece_user.upper()) # Try upper case version
+            elif from_piece.colour == 'black':
+                true_promotion_piece = Piece.get_user(promotion_piece_user.lower()) # Try lower case version
+            elif from_piece.colour == 'neutral':
+                true_promotion_piece = Piece.get_user(promotion_piece_user.lower()) # Try lower case version
 
         # Move recorded
         #print(f"Promotion move from {from_square.alg} to {to_square.alg} promoting to {promotion_piece}")
 
         # Implement the logic for handling promotion
 
-        piece = self.get_piece(from_square)
+        #piece = self.get_piece(from_square)
         target_piece = self.get_piece(to_square)
 
-        if piece is None:
+        if from_piece_internal is None:
             print("Uhm, there was meant to be a piece here!")
             return None, None
 
-        piece_color = self.get_piece_colour(piece)
+        piece_color = self.get_piece_colour(from_piece_internal)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 
         if piece_color != self.turn and piece_color != 'neutral':
@@ -833,9 +851,9 @@ class TempChessPosition(ChessPosition):
         #self.board.push(mv)
 
         prefix = self.to_san(from_square, to_square)
-        fake_san_version = prefix + promotion_piece.upper()
+        fake_san_version = prefix + true_promotion_piece.user_char
 
-        self.promote_pawn(from_square, to_square, promotion_piece)
+        self.promote_pawn(from_square, to_square, true_promotion_piece.user_char)
         self.add_this_fen()
 
         #fake_san_version = move['from'] + move['to'] + promotion_piece.lower()
@@ -972,58 +990,79 @@ class TempChessPosition(ChessPosition):
         Each case will be converted into an appropriate format (e.g., tuple or dict).
         """
 
+        # Retrieve all user_char names of all registered pieces (as potential promotion names)
+        piece_names = Piece.all_user_chars()
+
+        m = re.fullmatch(r'([a-h][1-8])([a-h][1-8])(.*)?$', move)
+
+        if m:
+            from_sq, to_sq, promo_text = m.groups()
+            if promo_text: # There is some text after the move (which we guess is for a promotion piece)
+                # Check if promo_text is valid piece user_char
+                if promo_text not in piece_names:
+                    raise ValueError(f"Invalid promotion piece: {promo_text} in move {move}")
+                return  {
+                    'type': 'promotion',
+                    'from': from_sq,
+                    'to': to_sq,
+                    'promotion_piece': promo_text
+                }
+            else:
+                return {'type': 'move', 'from': from_sq, 'to': to_sq}
+
+
         # Case a: letter-number-letter-number (e.g. a1e5) possibly ending +, ++ or #
-        if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1,2}|#)?$', move):
-            move = move.rstrip('+#')  # Strips any + or # at the end
-            # This matches a format like 'a1e5'
-            return {'type': 'move', 'from': move[:2], 'to': move[2:]}
+        #if re.fullmatch(r'[a-h][1-8][a-h][1-8](\+{1,2}|#)?$', move):
+        #    move = move.rstrip('+#')  # Strips any + or # at the end
+        #    # This matches a format like 'a1e5'
+        #    return {'type': 'move', 'from': move[:2], 'to': move[2:]}
 
         # Case b: letter-number-letter-number-letter (e.g. a7a8Q), where last letter is one of prsbQPRSBQ
         # possibly ending +, ++ or #
-        elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbsqkRBSQK](\+{1,2}|#)?$', move):
-            move = move.rstrip('+#')  # Strips any + or # at the end
-            # This matches a format like 'a7a8Q' with a valid promotion piece
-            return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
+        #elif re.fullmatch(r'[a-h][1-8][a-h][1-8][rbsqkRBSQK](\+{1,2}|#)?$', move):
+        #    move = move.rstrip('+#')  # Strips any + or # at the end
+        #    # This matches a format like 'a7a8Q' with a valid promotion piece
+        #    return {'type': 'promotion', 'from': move[:2], 'to': move[2:4], 'promotion_piece': move[4].lower()}
 
         # Case c: the string "*" means save checkpoint
-        elif move == "*":
+        if move == "*":
             return {'type': 'save'}
 
         # This case allow multiple moves to be simultaneous
-        elif move == "&":
+        if move == "&":
             return {'type': 'and'}  # Plan is to read next move and overwrite, not advancing the tree
 
         # Case d: the string "H" means return to home
-        elif move == "H":
+        if move == "H":
             return {'type': 'home'}
 
         # Case: setting whose turn it is to move
-        elif move in ("W", "B"):
+        if move in ("W", "B"):
             return {'type': 'player_turn', 'player': move}
 
         # Case e: a string of consecutive < symbols, e.g. <<< or <
-        elif re.fullmatch(r'<+', move):  # any number of < symbols
+        if re.fullmatch(r'<+', move):  # any number of < symbols
             return {'type': 'skipback', 'steps': len(move)}
 
         # Case f: string "+letter-letter-number" (e.g. +Rb2)
-        elif re.fullmatch(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
+        if re.fullmatch(r'^\+([prnbqPRNBQ])[a-h][1-8]$', move):
             # This matches a format like '+Rb2'
             return {'type': 'add', 'piece': move[1], 'to': move[2:]}
         
         # Case f SPECIAL NEW: '+ANYTHINGa1' format (e.g. +Rb2, +=qh5, +.l2g4
-        elif re.fullmatch(r'^\+.+[a-h][1-8]$', move):
+        if re.fullmatch(r'^\+.+[a-h][1-8]$', move):
             # Extract piece and destination square -- allows for multicharacter pieces
             square = move[-2:]           # Last two chars are the square
             piece = move[1:-2]           # All between '+' and square is the piece
             return {'type': 'add', 'piece': piece, 'to': square}
 
         # Case g: string "-letter-number" (e.g. -e4)
-        elif re.fullmatch(r'^-[a-h][1-8]$', move):
+        if re.fullmatch(r'^-[a-h][1-8]$', move):
             # This matches a format like '-e4'
             return {'type': 'remove', 'from': move[1:]}
 
-        else:
-            return {'type': 'invalid', 'move': move}
+        # Nothing matched! Invalid move
+        return {'type': 'invalid', 'move': move}
 
 def print_board_matrix(board, empty_square_char='.'):
     for row in board:  # print rank 8 to 1

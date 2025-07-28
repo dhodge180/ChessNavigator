@@ -3,12 +3,16 @@
 # As long as a FEN is present a diagram will be created titles and subtext are optional
 # If you mess up, unused titles and subtexts may get overwritten
 
-Title: D. Schoba, 1974, 1st Prize DSZ
-FEN: 4ss2/6p1/8/3pP3/R2Sk2P/1P3SPP/4K3/7B
-Subtext: Mate in 3
-Moves: e2d2 * a4a1 a1e1 < e8d6 f3h2 e4e5 h2g4 < f8e6 d4c6 * e4f5 c6e7 < d5d4 f3d4 < e6d4 f3d4 << f8g6 d4c6 * e4f5 f3d4 < d5d4 f3d4 << e8f6 f3g5 e4e5 g5f7 H
+Title: Promotions!
+FEN: 8/PPPPPPPP/8/8/8/8/pppppppp/8
+Moves: a7a8q b7b8r c7c8s d7d8n e7e8B f7f8.MO g7g8.mo h7h8.ro a2a1q b2b1r c2c1=s d2d1=b e2e1=r f2f1=q g2g1G h2h1=p
 
-Title: F. Chlubna, 1968, 1st Prize problem
-FEN: 5KR1/3p4/8/4P2Q/5k2/p2Pp3/r7/q1b5
-Subtext: Mate in 3
-Moves: g8g6 * h5g4 f4e5 g4e4 < d7d5 h5g4 f4e5 g6e6 < a1d4 h5g4 f4e5 g4g5 < e3e2 h5g5 f4f3 g5g3 < a2f2 h5g5 f4f3 g5g4 < a2g2 g6f6 f4g3 f6f3
+zTitle: D. Schoba, 1974, 1st Prize DSZ
+zFEN: 4ss2/6p1/8/3pP3/R2Sk2P/1P3SPP/4K3/7B
+zSubtext: Mate in 3
+zMoves: e2d2 * a4a1 a1e1 < e8d6 f3h2 e4e5 h2g4 < f8e6 d4c6 * e4f5 c6e7 < d5d4 f3d4 < e6d4 f3d4 << f8g6 d4c6 * e4f5 f3d4 < d5d4 f3d4 << e8f6 f3g5 e4e5 g5f7 H
+
+zTitle: F. Chlubna, 1968, 1st Prize problem
+zFEN: 5KR1/3p4/8/4P2Q/5k2/p2Pp3/r7/q1b5
+zSubtext: Mate in 3
+zMoves: g8g6 * h5g4 f4e5 g4e4 < d7d5 h5g4 f4e5 g6e6 < a1d4 h5g4 f4e5 g4g5 < e3e2 h5g5 f4f3 g5g3 < a2f2 h5g5 f4f3 g5g4 < a2g2 g6f6 f4g3 f6f3

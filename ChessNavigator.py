@@ -2181,6 +2181,7 @@ if __name__ == "__main__":
     #print(Piece.all())
     create_extra_pieces(problem_container.u_to_i_dict, EXTRA_PIECES) # This needs to be run again later after a Windows spawn
     #print(Piece.all())
+    print(Piece.all_user_chars())
 
 
     if problem_list_loaded:

@@ -98,6 +98,11 @@ class Piece:
         """Return all registered pieces."""
         return list(cls._char_map.values())
 
+    @classmethod
+    def all_user_chars(cls):
+        """Return the user_char of all registered pieces."""
+        return [p.user_char for p in cls._char_map.values()]
+
 
 class PieceBox:
     """
