@@ -2041,7 +2041,7 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
     #root.geometry(f"+{tk_x}+{tk_y}")
 
     frame = tk.Frame(root)
-    frame.pack(padx=10, pady=10)
+    frame.pack(padx=10, pady=10, anchor='nw')
 
     #data = [[(None, None, None), (None, None, None)], [(None, None, None), (None, None, None)]]
     #create_buttons(data)
@@ -2187,8 +2187,11 @@ if __name__ == "__main__":
     
     # New fen unicode stuff
 
+    # All user_chars in EXTRA_PIECES from custom_pieces.yml
+    all_user_chars = [piece_data['user_char'] for piece_data in EXTRA_PIECES.values()]
+
     # Create global piece_map.json and list new tokens
-    problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens)
+    problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens, extras=all_user_chars)
 
     if passed_fen: # Special case of command_line fen need to do the conversion for single item
         problem_container.set_current(1)

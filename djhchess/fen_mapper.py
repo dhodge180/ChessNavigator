@@ -168,7 +168,7 @@ def convert_fen_board_section(fen, mapping):
 
     return " ".join([board] + fen_tail)
 
-def load_and_update_mapping(fens, map_file=MAP_FILE):
+def load_and_update_mapping(fens, map_file=MAP_FILE, extras=None):
     """
         Loads an existing mapping of user-defined chess pieces to internal symbols, processes FEN strings to
         extract tokens representing chess pieces, and updates the mapping with any missing tokens using available
@@ -187,6 +187,7 @@ def load_and_update_mapping(fens, map_file=MAP_FILE):
         Args:
             fens (list): A list of FEN strings representing the current board state(s) to process.
             map_file (str, optional): The file path where the user-to-internal mapping is stored. Defaults to `MAP_FILE`.
+            extras (list): A list of user_chars for all pieces named in custom_pieces.yml, which we also want to be included
 
         Returns:
             tuple: A tuple containing:
@@ -210,6 +211,10 @@ def load_and_update_mapping(fens, map_file=MAP_FILE):
     existing_symbols = set(user_to_internal.values())
 
     raw_tokens = extract_tokens_from_fens(fens)
+    if raw_tokens is None:
+        raw_tokens = extras
+    else:
+        raw_tokens.append(extras)  # Add the passed extra tokens to include in creations.
     block_data = load_predefined_blocks()
     custom_tokens = [expand_tokens_with_blocks(tokens, block_data) for tokens in raw_tokens]
 

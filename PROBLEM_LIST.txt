@@ -5,7 +5,7 @@
 
 Title: Promotions!
 FEN: 8/PPPPPPPP/8/8/8/8/pppppppp/8
-Moves: a7a8q b7b8r c7c8s d7d8n e7e8B f7f8.MO g7g8.mo h7h8.ro a2a1q b2b1r c2c1=s d2d1=b e2e1=r f2f1=q g2g1G h2h1=p
+Moves: a7a8q b7b8r c7c8s d7d8n e7e8B f7f8.MO g7g8.mo h7h8.ro a2a1q b2b1r c2c1=s d2d1=b e2e1=r f2f1=q g2g1G h2h1=k
 
 Title: D. Schoba, 1974, 1st Prize DSZ
 FEN: 4ss2/6p1/8/3pP3/R2Sk2P/1P3SPP/4K3/7B
