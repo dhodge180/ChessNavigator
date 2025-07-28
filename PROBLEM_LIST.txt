@@ -1,36 +1,14 @@
-Title: Moa and Mao then Rose
-FEN: .mo.MO6/.ma.MA6/8/8/8/8/8/.ro.RO6
+# Syntax is each line should start with either Title: or FEN: or Subtext:
+# Blank lines can be used to separate problems (but might not be totally necessary)
+# As long as a FEN is present a diagram will be created titles and subtext are optional
+# If you mess up, unused titles and subtexts may get overwritten
 
-Title: Amazing new problem
-FEN: 8/s3s3/8/8/G7/8/8/7.ro
-Subtext: Brand new never before seen pieces
-Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8 +Bd3 +bd3 +Qe3 +=pf3 +.rog3
+Title: D. Schoba, 1974, 1st Prize DSZ
+FEN: 4ss2/6p1/8/3pP3/R2Sk2P/1P3SPP/4K3/7B
+Subtext: Mate in 3
+Moves: e2d2 * a4a1 a1e1 < e8d6 f3h2 e4e5 h2g4 < f8e6 d4c6 * e4f5 c6e7 < d5d4 f3d4 < e6d4 f3d4 << f8g6 d4c6 * e4f5 f3d4 < d5d4 f3d4 << e8f6 f3g5 e4e5 g5f7 H
 
-zTitle: Tree training
-zFEN: 8/PPPP4/k1Pb4/4Q3/8/8/P4P2/KB6
-zSubtext: S#5
-zMoves: a7a8Q a6b6 c7c8S * b6c7 b7b8b c7d8 e5f6 d6e7 c8d6 e7f6 < b6c6 b7b8r * c6d7 c8b6 d7c7 f2f3 d6e5 < c6c7 c8b6 d6e5
-
-zTitle: Testing opening branches
-zFEN: "rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR w KQkq - 0 1"
-zSubtext: "Mate in none"
-zMoves: e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4 H g1f3 g7g5 f3g5
-
-Title: Fairy pieces
-FEN: 8/g5p1/6p1/8/G8/k6K/8/g7
-Subtext: Grasshoppers
-Moves: a1h8 h8f6 a4a2
-
-Title: Neutrals
-FEN: G7/8/8/8/8/7Q/8/=b=p=r=q=k=sqQ
-Subtext: Just neutral bishop
-Moves: b1b8 c1c8 d1d8 e1e8 f1f8 g1g8 h1h8 a1f8 a8h8
-
-Title: Dirk Borst (original for The Problemist?)
-FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b - - 0 1
-Subtext: H#3 (2 solutions)
-Moves: d7d5 c8d8 d1b3 c1g1 e7e5 d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 e5d6 H d7d8Q
-
-Title: All knights?
-FEN: 8/8/8/8/8/8/8/nnNNssSS
-Subtext: nnNNssSS
+Title: F. Chlubna, 1968, 1st Prize problem
+FEN: 5KR1/3p4/8/4P2Q/5k2/p2Pp3/r7/q1b5
+Subtext: Mate in 3
+Moves: g8g6 * h5g4 f4e5 g4e4 < d7d5 h5g4 f4e5 g6e6 < a1d4 h5g4 f4e5 g4g5 < e3e2 h5g5 f4f3 g5g3 < a2f2 h5g5 f4f3 g5g4 < a2g2 g6f6 f4g3 f6f3

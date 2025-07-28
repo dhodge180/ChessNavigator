@@ -706,6 +706,10 @@ class TempChessPosition(ChessPosition):
         converted_move = self.convert_move(move_str)
         move_type = converted_move['type']
 
+        # Check move is not from square X to square X
+        if converted_move['type'] in ('move', 'promotion') and converted_move['from'] == converted_move['to']:
+            raise ValueError(f"Invalid move: from and to squares are the same: {converted_move['from']}{converted_move['to']} not valid")
+
         button_label = None
         button_fen = None
 
@@ -727,6 +731,11 @@ class TempChessPosition(ChessPosition):
         # Updated Square objects
         from_square = Square.get(alg=move['from'])
         to_square = Square.get(alg=move['to'])
+
+        if from_square is to_square:
+            print("Cannot move a piece from a square to itself!")
+            print(f"You tried to move from {from_square.alg} to {to_square.alg}")
+            return None, None
 
         # Move recorded
         print(f"Regular move from {from_square.alg} to {to_square.alg}")
