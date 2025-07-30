@@ -1250,8 +1250,8 @@ class ChessGUI:
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
         # Show clickable areas
-        for entry in self.clickable_objects:
-            pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
+        #for entry in self.clickable_objects:
+        #    pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
 
 
     def get_square_under_mouse(self, pos):
