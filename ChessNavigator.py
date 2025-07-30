@@ -75,7 +75,7 @@ class Config:
     }
 
     # Customizable
-    WINDOW_WIDTH = 800
+    WINDOW_WIDTH = 1000
     WINDOW_HEIGHT = 800
 
     MAIN_HEIGHT = 0
@@ -249,7 +249,7 @@ class Config:
 
         cls.BOARD_WIDTH = cls.SQUARE_SIZE * cls.BOARD_SIZE
         """Width of just the board"""
-        cls.PANEL_WIDTH = 4 * cls.SQUARE_SIZE
+        cls.PANEL_WIDTH = 5 * cls.SQUARE_SIZE
         """Side panel with spare pieces (width)"""
         cls.WIDTH = cls.BOARD_WIDTH + cls.PANEL_WIDTH + 2 * cls.BORDER_SIZE + cls.MOVES_WIDTH
         """Full width"""
@@ -1128,7 +1128,7 @@ class ChessGUI:
             self.screen.blit(self.dragging_piece, self.dragging_pos)
 
 
-    def setup_spare_pieces(self):
+    def old_setup_spare_pieces(self):
         """Defines positions for the spare pieces on the panel."""
         self.spare_pieces = []
         _panel_width = Config.PANEL_WIDTH
@@ -1149,6 +1149,60 @@ class ChessGUI:
         #         y = 50 + i * (Config.SQUARE_SIZE + 20)
         #         # Custom pieces in a third column
         #         self.spare_pieces.append((piece, (x_offset_base + 2 * Config.SQUARE_SIZE, y)))
+
+    def setup_spare_pieces(self, num_columns=4):
+        """Defines positions for the spare pieces on the panel with dynamic columns."""
+        self.spare_pieces = []  # flat list of (piece, (x, y))
+        _panel_width = Config.PANEL_WIDTH
+        x_offset_base = _panel_width * 0.1
+
+
+        #print(f"This composition is called {self.problem_container.current_index}") 
+        #print(f"This composition has these fairies to draw: {self.composition.fairies}")
+        #print("Gonna debug here")
+
+
+        # Spacing variables grouped together
+        col_spacing = Config.SQUARE_SIZE      # horizontal gap between columns
+        y_start = 50                          # starting Y position
+        y_spacing = Config.SQUARE_SIZE + 20  # vertical gap between pieces
+
+        self.composition.fairies
+
+        # Fixed piece_order with 3 columns of 6 pieces each
+        piece_order = [
+            ['K', 'Q', 'R', 'B', 'S', 'P'],          # column 0
+            ['k', 'q', 'r', 'b', 's', 'p'],          # column 1
+            ['.MO', '.mo', '.MA', '.ma', 'G', 'g'],   # column 2
+            ['.MO', '.mo', '.MA', '.ma', 'G', 'g']   # column 3
+        ]
+
+        # Draw fixed columns 0 and 1
+        for col in range(2):
+            x_offset = x_offset_base + col * col_spacing
+            for i, piece in enumerate(piece_order[col]):
+                y = y_start + i * y_spacing
+                self.spare_pieces.append((piece, (x_offset, y)))
+
+        # Now to try and draw the specific fairy pieces for this problem
+        # First we need to format the list into columns
+         # Draw fairies starting at column 2
+        fairies = self.composition.fairies or []
+        pieces_per_column = 6
+        start_col = 2 # col 2 really means the third col as they go 0,1,2,3,...
+
+        for idx, piece in enumerate(fairies):
+            # Calculate which column and row within that column this piece goes in
+            col = start_col + (idx // pieces_per_column)
+            row = idx % pieces_per_column
+
+            x_offset = x_offset_base + col * col_spacing
+            y = y_start + row * y_spacing
+
+            # Only draw if within num_columns limit
+            if col < num_columns:
+                self.spare_pieces.append((piece, (x_offset, y)))
+
 
     def build_clickable_objects(self, spare_pieces):
         clickable = []
@@ -1196,8 +1250,8 @@ class ChessGUI:
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
         # Show clickable areas
-        #for entry in self.clickable_objects:
-        #    pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
+        for entry in self.clickable_objects:
+            pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
 
 
     def get_square_under_mouse(self, pos):
@@ -1977,7 +2031,7 @@ def generate_fen_path(beginning, moves):
                 next_j = 0
                 next_i += 1
 
-    print("Grid contents:\n")
+    print("Move grid contents:\n")
     
     for row_idx, row in enumerate(grid_data):
         print(f"Row {row_idx}: ", end="")
@@ -2192,11 +2246,14 @@ if __name__ == "__main__":
 
     # Create global piece_map.json and list new tokens
     problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens, extras=all_user_chars)
+    #new_tokens contains n+1 lists, the last is ALL pieces, the first n should be saved with their respective compositions
+
 
     if passed_fen: # Special case of command_line fen need to do the conversion for single item
         problem_container.set_current(1)
-        only_comp = problem_container.get_current()
+        only_comp = problem_container.get_current() # Get current (and only) composition
         converted = convert_fen_board_section(only_comp.fen, problem_container.u_to_i_dict)
+        only_comp.fairies = new_tokens[0]
         only_comp.fen = converted
         only_comp.u_to_i_map = problem_container.u_to_i_dict
         only_comp.i_to_u_map = problem_container.i_to_u_dict
@@ -2237,7 +2294,7 @@ if __name__ == "__main__":
         """
 
         # Put the problem skeletons into the container
-        for fen_data in PROBLEM_LIST:
+        for idx, fen_data in enumerate(PROBLEM_LIST):
             comp = problem_container.add_composition(
                 title=fen_data.get('title', ''),  # Use get in case some entries lack these fields
                 fen=fen_data['fen'],
@@ -2259,6 +2316,10 @@ if __name__ == "__main__":
             # (for consistency with existing later code which looks for it there)
             comp.u_to_i_map = problem_container.u_to_i_dict
             comp.i_to_u_map = problem_container.i_to_u_dict
+
+            # Creating specific database of pieces to print for this composition
+            #print(f"For composition {idx+1}: pieces {new_tokens[idx]} will be loaded")
+            comp.fairies = new_tokens[idx]
 
             # Show mappings
             #print_mapping("User → Internal Mapping", comp.u_to_i_map)

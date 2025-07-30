@@ -8,6 +8,21 @@
 # - base_type: Piece to use as base for image and rotation.
 # - rotation: Rotation of the image in degrees (clockwise).
 # ==============================
+bZZ:
+  user_char: .zz
+  long_name: family
+  colour: black
+  type: queen
+  rotation: -90
+
+wZZ:
+  user_char: .ZZ
+  long_name: family
+  colour: white
+  type: queen
+  rotation: -90
+
+
 WhiteMoa:
   user_char: '.MO'
   long_name: White Moa

@@ -38,7 +38,7 @@ def generate_unicode_symbols(n=512):
 
 def default_predefined_blocks():
     return {
-        "neutral": ["=p", "=b", "=s", "=r", "=q", "=k"],
+        "neutral": ["=k", "=q", "=r", "=b", "=s", "=p"],
     }
 
 def load_predefined_blocks(filename="fairy_piece_blocks.json"):
@@ -129,12 +129,31 @@ def single_extract_custom_tokens(fen):
 
     return sorted(found)
 
-def expand_tokens_with_blocks(tokens, block_data):
+def old_expand_tokens_with_blocks(tokens, block_data):
     expanded = set(tokens)
     for block_tokens in block_data.values():
         if any(t in tokens for t in block_tokens):
             expanded.update(block_tokens)
     return sorted(expanded)
+
+def expand_tokens_with_blocks(tokens, block_data):
+    expanded = []
+
+    # 1️⃣ Add tokens not covered by any block first, in their original order
+    for t in tokens:
+        if not any(t in block for block in block_data.values()):
+            if t not in expanded:
+                expanded.append(t)
+
+    # 2️⃣ Then add block tokens in block_data order
+    for block_tokens in block_data.values():
+        if any(t in tokens for t in block_tokens):
+            for t in block_tokens:
+                if t not in expanded:
+                    expanded.append(t)
+
+    return expanded
+
 
 def load_existing_map(filename=MAP_FILE):
     if os.path.exists(filename):

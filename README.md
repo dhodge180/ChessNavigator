@@ -111,3 +111,12 @@ You must specify a name for use in the FEN according to the Popeye rules:
     + Optionally a = on the front indicates neutral
 
 e.g. 's', 'N', '.ab', '.L1', '.l1' the first letter's case typically determines colour
+
+Fairy pieces identified in the fen of a composition will appear in the panel for position editing. However this means that pieces that only appear during the play will not appear. The optional file fairy_piece_blocks.json allow specification of pieces that always come together.
+The default version contains all standard neutral pieces, thus if a FEN contains any such piece then they are all loaded into the panel.
+
+You may add additional families if you wish to this file. This is generally unnecessary as by default all white and black variants are always automatically added. It would only be necessary, for example, should the inclusion of one piece mean you also wish for another. e.g. one Chinese piece loading other Chinese pieces.
+
+So the Grasshoppers group in fairy_piece_blocks.json is actually totally unnecessary, but provided to show the syntax for adding new groups.
+
+Do not attempt to add existing standard pieces, else weird things may happen. If you do, you may wish to delete your piece_map.json file before trying again.

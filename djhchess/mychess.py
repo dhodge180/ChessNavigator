@@ -21,6 +21,7 @@ class Composition:
         self.tree_position = 0
         self.position = None
         self.move_window_version = False
+        self.fairies = []
         self.u_to_i_map = None # Added at composition level (previously only in chessposition)
         self.i_to_u_map = None # Added at composition level (previously only in chessposition)
 
@@ -376,7 +377,9 @@ class ChessPosition:
             return
 
         # En passant capture
-        if internal_piece.is_pawn and end == self.en_passant:
+        if internal_piece.is_pawn and end == self.en_passant and abs(start_col - end_col) == 1:
+            # Could actually have got here is a neutral pawn moves a2 to a4 then a4 to a3!
+            # Third condition: Only allow e.p. if from an adjacent column!
             self.capture_en_passant(start, end)
         else:
             # Check here if it's a promotion attempt
@@ -752,7 +755,7 @@ class TempChessPosition(ChessPosition):
         piece_color = self.get_piece_colour(internal_piece)
         target_piece_color = self.get_piece_colour(target_piece) if target_piece else None
 
-        if piece_color not in  (self.turn, 'neutral'):
+        if piece_color not in (self.turn, 'neutral'):
             print("You moved out of turn, but I'll allow it [1].")
             self.change_turn()  # Swap player to move
 
