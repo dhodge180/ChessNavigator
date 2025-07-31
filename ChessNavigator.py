@@ -13,7 +13,7 @@ import tkinter as tk
 import multiprocessing
 
 # For help window
-from tkinter import messagebox
+#from tkinter import messagebox
 
 # For FEN copying
 from pyperclip import copy
@@ -30,7 +30,7 @@ from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_secti
 
 # Needed (my new modules)
 from djhchess.square import Square
-from djhchess.pieces import Piece, PieceBox, create_extra_pieces
+from djhchess.pieces import Piece, create_extra_pieces#, PieceBox
 from djhchess.mychess import ProblemListContainer, TempChessPosition
 
 # For click management
@@ -795,6 +795,7 @@ class ChessGUI:
         self.clickable_objects = []
         self.dragging_square = None
         self.dragging_piece_symbol = None
+        self.chosen_square = None
         self.piece_source = None  # Track if dragging from board or panel
         self.clock = pygame.time.Clock()
         self.target_fps = None
@@ -1101,6 +1102,18 @@ class ChessGUI:
                      _square_size,
                      _square_size)
                 )
+        if self.chosen_square:
+            highlight_color = (255, 0, 0)  # bright red border
+            row, col = self.chosen_square.coord
+            x = _border_size + col * _square_size
+            y = _border_size + _height_padding + row * _square_size
+
+            pygame.draw.rect(
+                self.screen,
+                highlight_color,
+                (x, y, _square_size, _square_size),
+                width=4  # thickness of the border
+            )
 
     def draw_pieces(self):
         """Draws pieces inside the board with border offset."""
@@ -1166,8 +1179,6 @@ class ChessGUI:
         col_spacing = Config.SQUARE_SIZE      # horizontal gap between columns
         y_start = 50                          # starting Y position
         y_spacing = Config.SQUARE_SIZE + 20  # vertical gap between pieces
-
-        self.composition.fairies
 
         # Fixed piece_order with 3 columns of 6 pieces each
         piece_order = [
@@ -1312,6 +1323,33 @@ class ChessGUI:
         #     print("****Clicked panel piece:", result.target.internal_char)
         # else:
         #     print("****Clicked nothing relevant")
+
+        mods = pygame.key.get_mods()
+        if mods & pygame.KMOD_CAPS and not self.dragging_piece and result.type == 'board':
+            #print("CAPS LOCK IS ON!")
+            #print("Not mid-drag")
+            #print("Click on board itself")
+            if self.chosen_square: # Start square already highlighted
+                if self.chosen_square is result.target:
+                    # print("Square unselected")
+                    self.chosen_square = None
+                    return
+                #print("Start square exists and it's not the square clicked")
+                from_piece = self.position.get_piece(self.chosen_square)
+                if from_piece: # there was a piece to move
+                    self.position.move_piece(self.chosen_square, result.target,
+                                             promotion_callback=self.gui_ask_for_promotion)
+                    self.chosen_square = None
+                else: # No piece to move
+                    #print("Start square had no piece on!")
+                    self.chosen_square = None
+                    return
+            else:
+                self.chosen_square = result.target
+                #print("Square selected")
+                return
+            # Get here is capslock is on but the click wasn't on the board
+            # Just carry on!
 
         if result.type == "board":
             piece = self.position.get_piece(result.target)

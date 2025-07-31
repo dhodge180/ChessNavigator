@@ -6,6 +6,9 @@ The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with 
 
 New move entry is by dragging the mouse.
 
+If you desire to use separate clicks to move pieces then press CAPS LOCK. 
+Trying to drag pieces while caps lock is on won't behave as usual. As clicks are processed first.
+
 Various shortcuts are currently implemented but not documented.
 
 | Key       | Action                                                     |
