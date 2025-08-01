@@ -13,7 +13,8 @@ files = [
     "README.md",
     "Sample_PROBLEM_LIST.txt",
     "config.json",
-    "custom_pieces.yml"
+    "custom_pieces.yml",
+    "fairy_piece_blocks.json"
 ]
 
 # Folders to include (copy recursively)

@@ -107,7 +107,7 @@ class Config:
     original_stip = None
 
     # Genuine fixed
-    HEIGHT_PADDING = 5
+    HEIGHT_PADDING = 10
     BORDER_SIZE = 60
     MOVES_WIDTH = 0
     config_path = "config.json"
@@ -142,6 +142,11 @@ class Config:
     def set_square_size(cls, new_size):
         """Updates square size and recalculates all dependent values."""
         cls.SQUARE_SIZE = new_size
+        cls.update_derived_sizes()
+
+    @classmethod
+    def change_height_padding(cls, new_size):
+        cls.HEIGHT_PADDING = new_size
         cls.update_derived_sizes()
 
     @classmethod
@@ -336,7 +341,7 @@ def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
         print(f"File {filename} not found.")
         return False
 
-    with open(filename, "r") as file:
+    with open(filename, "r", encoding="utf-8") as file:
         lines = file.readlines()
         # Ensure final diagram is always processed properly
         lines.append("\n") # Adds a blank line to the end   
@@ -753,8 +758,8 @@ def parse_arguments():
 #         self.legal_moves_enabled = not self.legal_moves_enabled  # Toggle legality mode
 
 class ChessGUI:
-    def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "", 
-                 title='Chess Navigator', 
+    def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "Chess Navigator", 
+                 title='', 
                  stip = "", 
                  fenlist = False, #problem_list_loaded
                  main_window_queue = None,
@@ -812,8 +817,10 @@ class ChessGUI:
         # Add custom title inside the window
         self.title_font = pygame.font.SysFont("Arial", Config.TITLE_FONT_SIZE)  # Change font and size here
         self.stip_font = pygame.font.SysFont("Arial", Config.STIP_FONT_SIZE)  # Change font and size here
+        
         self.custom_title = title  # Or any other dynamic title based on your logic
-        self.custom_stip = stip
+        self.custom_stip = stip # Text below diagram
+        self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
 
         # If no fen was passed but a PROBLEM_LIST exists. Then start the F1 cycle early
         if fen is None and self.fenlist:
@@ -872,8 +879,10 @@ class ChessGUI:
                 #self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
                 # self.draw_pgn_panel()
-                self.draw_custom_title()
-                self.draw_custom_stip()
+                
+                #self.draw_custom_title()
+                #self.draw_custom_stip()
+                self.draw_custom_text()
 
             self.redraw = False # Turn off default drawing of next frame, unless we're dragging
 
@@ -967,15 +976,73 @@ class ChessGUI:
 
             loop_counter += 1
 
-    def draw_custom_title(self):
+    def set_custom_text(self, title_text, stip_text):
+        self.custom_title = title_text
+        self.custom_stip = stip_text
+        self.text_surfaces = []  # clear old cached surfaces
+
+        # Spilling - new border HEIGHT_PADDING?
+        title_split = False
+        stip_split = False
+
+        # --- Title ---
+        _border_size = Config.BORDER_SIZE
+        max_width = Config.BOARD_WIDTH
+
+        temp_surface = self.title_font.render(title_text, True, (255, 255, 255))
+        if temp_surface.get_width() > max_width:
+            words = title_text.split()
+            half = len(words) // 2
+            title_lines = [" ".join(words[:half]), " ".join(words[half:])]
+            title_split = True
+        else:
+            title_lines = [title_text]
+
+        title_offset = -15 if title_split else 0
+        y = _border_size // 2 + title_offset
+
+        for i, line in enumerate(title_lines):
+            surface = self.title_font.render(line, True, (255, 255, 255))
+            rect = surface.get_rect(center=(Config.BOARD_WIDTH // 2 + _border_size,
+                                            y + i * surface.get_height()))
+            self.text_surfaces.append((surface, rect))
+
+        # --- Stip ---
+        temp_surface = self.stip_font.render(stip_text, True, (255, 255, 255))
+        if temp_surface.get_width() > max_width:
+            words = stip_text.split()
+            half = len(words) // 2
+            stip_lines = [" ".join(words[:half]), " ".join(words[half:])]
+            stip_split = True
+        else:
+            stip_lines = [stip_text]
+
+        stip_offset = -15 if stip_split else 0
+        base_x, base_y = Config.STIP_COORDS
+        base_y = base_y + stip_offset
+
+        for i, line in enumerate(stip_lines):
+            surface = self.stip_font.render(line, True, (255, 255, 255))
+            rect = surface.get_rect(center=(base_x, base_y + i * surface.get_height()))
+            self.text_surfaces.append((surface, rect))
+
+    
+    def draw_custom_text(self):
+        for surface, rect in self.text_surfaces:
+            self.screen.blit(surface, rect)
+
+
+    def old_draw_custom_title(self):
         """Draw the custom title at the top of the window."""
         _border_size = Config.BORDER_SIZE
+        max_width = Config.BOARD_WIDTH - 2 * _border_size  # how wide text can be
+
         title_surface = self.title_font.render(self.custom_title, True, (255, 255, 255))  # White color
         title_rect = title_surface.get_rect(center=(Config.BOARD_WIDTH // 2 + _border_size,
                                                     _border_size // 2 ))  # Adjust position as needed
         self.screen.blit(title_surface, title_rect)
 
-    def draw_custom_stip(self):
+    def old_draw_custom_stip(self):
         """Draw the custom title at the top of the window."""
         #print("HELP FIX THIS!!!")
         stip_surface = self.stip_font.render(self.custom_stip, True, (255, 255, 255))  # White color
@@ -983,13 +1050,24 @@ class ChessGUI:
         self.screen.blit(stip_surface, stip_rect)
         #print("Did it work?")
 
+    def draw_custom_title(self):
+        for surface, rect in self.title_surfaces:
+            self.screen.blit(surface, rect)
+
+    def draw_custom_stip(self):
+        for surface, rect in self.stip_surfaces:
+            self.screen.blit(surface, rect)
+
+
     def resize_elements_after_resize(self):
         self.pieces = load_images()
         self.setup_spare_pieces()
         self.title_font = pygame.font.SysFont("Arial", Config.TITLE_FONT_SIZE)  # Change font and size here
         self.stip_font = pygame.font.SysFont("Arial", Config.STIP_FONT_SIZE)  # Change font and size here
-        self.draw_custom_stip()
-        self.draw_custom_title()
+        #self.draw_custom_stip()
+        #self.draw_custom_title()
+        self.set_custom_text(self.custom_title, self.custom_stip)
+        self.draw_custom_text()
         self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
 
     def draw_pgn_panel(self): #Unused
@@ -1529,10 +1607,13 @@ class ChessGUI:
         self.position = self.composition.get_position_object()
 
         # NEW Update game state
-        self.custom_title = self.composition.title
-        self.custom_stip = self.composition.stipulation
-        self.draw_custom_title()
-        self.draw_custom_stip()
+        #self.custom_title = self.composition.title
+        #self.custom_stip = self.composition.stipulation
+        self.set_custom_text(title_text=self.composition.title, stip_text=self.composition.stipulation)
+
+        #self.draw_custom_stip()
+        #self.draw_custom_title()
+        self.draw_custom_text()
         self.composition.tree_position = 0
 
         # Fairy piece panel
