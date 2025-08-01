@@ -103,6 +103,11 @@ class Piece:
         """Return the user_char of all registered pieces."""
         return [p.user_char for p in cls._char_map.values()]
 
+    @classmethod
+    def all_internal_chars(cls):
+        """Return the internal_char of all registered pieces."""
+        return [p.internal_char for p in cls._char_map.values()]
+
 
 class PieceBox:
     """

@@ -13,7 +13,7 @@ import tkinter as tk
 import multiprocessing
 
 # For help window
-#from tkinter import messagebox
+from tkinter import messagebox
 
 # For FEN copying
 from pyperclip import copy
@@ -21,7 +21,7 @@ from pyperclip import copy
 # For config file management
 import json
 
-from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section
+from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, validate_all_fens
 # from djhchess.fen_test import print_mapping
 
 # No longer needed
@@ -2367,7 +2367,6 @@ if __name__ == "__main__":
     problem_container.u_to_i_dict, problem_container.i_to_u_dict, new_tokens = load_and_update_mapping(fens=all_fens, extras=all_user_chars)
     #new_tokens contains n+1 lists, the last is ALL pieces, the first n should be saved with their respective compositions
 
-
     if passed_fen: # Special case of command_line fen need to do the conversion for single item
         problem_container.set_current(1)
         only_comp = problem_container.get_current() # Get current (and only) composition
@@ -2386,7 +2385,20 @@ if __name__ == "__main__":
     create_extra_pieces(problem_container.u_to_i_dict, EXTRA_PIECES) # This needs to be run again later after a Windows spawn
     #print(Piece.all())
     print(Piece.all_user_chars())
+    print(Piece.all_internal_chars())
 
+    # internal pieces
+    all_internal_pieces = Piece.all_internal_chars()
+    all_user_chars = Piece.all_user_chars()
+    valid, errors = validate_all_fens(all_fens, all_internal_pieces, all_user_chars, problem_container.u_to_i_dict, problem_container.i_to_u_dict)
+
+    if not valid:
+        # Create a hidden Tk root window
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        messagebox.showerror("Invalid FEN(s)", "\n".join(errors))
+        root.destroy()  # Cleanly close Tkinter
+        sys.exit(1)  
 
     if problem_list_loaded:
         # Here we generate move trees from the moves

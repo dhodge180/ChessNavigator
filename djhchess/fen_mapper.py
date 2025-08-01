@@ -175,6 +175,89 @@ def split_epd_from_fen(fen):
 
     return fields[0], fields[1:]
 
+def validate_all_fens(all_fens, permitted_internals, user_chars, u_to_i_dict, i_to_u_dict):
+    """
+    Validate the board part of every FEN in all_fens.
+    permitted_internals: set/list of engine piece codes.
+    user_chars: list of user-facing piece codes (for helpful error messages).
+    u_to_i_dict: mapping from user char -> internal char.
+    i_to_u_dict: mapping from internal char -> user char (for error display).
+    """
+    valid = True
+    errors = []
+
+    for idx, fen in enumerate(all_fens):
+        parts = fen.split()
+        if not parts:
+            errors.append(f"[ERROR] FEN #{idx+1} is empty. A FEN must have at least the board description.")
+            valid = False
+            continue
+
+        board_part = parts[0]
+        # Convert user-facing chars to internal engine chars
+        board_part_converted = convert_fen_board_section(board_part, u_to_i_dict)
+        ranks = board_part_converted.split('/')
+
+        # Check rank count
+        if len(ranks) != 8:
+            errors.append(f"[ERROR] FEN #{idx+1}: '{fen}'")
+            errors.append(f"        The board portion '{board_part}' must have exactly 8 ranks separated by '/'.")
+            errors.append(f"You provided {len(ranks)} ranks.")
+            errors.append("        Example valid board: '8/8/8/8/8/8/8/8'")
+            valid = False
+            continue
+
+        # Check each rank
+        for r_idx, rank in enumerate(ranks):
+            count = 0
+            i = 0
+            rank_has_error = False
+
+            while i < len(rank):
+                ch = rank[i]
+
+                if ch.isdigit():
+                    count += int(ch)
+                    i += 1
+                    continue
+
+                # Match internal piece codes (single or multi-char)
+                matched = False
+                for piece in sorted(permitted_internals, key=len, reverse=True):
+                    if rank.startswith(piece, i):
+                        count += 1
+                        i += len(piece)
+                        matched = True
+                        break
+
+                if not matched:
+                    bad = rank[i]
+                    user_bad = i_to_u_dict.get(bad, bad)
+                    offending_rank_user = ''.join(i_to_u_dict.get(ch, ch) for ch in ranks[r_idx])
+                    errors.append(f"[ERROR] FEN #{idx+1}, Rank {r_idx+1}: Invalid character at '{user_bad}'.")
+                    errors.append(f"        Check this row for invalid characters: '{offending_rank_user}'")
+                    errors.append(f"        Allowed pieces: {', '.join(user_chars)}")
+                    errors.append("Normal causes are:")
+                    errors.append("         (a) using a fairy piece that is not in the file custom_pieces.yml")
+                    errors.append("         (b) mis-typing a letter in your FEN")
+                    errors.append("Note pieces are case-sensitive.")
+                    valid = False
+                    rank_has_error = True
+                    i += 1  # Skip bad char to avoid infinite loop
+
+            if not rank_has_error and count != 8:
+                # Convert internal chars back to user chars for display
+                offending_rank_user = ''.join(i_to_u_dict.get(ch, ch) for ch in ranks[r_idx])
+                errors.append(f"[ERROR] FEN #{idx+1}, Rank {r_idx+1}: Rank does not describe exactly 8 squares (got {count}).")
+                errors.append(f"        Offending rank says: '{offending_rank_user}' which is {count} squares")
+                errors.append("        Fix the numbers so each rank totals 8 squares.")
+                valid = False
+
+    return valid, errors
+
+
+
+
 def convert_fen_board_section(fen, mapping):
     """Convert only the board layout part of the FEN using the provided mapping."""
 
