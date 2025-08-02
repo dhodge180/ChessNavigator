@@ -15,6 +15,9 @@ FEN: k6K/8/8/8/8/8/=p7/8
 Subtext: H=3
 Moves: a2a4 a4a3 a3a4 a4a3 a3a4
 
+Title: Chinese
+FEN: 8/8/8/8/8/8/8/4=czce
+
 Title: Moa and Mao then Rose
 FEN: .mo.MO6/.ma.MA6/8/8/8/8/8/.ro.RO6
 
