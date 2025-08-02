@@ -4,6 +4,12 @@
 ****************************************************************
 
 ----------------------------------------------------------------------------------
+Images of some pieces are based on originals from Wikimedia:
+The camel image was drawn by Kwamikagami. https://creativecommons.org/licenses/by-sa/4.0/ 
+The zebra image was drawn by Cburnett (knight) and Francois-Pier (zebra). https://creativecommons.org/licenses/by-sa/3.0/
+The giraffe image was drawn by Francois-Pier. https://creativecommons.org/licenses/by-sa/3.0/
+----------------------------------------------------------------------------------
+
 It makes use of four python packages who licences are copied below.
 PyYaml, pygame, pyperclip, and pyinstaller.
 

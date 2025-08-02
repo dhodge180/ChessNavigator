@@ -823,8 +823,8 @@ class ChessGUI:
         self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
 
         # Load all the piece singletons
-        self.pieces = load_images()
         create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES)  # This needs to be run again later after a Windows spawn
+        self.pieces = load_images()
         # print("Now we see what pieces exist,")
         # print(Piece.all())
 
