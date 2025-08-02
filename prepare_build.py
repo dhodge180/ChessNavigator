@@ -14,7 +14,8 @@ files = [
     "Sample_PROBLEM_LIST.txt",
     "config.json",
     "custom_pieces.yml",
-    "fairy_piece_blocks.json"
+    "fairy_piece_blocks.json",
+    "PROBLEM_LIST.txt"
 ]
 
 # Folders to include (copy recursively)

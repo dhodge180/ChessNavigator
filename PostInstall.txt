@@ -1,0 +1,10 @@
+Installation complete!
+
+To begin I recommend you by reading the Sample_PROBLEM_LIST.txt file.
+
+Then rename Sample_PROBLEM_LIST.txt to just PROBLEM_LIST.txt, then run the ChessNavigator executable!
+
+PROBLEM_LIST.txt contains your problems.
+custom_pieces.yml contains any fairy pieces you define.
+config.json contains any cosmetic changes to the interface.
+fairy_piece_blocks.json (Advanced) to customize the side panel of fairy pieces.

@@ -1,0 +1,5 @@
+Welcome to Chess Navigator! This is the installation manager, it will guide you through installing the software on your PC.
+
+There is a README.txt file with guidance on how to use it, and you can also press H while in-game to common help terms.
+
+Further configurations are available by the config.json file, the custom_pieces.yml file and the fairy_piece_blocks.json files. These control display, fairy piece appearance, and fairy piece families respectively.

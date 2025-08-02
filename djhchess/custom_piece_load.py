@@ -3,6 +3,59 @@ import yaml
 
 CUSTOM_PIECES_FILE = "custom_pieces.yml"
 
+# Base piece definitions you provided
+FAIRY_BASE_PIECES = {
+    'Camel':        { 'user_char': 'c',    'type': 'camel' },
+    'Giraffe':      { 'user_char': '.gi',  'type': 'giraffe' },
+    'Zebra':        { 'user_char': 'z',    'type': 'zebra' },
+    'Elephant':     { 'user_char': 'e',    'type': 'elephant' , 'base_type': 'bishop', 'rotation': 180 },
+    'Kangaroo':     { 'user_char': '.ka',  'type': 'kangaroo', 'base_type': 'queen', 'rotation': 270 },
+    'Leo':          { 'user_char': '.le',  'type': 'leo', 'base_type': 'queen', 'rotation': 270 },
+    'Lion':         { 'user_char': '.li',  'type': 'lion', 'base_type': 'queen', 'rotation': 270 },
+    'Nightrider':   { 'user_char': 'n',    'type': 'knight', 'rotation': 180 },
+    'Pao':          { 'user_char': '.pa',  'type': 'pao', 'base_type': 'rook', 'rotation': 270 },
+    'Vao':          { 'user_char': '.va',  'type': 'vao', 'base_type': 'bishop', 'rotation': 270 },
+    'Nao':          { 'user_char': '.na',  'type': 'nao', 'base_type': 'knight', 'rotation': 270 },
+    'Mao':          { 'user_char': '.ma',  'type': 'knight', 'base_type': 'knight', 'rotation': 270 },
+    'Moa':          { 'user_char': '.mo',  'type': 'knight', 'base_type': 'knight', 'rotation': 90 },
+    'Grasshopper':  { 'user_char': 'g',    'type': 'grasshopper', 'base_type': 'queen', 'rotation': 180 },
+    'Rookhopper':   { 'user_char': '.rh',  'type': 'grasshopper', 'base_type': 'rook', 'rotation': 180 },
+    'Bishophopper': { 'user_char': '.bh',  'type': 'grasshopper', 'base_type': 'bishop', 'rotation': 180 },
+    'Equihopper':   { 'user_char': '.eq',  'type': 'grasshopper', 'base_type': 'queen', 'rotation': 90 },
+
+    'Rose':         { 'user_char': '.ro',  'type': 'knight', 'rotation': -45 },
+}
+
+def generate_piece_variants(base_dict):
+    pieces = {}
+    for name, attrs in base_dict.items():
+        base_char = attrs['user_char']
+
+        # Neutral
+        pieces[f'Neutral{name}'] = {
+            **attrs,
+            'user_char': f"={base_char}",
+            'colour': 'neutral',
+            'long_name': f"Neutral {name}"
+        }
+        # White
+        pieces[f'White{name}'] = {
+            **attrs,
+            'user_char': base_char.upper(),
+            'colour': 'white',
+            'long_name': f"White {name}"
+        }
+        # Black
+        pieces[f'Black{name}'] = {
+            **attrs,
+            'user_char': base_char.lower(),
+            'colour': 'black',
+            'long_name': f"Black {name}"
+        }
+
+    return pieces
+
+
 # Default to be set if no YML file exists
 DEFAULT_PIECES = {
     'NeutralBishop': { 'user_char': '=b', 'long_name': 'Neutral Bishop', 'colour': 'neutral', 'type': 'bishop', 'rotation': 0 },
@@ -12,12 +65,14 @@ DEFAULT_PIECES = {
     'NeutralKing':   { 'user_char': '=k', 'long_name': 'Neutral King',   'colour': 'neutral', 'type': 'king',   'rotation': 0 },
     'NeutralKnight': { 'user_char': '=s', 'long_name': 'Neutral Knight', 'colour': 'neutral', 'type': 'knight', 'rotation': 0 },
 
-    'BlackGrasshopper': { 'user_char': 'g', 'long_name': 'Grasshopper', 'colour': 'black', 'type': 'grasshopper', 'base_type': 'queen', 'rotation': 180 },
-    'WhiteGrasshopper': { 'user_char': 'G', 'long_name': 'Grasshopper', 'colour': 'white', 'type': 'grasshopper', 'base_type': 'queen', 'rotation': 180 },
+    #'WhiteNKnight': { 'user_char': 'N', 'long_name': 'White Knight', 'colour': 'white', 'type': 'knight', 'rotation': 0 },
+    #'BlackNKnight': { 'user_char': 'n', 'long_name': 'Black Knight', 'colour': 'black', 'type': 'knight', 'rotation': 0 },
 
-    'WhiteNKnight': { 'user_char': 'N', 'long_name': 'White Knight', 'colour': 'white', 'type': 'knight', 'rotation': 0 },
-    'BlackNKnight': { 'user_char': 'n', 'long_name': 'Black Knight', 'colour': 'black', 'type': 'knight', 'rotation': 0 },
 }
+
+# Add auto-generated variants
+DEFAULT_PIECES.update(generate_piece_variants(FAIRY_BASE_PIECES))
+
 
 YAML_HEADER = """# ==============================
 # Custom Piece Definitions

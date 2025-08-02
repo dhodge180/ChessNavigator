@@ -79,7 +79,10 @@ class Piece:
             'rook': 'R',
             'bishop': 'B',
             'knight': 'S',
-            'pawn': 'P'
+            'pawn': 'P',
+            'giraffe': 'GI',
+            'camel': 'C',
+            'zebra': 'Z'
         }
         return mapping.get(type_, type_[0].upper())  # fallback to first letter
 

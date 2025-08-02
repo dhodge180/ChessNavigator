@@ -1,7 +1,10 @@
-ChessNavigator is developed my David Hodge.
-All Rights are Reserved, July 2025.
+****************************************************************
+**   ChessNavigator is developed by David Hodge.                                           **
+**   All Rights are Reserved, July 2025. As usual you use it at your own risk.  **
+****************************************************************
 
-It makes use of four python packages who licences appear below.
+----------------------------------------------------------------------------------
+It makes use of four python packages who licences are copied below.
 PyYaml, pygame, pyperclip, and pyinstaller.
 
 PyYAML
