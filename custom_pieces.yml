@@ -1,0 +1,463 @@
+# ==============================
+# Custom Piece Definitions
+# ------------------------------
+# - user_char: The character used in FEN strings. (Use quotes if only numbers)
+# - long_name: Display name of the piece.
+# - colour: "white", "black", or "neutral".
+# - type: The piece type (pawn, rook, etc.) for logic
+# - base_type: Piece to use as base for image and rotation.
+# - rotation: Rotation of the image in degrees (clockwise).
+# - mirror: Mirroring of piece, likely before rotation (true/false).
+# ==============================
+NeutralBishop:
+  user_char: '=b' # The character used in FEN strings
+  long_name: Neutral Bishop  # Display name of the piece
+  colour: neutral  # white, black, or neutral
+  type: bishop  # The piece type (pawn, bishop, knight, rook, queen or king)
+  rotation: 0  # (Optional) Rotation of the image in degrees
+  # base_type: queen  # (Optional) Piece to use as base for image and rotation
+  # mirror: false  # (Optional) Mirror (horizontal flip) of the image
+
+NeutralPawn:
+  user_char: =p
+  long_name: Neutral Pawn
+  colour: neutral
+  type: pawn
+  rotation: 0
+
+NeutralRook:
+  user_char: =r
+  long_name: Neutral Rook
+  colour: neutral
+  type: rook
+  rotation: 0
+
+NeutralQueen:
+  user_char: =q
+  long_name: Neutral Queen
+  colour: neutral
+  type: queen
+  rotation: 0
+
+NeutralKing:
+  user_char: =k
+  long_name: Neutral King
+  colour: neutral
+  type: king
+  rotation: 0
+
+NeutralKnight:
+  user_char: =s
+  long_name: Neutral Knight
+  colour: neutral
+  type: knight
+  rotation: 0
+
+NeutralCamel:
+  user_char: =c
+  type: camel
+  colour: neutral
+  long_name: Neutral Camel
+
+WhiteCamel:
+  user_char: C
+  type: camel
+  colour: white
+  long_name: White Camel
+
+BlackCamel:
+  user_char: c
+  type: camel
+  colour: black
+  long_name: Black Camel
+
+NeutralGiraffe:
+  user_char: =.gi
+  type: giraffe
+  colour: neutral
+  long_name: Neutral Giraffe
+
+WhiteGiraffe:
+  user_char: .GI
+  type: giraffe
+  colour: white
+  long_name: White Giraffe
+
+BlackGiraffe:
+  user_char: .gi
+  type: giraffe
+  colour: black
+  long_name: Black Giraffe
+
+NeutralZebra:
+  user_char: =z
+  type: zebra
+  colour: neutral
+  long_name: Neutral Zebra
+
+WhiteZebra:
+  user_char: Z
+  type: zebra
+  colour: white
+  long_name: White Zebra
+
+BlackZebra:
+  user_char: z
+  type: zebra
+  colour: black
+  long_name: Black Zebra
+
+NeutralElephant:
+  user_char: =e
+  type: elephant
+  base_type: bishop
+  rotation: 180
+  colour: neutral
+  long_name: Neutral Elephant
+
+WhiteElephant:
+  user_char: E
+  type: elephant
+  base_type: bishop
+  rotation: 180
+  colour: white
+  long_name: White Elephant
+
+BlackElephant:
+  user_char: e
+  type: elephant
+  base_type: bishop
+  rotation: 180
+  colour: black
+  long_name: Black Elephant
+
+NeutralKangaroo:
+  user_char: =.ka
+  type: kangaroo
+  base_type: queen
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Kangaroo
+
+WhiteKangaroo:
+  user_char: .KA
+  type: kangaroo
+  base_type: queen
+  rotation: 270
+  colour: white
+  long_name: White Kangaroo
+
+BlackKangaroo:
+  user_char: .ka
+  type: kangaroo
+  base_type: queen
+  rotation: 270
+  colour: black
+  long_name: Black Kangaroo
+
+NeutralLeo:
+  user_char: =.le
+  type: leo
+  base_type: queen
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Leo
+
+WhiteLeo:
+  user_char: .LE
+  type: leo
+  base_type: queen
+  rotation: 270
+  colour: white
+  long_name: White Leo
+
+BlackLeo:
+  user_char: .le
+  type: leo
+  base_type: queen
+  rotation: 270
+  colour: black
+  long_name: Black Leo
+
+NeutralLion:
+  user_char: =.li
+  type: lion
+  base_type: queen
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Lion
+
+WhiteLion:
+  user_char: .LI
+  type: lion
+  base_type: queen
+  rotation: 270
+  colour: white
+  long_name: White Lion
+
+BlackLion:
+  user_char: .li
+  type: lion
+  base_type: queen
+  rotation: 270
+  colour: black
+  long_name: Black Lion
+
+NeutralNightrider:
+  user_char: =n
+  type: knight
+  rotation: 180
+  colour: neutral
+  long_name: Neutral Nightrider
+
+WhiteNightrider:
+  user_char: N
+  type: knight
+  rotation: 180
+  colour: white
+  long_name: White Nightrider
+
+BlackNightrider:
+  user_char: n
+  type: knight
+  rotation: 180
+  colour: black
+  long_name: Black Nightrider
+
+NeutralPao:
+  user_char: =.pa
+  type: pao
+  base_type: rook
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Pao
+
+WhitePao:
+  user_char: .PA
+  type: pao
+  base_type: rook
+  rotation: 270
+  colour: white
+  long_name: White Pao
+
+BlackPao:
+  user_char: .pa
+  type: pao
+  base_type: rook
+  rotation: 270
+  colour: black
+  long_name: Black Pao
+
+NeutralVao:
+  user_char: =.va
+  type: vao
+  base_type: bishop
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Vao
+
+WhiteVao:
+  user_char: .VA
+  type: vao
+  base_type: bishop
+  rotation: 270
+  colour: white
+  long_name: White Vao
+
+BlackVao:
+  user_char: .va
+  type: vao
+  base_type: bishop
+  rotation: 270
+  colour: black
+  long_name: Black Vao
+
+NeutralNao:
+  user_char: =.na
+  type: nao
+  base_type: knight
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Nao
+
+WhiteNao:
+  user_char: .NA
+  type: nao
+  base_type: knight
+  rotation: 270
+  colour: white
+  long_name: White Nao
+
+BlackNao:
+  user_char: .na
+  type: nao
+  base_type: knight
+  rotation: 270
+  colour: black
+  long_name: Black Nao
+
+NeutralMao:
+  user_char: =.ma
+  type: knight
+  base_type: knight
+  rotation: 270
+  colour: neutral
+  long_name: Neutral Mao
+
+WhiteMao:
+  user_char: .MA
+  type: knight
+  base_type: knight
+  rotation: 270
+  colour: white
+  long_name: White Mao
+
+BlackMao:
+  user_char: .ma
+  type: knight
+  base_type: knight
+  rotation: 270
+  colour: black
+  long_name: Black Mao
+
+NeutralMoa:
+  user_char: =.mo
+  type: knight
+  base_type: knight
+  rotation: 90
+  colour: neutral
+  long_name: Neutral Moa
+
+WhiteMoa:
+  user_char: .MO
+  type: knight
+  base_type: knight
+  rotation: 90
+  colour: white
+  long_name: White Moa
+
+BlackMoa:
+  user_char: .mo
+  type: knight
+  base_type: knight
+  rotation: 90
+  colour: black
+  long_name: Black Moa
+
+NeutralGrasshopper:
+  user_char: =g
+  type: grasshopper
+  base_type: queen
+  rotation: 180
+  colour: neutral
+  long_name: Neutral Grasshopper
+
+WhiteGrasshopper:
+  user_char: G
+  type: grasshopper
+  base_type: queen
+  rotation: 180
+  colour: white
+  long_name: White Grasshopper
+
+BlackGrasshopper:
+  user_char: g
+  type: grasshopper
+  base_type: queen
+  rotation: 180
+  colour: black
+  long_name: Black Grasshopper
+
+NeutralRookhopper:
+  user_char: =.rh
+  type: grasshopper
+  base_type: rook
+  rotation: 180
+  colour: neutral
+  long_name: Neutral Rookhopper
+
+WhiteRookhopper:
+  user_char: .RH
+  type: grasshopper
+  base_type: rook
+  rotation: 180
+  colour: white
+  long_name: White Rookhopper
+
+BlackRookhopper:
+  user_char: .rh
+  type: grasshopper
+  base_type: rook
+  rotation: 180
+  colour: black
+  long_name: Black Rookhopper
+
+NeutralBishophopper:
+  user_char: =.bh
+  type: grasshopper
+  base_type: bishop
+  rotation: 180
+  colour: neutral
+  long_name: Neutral Bishophopper
+
+WhiteBishophopper:
+  user_char: .BH
+  type: grasshopper
+  base_type: bishop
+  rotation: 180
+  colour: white
+  long_name: White Bishophopper
+
+BlackBishophopper:
+  user_char: .bh
+  type: grasshopper
+  base_type: bishop
+  rotation: 180
+  colour: black
+  long_name: Black Bishophopper
+
+NeutralEquihopper:
+  user_char: =.eq
+  type: grasshopper
+  base_type: queen
+  rotation: 90
+  colour: neutral
+  long_name: Neutral Equihopper
+
+WhiteEquihopper:
+  user_char: .EQ
+  type: grasshopper
+  base_type: queen
+  rotation: 90
+  colour: white
+  long_name: White Equihopper
+
+BlackEquihopper:
+  user_char: .eq
+  type: grasshopper
+  base_type: queen
+  rotation: 90
+  colour: black
+  long_name: Black Equihopper
+
+NeutralRose:
+  user_char: =.ro
+  type: knight
+  rotation: -45
+  colour: neutral
+  long_name: Neutral Rose
+
+WhiteRose:
+  user_char: .RO
+  type: knight
+  rotation: -45
+  colour: white
+  long_name: White Rose
+
+BlackRose:
+  user_char: .ro
+  type: knight
+  rotation: -45
+  colour: black
+  long_name: Black Rose
+
