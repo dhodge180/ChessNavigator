@@ -822,6 +822,12 @@ class ChessGUI:
         self.custom_stip = stip # Text below diagram
         self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
 
+        # Load all the piece singletons
+        self.pieces = load_images()
+        create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES)  # This needs to be run again later after a Windows spawn
+        # print("Now we see what pieces exist,")
+        # print(Piece.all())
+
         # If no fen was passed but a PROBLEM_LIST exists. Then start the F1 cycle early
         if fen is None and self.fenlist:
             #self.reverse_cycle_fen()
@@ -835,10 +841,7 @@ class ChessGUI:
         #print("Inside the GUI process, first lets see what pieces exist:")
         #print(Piece.all())
         #print("Now we recreate the singletons.")
-        create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES) # This needs to be run again later after a Windows spawn
-        #print("Now we see what pieces exist,")
-        #print(Piece.all())
-        self.pieces = load_images()
+
         self.clickable_objects = self.build_clickable_objects(self.spare_pieces)  # New ClickResult
 
         # global SQUARE_SIZE
@@ -874,8 +877,8 @@ class ChessGUI:
                 self.screen.fill((0, 0, 0))
                 self.draw_board()
                 self.draw_pieces()
-                self.draw_panel()
                 self.setup_spare_pieces()
+                self.draw_panel()
                 #self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
                 # self.draw_pgn_panel()
@@ -922,6 +925,7 @@ class ChessGUI:
                         #print("F1 pressed!")
                         if self.fenlist:
                             self.cycle_fen()
+                            self.redraw = True
                     elif event.key == pygame.K_F3:
                         if self.fenlist:
                             self.reverse_cycle_fen()
@@ -1050,11 +1054,11 @@ class ChessGUI:
         self.screen.blit(stip_surface, stip_rect)
         #print("Did it work?")
 
-    def draw_custom_title(self):
+    def old2_draw_custom_title(self):
         for surface, rect in self.title_surfaces:
             self.screen.blit(surface, rect)
 
-    def draw_custom_stip(self):
+    def old2_draw_custom_stip(self):
         for surface, rect in self.stip_surfaces:
             self.screen.blit(surface, rect)
 
@@ -1335,12 +1339,14 @@ class ChessGUI:
         for piece, pos in self.spare_pieces:
             # Draw the piece at the correct adjusted position inside the panel
             internal_piece = self.composition.position.convert_u_to_i(piece)
+            #print(type(self.pieces), internal_piece)
+            #print(self.pieces)
             img = self.pieces[internal_piece]
             self.screen.blit(img, (panel_x + pos[0], pos[1]))  # Add panel_x to position the pieces correctly
 
         # Show clickable areas
-        #for entry in self.clickable_objects:
-        #    pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
+        for entry in self.clickable_objects:
+            pygame.draw.rect(self.screen, (0, 255, 0), entry['rect'], 1)
 
 
     def get_square_under_mouse(self, pos):
@@ -1618,7 +1624,9 @@ class ChessGUI:
 
         # Fairy piece panel
         # WE MAY WANT TO RECALC THE CLICKABLE PIECES AND REDO THE setup_panel_pieces here
-        # and self.build_clickable_objects()
+        self.setup_spare_pieces()
+        self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
+        self.draw_panel()
 
         # PROBLEM_LIST[-1] the last element is now the one we're working with
         # PROBLEM_LIST[0] will be loaded when we NEXT run the cycle
@@ -1761,7 +1769,19 @@ def load_images():
             image = pygame.transform.flip(image, flip_x=True, flip_y=False)  # flip horizontally (before any rotation)
 
         if piece.rotation != 0:
-            image = pygame.transform.rotate(image, -piece.rotation)  # pygame rotates counter-clockwise by default
+            # Pad with transparent margin
+            padded_size = int(square_size * 1.5)
+            padded = pygame.Surface((padded_size, padded_size), pygame.SRCALPHA)
+            rect = image.get_rect(center=(padded_size // 2, padded_size // 2))
+            padded.blit(image, rect)
+
+            rotated = pygame.transform.rotate(padded, -piece.rotation)
+
+            # Crop back to square_size and center it
+            final = pygame.Surface((square_size, square_size), pygame.SRCALPHA)
+            rect = rotated.get_rect(center=(square_size // 2, square_size // 2))
+            final.blit(rotated, rect)
+            image = final
 
         pieces_images[piece.internal_char] = image
 
