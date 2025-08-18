@@ -3,7 +3,7 @@ import yaml
 
 CUSTOM_PIECES_FILE = "custom_pieces.yml"
 
-# Base piece definitions you provided
+# Base piece definitions
 FAIRY_BASE_PIECES = {
     'Camel':        { 'user_char': 'c',    'type': 'camel' },
     'Giraffe':      { 'user_char': '.gi',  'type': 'giraffe' },
@@ -84,6 +84,11 @@ YAML_HEADER = """# ==============================
 # - base_type: Piece to use as base for image and rotation.
 # - rotation: Rotation of the image in degrees (clockwise).
 # - mirror: Mirroring of piece, likely before rotation (true/false).
+# ==============================
+# Along with the standard base pieces, images have been provided for camel, giraffe and elephant
+# should you wish to use alternatives, just edit the base_type of those pieces below to not be
+# camel, elephant or giraffe. e.g. change the base_type of elephant to bishop if you wish to use
+# the bishop symbol, and just set the rotation you desire
 # ==============================
 """
 
