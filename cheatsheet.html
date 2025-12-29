@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChessNavigator Cheat Sheet</title>
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.css" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 15px;
+        color: #333;
+        background: #fdfdfd;
+    }
+
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 25px;
+    }
+
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        overflow: visible;
+    }
+    .column {
+        flex: 1 1 calc(33% - 10px);
+        min-width: 250px;
+    }
+
+    .section {
+        border-left: 6px solid;
+        padding-left: 10px;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        border-radius: 3px;
+    }
+
+    .move { border-color: #d35400; background: #fdebd0; }
+    .nav { border-color: #2980b9; background: #ecf5fc; }
+    .board { border-color: #27ae60; background: #eafaf1; }
+    .analysis { border-color: #e67e22; background: #fdf5e6; }
+    .highlight { border-color: #9b59b6; background: #f5e6fc; }
+
+    .section h2 {
+        display: flex;
+        align-items: center;
+        font-size: 1.1em;
+        margin-bottom: 8px;
+    }
+    .section h2 i { margin-right: 6px; }
+
+    .subsection h3 {
+        font-size: 0.95em;
+        margin-top: 8px;
+        margin-bottom: 5px;
+        color: #34495e;
+        font-weight: 600;
+    }
+
+    .shortcut {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+    }
+    .shortcut i {
+        margin-right: 8px;
+        width: 25px;
+        text-align: center;
+    }
+
+    .key {
+        display: inline-block;
+        padding: 2px 6px;
+        margin-right: 5px;
+        background: #bdc3c7;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: bold;
+        cursor: default;
+    }
+    
+    .fairy-sideways {
+		display: inline-block;
+		transform: rotate(90deg);
+	}
+
+    pre {
+        background: #fff3cd;
+        padding: 8px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+
+    footer {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 0.85em;
+        color: #7f8c8d;
+    }
+
+    @media print {
+        @page {
+            size: landscape;
+            margin: 15mm;
+        }
+        body {
+            background: #fff;
+            color: #000;
+        }
+        .section { background: #fff; }
+        .key { background: #ccc; }
+        .container {
+            display: block;
+            column-count: 3;
+            column-gap: 15px;
+        }
+        .column {
+            display: inline-block;
+            width: 100%;
+            break-inside: avoid-column;
+            margin-bottom: 0;
+        }
+        h1, h2 {
+            page-break-inside: avoid;
+            page-break-after: avoid;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        details.advanced-user > *:not(summary) {
+            display: none;
+        }
+        footer {
+            display: block;
+            margin-top: 10px;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+</head>
+<body>
+
+<h1>ChessNavigator Cheat Sheet</h1>
+
+<div class="container">
+
+    <!-- Column 1 -->
+    <div class="column">
+        <div class="section move">
+            <h2><i class="fas fa-mouse-pointer"></i> Move Entry</h2>
+            <p>New moves are entered by dragging pieces with the mouse.</p>
+            <p><strong>Caps Lock:</strong> Toggle click-based moves (dragging disabled while Caps Lock is on).</p>
+            <p><strong>Promotion:</strong> When a pawn reaches the final rank, use a keyboard shortcut to select the promotion piece:</p>
+            <div class="shortcut"><i class="fas fa-chess"></i><div class="desc"><span class="key">r / s / b / q</span> Choose promotion piece (Rook / Knight / Bishop / Queen)</div></div>
+        </div>
+
+        <div class="section nav">
+            <h2><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h2>
+
+            <div class="shortcut"><i class="fas fa-home"></i><div class="desc"><span class="key">HOME / R</span> Return to home position</div></div>
+            <div class="shortcut"><i class="fas fa-save"></i><div class="desc"><span class="key">INSERT</span> Save current position as home</div></div>
+            <div class="shortcut"><i class="fas fa-ban"></i><div class="desc"><span class="key">Z</span> Zero the board</div></div>
+
+            <!-- Highlight colours -->
+            <div class="shortcut">
+                <span style="display:flex; flex-direction:column; align-items:center; margin-right:8px; gap:2px;">
+                    <i class="fas fa-square" style="color:#e74c3c;"></i>
+                    <i class="fas fa-square" style="color:#f1c40f;"></i>
+                    <i class="fas fa-square" style="color:#27ae60;"></i>
+                    <i class="far fa-square" style="color:#7f8c8d;"></i>
+                </span>
+                <div class="desc">
+                    <span class="key">1 / 2 / 3 / 0</span>
+                    Highlight hovered square:
+                    <span style="color:#e74c3c; font-weight:bold;">RED</span> /
+                    <span style="color:#f1c40f; font-weight:bold;">YELLOW</span> /
+                    <span style="color:#27ae60; font-weight:bold;">GREEN</span> /
+                    NO-HIGHLIGHT
+                </div>
+            </div>
+
+            <div class="shortcut"><i class="fas fa-trash-alt"></i><div class="desc"><span class="key">DELETE</span> Clear all highlighting</div></div>
+
+            <div class="shortcut"><i class="fas fa-copy"></i><div class="desc"><span class="key">Ctrl + C</span> Copy current position to clipboard as FEN</div></div>
+            <div class="shortcut"><i class="fas fa-search-minus"></i><div class="desc"><span class="key">- / +</span> Zoom out / Zoom in (adjust window size)</div></div>
+
+            <!-- Move tree navigation -->
+            <div class="subsection">
+                <h3><i class="fas fa-random"></i> Navigating a Pre-defined Move Tree (via .txt file)</h3>
+                <div class="shortcut"><i class="fas fa-home"></i><div class="desc"><span class="key">HOME / R</span> Return to current home position</div></div>
+                <div class="shortcut"><i class="fas fa-file"></i><div class="desc"><span class="key">F1 / F3</span> Cycle to next / previous FEN in the loaded file</div></div>
+                <div class="shortcut"><i class="fas fa-arrow-right" style="color:#2980b9;"></i><div class="desc"><span class="key">⮕ (RIGHT ARROW)</span> Step into predefined move tree</div></div>
+                <div class="shortcut"><i class="fas fa-arrow-left" style="color:#2980b9;"></i><div class="desc"><span class="key">⬅ (LEFT ARROW)</span> Step back along predefined move tree</div></div>
+                <div class="shortcut"><i class="fas fa-flag-checkered"></i><div class="desc"><span class="key">END</span> Jump to end of predefined move tree</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2 -->
+    <div class="column">
+        <div class="section board">
+            <h2><i class="fas fa-chess-board"></i> Adding / Removing Pieces</h2>
+            <p>Drag pieces from the extra pieces panel to place them on the board.  
+            Using the <strong>right mouse button</strong> allows you to drop multiple identical pieces.  
+            To remove pieces, drag them off the board.</p>
+        </div>
+
+        <div class="section analysis">
+            <h2><i class="fas fa-chess-rook fairy-sideways"></i>Fairy Pieces</h2>
+            <p><strong>Standard pieces:</strong> <code>K Q R B S P</code> for King, Queen, Rook, Bishop, Knight, Pawn.</p>
+            <p>Run the program once to generate a default <code>custom_pieces.yml</code> file, then edit it to add or modify available fairy pieces.</p>
+            <p>The FEN naming rules follow those of <strong>Popeye software</strong>:</p>
+            <ul>
+                <li>Single letter, e.g. <code>s</code> or <code>N</code></li>
+                <li>Dot + 2 letters/numbers, e.g. <code>.ab</code>, <code>.L1</code>, <code>.l1</code></li>
+                <li>Optional <code>=</code> at front means neutral</li>
+            </ul>
+            <p>Fairy pieces in a FEN appear in the panel for editing. Pieces that only appear during play may not appear.  
+            Use <code>fairy_piece_blocks.json</code> to specify pieces that come in families.</p>
+            <p>Additional families can be added if needed, though standard white/black variants are automatically included.  
+            Do not add existing standard pieces — if you have changed names or any previously defined pieces, delete <code>piece_map.json</code> before restarting.</p>
+
+            <details class="advanced-user">
+              <summary>Advanced Users: Piece Image Conventions</summary>
+              <p>Piece images are loaded from the <code>images/</code> folder using a naming convention based on colour, base_type, and square size:</p>
+              <ul>
+                  <li>Filename format: <code>&lt;prefix&gt;&lt;letter&gt;_&lt;square_size&gt;px.png</code></li>
+                  <li><strong>Prefix:</strong> <code>w</code> = white, <code>b</code> = black, <code>n</code> = neutral</li>
+                  <li><strong>Letter:</strong> Taken from the piece's <code>base_type</code>. For standard pieces: K=King, Q=Queen, R=Rook, B=Bishop, S=Knight, P=Pawn; for some fairy pieces: C=Camel, GI=Giraffe, Z=Zebra.</li>
+                  <li>If you add a new piece <code>base_type</code>, the first letter of its name is used by default. To customize further, you will need to edit <code>pieces.py</code> to define the mapping.</li>
+              </ul>
+              <p>Rotation and mirroring specified in the piece definition are applied to the base image. Ensure your image filenames match the convention for the program to locate them correctly.</p>
+            </details>
+        </div>
+    </div>
+
+    <!-- Column 3 -->
+    <div class="column">
+        <div class="section nav">
+            <h2><i class="fas fa-terminal"></i> Command Line Options</h2>
+
+            <div class="subsection">
+                <h3><i class="fas fa-window-restore"></i> Window / Interface</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--window "New title"</span> Specifies window title</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--nomoves</span> Disables the 'moves' navigation pop-up</div></div>
+            </div>
+
+            <div class="subsection">
+                <h3><i class="fas fa-list"></i> Multiple FEN Files</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i>
+                    <div class="desc">
+                        <span class="key">--fenlist problems.txt</span>
+                        Specifies a file containing multiple FEN positions (default is <code>PROBLEM_LIST.txt</code>).
+                    </div>
+                </div>
+                <p>You can use this file to define a small <strong>database of problems</strong>.  
+                Each line follows the <code>PROBLEM_LIST.txt</code> syntax, allowing you to pre-load multiple studies or compositions for navigation in sequence.</p>
+            </div>
+
+            <div class="subsection">
+                <h3><i class="fas fa-chess-king"></i> Single FEN and Meta Info</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--fen "8/7R/2K4k/..."</span> Pass a single FEN position</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--title "My Problem"</span> Force a title for the single FEN</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--stip "h#2"</span> Force a stipulation for the single FEN</div></div>
+            </div>
+        </div>
+
+        <div class="section highlight">
+            <h2><i class="fas fa-cog"></i> Customizations</h2>
+            <p>Edit <strong>config.json</strong> in the executable folder to override default RGB board colors and start-up window size:</p>
+            <pre>
+{
+    "white_squares": [238, 238, 210],
+    "black_squares": [118, 150, 86],
+    "panel_colour": [20, 60, 60],
+    "square_size": 70,
+    "title_font_size": 28,
+    "stip_font_size": 28
+}
+            </pre>
+            <p><strong>Note:</strong> Square sizes must be one of 40,50,60,70,80,90,100, as only these have anti-aliased piece images.</p>
+        </div>
+
+        <!-- Footer inside column 3 -->
+        <footer>
+            ChessNavigator v1.0 — Created by David Hodge
+        </footer>
+    </div>
+
+</div>
+
+</body>
+</html>
