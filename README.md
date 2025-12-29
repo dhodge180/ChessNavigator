@@ -30,9 +30,9 @@ Various shortcuts are currently implemented but not documented.
 
 ### Adding and removing pieces
 
-Adding new pieces by dragging them from the extra pieces panel requires first toggling "Legality" off.
+Add new pieces by dragging them from the extra pieces panel.
 
-Removing pieces by dragging them from the board and dropping them off the board requires first toggling "Legality" off.
+Removing pieces by dragging them from the board and dropping them off the board.
 
 If you add pieces from the panel using the right-mouse-button you can keep adding more pieces of the same type without returning to the panel.
 
@@ -88,6 +88,7 @@ Edit a file with this name in the executable's folder and it will be used instea
 }
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
+Also note, squares and colour triples above are RGB values.
 
 ## Command line options: examples
 
