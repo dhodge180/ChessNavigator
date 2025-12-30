@@ -13,9 +13,9 @@ Various shortcuts are currently implemented but not documented.
 
 | Key       | Action                                                     |
 |-----------|------------------------------------------------------------|
-| HOME or R | Return to home position                               |
-| INSERT    | Save current position as home position                   |
-| Z         | Zero the board     |
+| HOME or R | Return to home position                                    |
+| INSERT    | Save current position as home position                     |
+| Z         | Zero the board                                             |
 | F1/F3     | Cycle to next/previous FEN in the loaded file              |
 | U         | Undo last move (cannot currently undo after add/remove)    |
 | T         | Toggle whose turn it is (also clickable)                   |
