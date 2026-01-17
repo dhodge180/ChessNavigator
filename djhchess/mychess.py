@@ -975,10 +975,13 @@ class TempChessPosition(ChessPosition):
         Request to set whose turn it is
         """
         player_to_move = move['player']
-        current_turn = "W" if self.turn == 'w' else "B"  # Find whos turn it current is
+        current_turn = self.turn.upper()  # Find whos turn it current is in UPPERCASE, note self.turn is lower
         if player_to_move != current_turn:
             # Target player to move means we need to change
             self.change_turn()
+            parts = self.fen.split() # We want to actually edit the FEN too, change_turn doesn't do this normally
+            parts[1] = player_to_move.lower() # Overwrite the 'w' or 'b' part with player_to_move
+            self.fen = ' '.join(parts)
             self.add_this_fen()
 
         return str(player_to_move), None
