@@ -967,8 +967,9 @@ class ChessGUI:
                         # Get FEN from the board and copy it to clipboard
                         try:
                             fen = self.position.fen  # Call the board.fen() method from the LiveGame instance
-                            copy(fen)  # Copy the FEN to clipboard
-                            print("FEN copied to clipboard:", fen)  # Optional: print to console for confirmation
+                            user_fen = convert_fen_board_section(fen, problem_container.i_to_u_dict)
+                            copy(user_fen)  # Copy the FEN to clipboard
+                            print("FEN copied to clipboard:", user_fen)  # Optional: print to console for confirmation
                         except Exception as e:
                             print(f"Error copying FEN to clipboard: {e}")
 
