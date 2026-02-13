@@ -1,5 +1,12 @@
-# Sample of problems for ChessNavigator
+# This is a sample database of problems. 
+# If you delete this file or remove all FENs from it then the program will just launch with the start position.
+# You can also call the executable with --fen 8/8/8/8/8/8/8/8 to specify a single diagram.
+# Or with --fenlist filename.txt to load from a custom file not this one.
 
+The syntax for this file is explained inside the README.txt file, inside the "Syntax of tree file" section.
+Primarily it searches for lines beginning with certain key phrases, namely Title: FEN: Subtext: and Moves:
+
+Details on how to specify different files or positions are also on the Cheatsheet.
 
 A mate in 3
 ---------------------------------
