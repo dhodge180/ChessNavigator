@@ -24,6 +24,7 @@ FAIRY_BASE_PIECES = {
     'Equihopper':   { 'user_char': '.eq',  'type': 'grasshopper', 'base_type': 'queen', 'rotation': 90 },
 
     'Rose':         { 'user_char': '.ro',  'type': 'knight', 'rotation': -45 },
+    'Circle':       { 'user_char': 'o',    'type': 'circle' },
 }
 
 def generate_piece_variants(base_dict):

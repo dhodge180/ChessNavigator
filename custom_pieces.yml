@@ -461,3 +461,20 @@ BlackRose:
   colour: black
   long_name: Black Rose
 
+BlackCircle:
+  user_char: o
+  type: o
+  colour: black
+  long_name: Black Circle
+
+WhiteCircle:
+  user_char: O
+  type: o
+  colour: white
+  long_name: White Circle
+
+NeutralCircle:
+  user_char: =o
+  type: o
+  colour: neutral
+  long_name: Neutral Circle

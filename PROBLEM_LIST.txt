@@ -7,6 +7,13 @@
 #FEN: 8/PPPPPPPP/8/8/8/8/pppppppp/8
 #Moves: a7a8q b7b8r c7c8s d7d8n e7e8B f7f8.MO g7g8.mo h7h8.ro a2a1q b2b1r c2c1=s d2d1=b e2e1=r f2f1=q g2g1G h2h1=k
 
+FEN: 4k3/P7/o=o6/8/1p1b4/2p5/3p1P2/5K2 b - - 0 1
+
+Title: O&J
+FEN: 4k3/8/8/8/1p1b4/2p5/3p1P2/5K2
+Subtext: H3.5 3 invisibles
+Moves: +Pa7 B W B a7a8S d2d1Q
+
 Title: Just grasčhoppers Just grasčhoppers Just grasčhoppers
 FEN: k6K/8/8/8/8/8/8/g7
 
@@ -16,7 +23,7 @@ Subtext: H=3
 Moves: a2a4 a4a3 a3a4 a4a3 a3a4
 
 Title: Chinese
-FEN: 8/8/8/8/8/8/8/4=czce
+FEN: 8/8/8/8/8/8/8/.gi3=czce
 
 Title: Moa and Mao then Rose
 FEN: .mo.MO6/.ma.MA6/8/8/8/8/8/.ro.RO6
@@ -25,7 +32,6 @@ Title: Amazing new problem
 FEN: 8/s3s3/8/8/G7/8/8/7.ro
 Subtext: Brand new never before seen pieces
 Moves: +Bb3 +Rb4 +=pb7 b7b8S a7c8 b8c6 c8a7 e7c8 +Bd3 +bd3 +Qe3 +=pf3 +.rog3
-
 
 Title: D. Schoba, 1974, 1st Prize DSZ
 FEN: 4ss2/6p1/8/3pP3/R2Sk2P/1P3SPP/4K3/7B
