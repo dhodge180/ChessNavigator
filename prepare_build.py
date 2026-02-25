@@ -5,6 +5,8 @@
 import shutil
 import os
 
+print("Current working directory:", os.getcwd())
+
 # Files to include
 files = [
     "build.py",
