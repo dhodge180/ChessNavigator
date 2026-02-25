@@ -3,14 +3,58 @@
 # You can also call the executable with --fen 8/8/8/8/8/8/8/8 to specify a single diagram.
 # Or with --fenlist filename.txt to load from a custom file not this one.
 
-# Here is a sample entry:
+The syntax for this file is explained inside the README.txt file, inside the "Syntax of tree file" section.
+Primarily it searches for lines beginning with certain key phrases, namely Title: FEN: Subtext: and Moves:
 
-Title: This is the Title
-FEN: KB6/b7/1kPP4/1Pp5/2p5/2Pr4/8/7r
-Subtext: This appears below (Draw)
-Moves: c6c7 h1h8 d6d7 a7b8 * d7d8q b8c7 d8h8 d3d8 < d7d8b * b8c7 < b8a7 c7c8b b6b5 c8d7 * d3d7 < b5a6 d7c8 a6b5 c8d7
+Details on how to specify different files or positions are also on the Cheatsheet.
 
-Title: The Start position
-FEN: rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR w KQkq - 0 1
-Subtext: Unknown
-Moves: e2e4 e7e5 d1f3 g8f6 f1c4 f6e4 f3f7
+A mate in 3
+---------------------------------
+Title: Loshinski, 1946
+FEN: 5B1K/6Q1/4p3/RS1P1b2/1Sq1kp2/1r1s1p2/B2R2P1/8
+Subtext: #3
+Moves: b4c2 * b5d6 < * b3b5 g2f3 * e4f3 g7g2 < e4d5 c2b4 << c4c5 b5d6 * c5d6 g7d4 < e4d5 c2b4 << e4d5 g7b7 * d5e5 f8g7 < c4c6 b5d6
+
+
+A helpmate with two solutions
+-----------------------------------
+
+Title: Linß & Degener
+FEN: 8/3pp2r/3b3r/1bksp3/1q1p3R/pp1p4/7B/7K
+Subtext: H#3.5 (2 sols)
+Moves: h2e5 c5c6 e5h2 d6c5 h4f4 c6d6 f4f6 H h4d4 b4c4 d4h4 c5b4 h2f4 c4c5 f4d2
+
+A neutral piece problem by Dirk Borst.
+-------------------------------------
+
+Title: Dirk Borst
+FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b
+Subtext: H#3 (2 solutions)
+Moves: d7d5 c8d8 -b3 & d1b3 c1g1 e7e5 -e5 & d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 -d5 & e5d6
+
+An anti-circe problem
+-----------------------------------
+Title: K. Wenda & D. Werner, Die Schwalbe 2022
+FEN: r5S1/pP2p1P1/1BR1k3/1BR1S3/8/4pP2/1PP5/K3s2Q
+Subtext: S#9 AntiCirce Calvet
+Moves: h1h5 e6d6 a1b1 d6d7 b1c1 d7d8 c1d1 d8e8 b7b8r a8b8 & b8h8 d1e1 h8h5 & h5a8 c6c7 e8d8 c7e7 & e7a1 a7b6 & b6b7 e1c1 a8a1
+
+A #2 with lines to show
+----------------------------------
+Title: Barnes 1st Prize ea Die Schwalbe 1957
+FEN: 3b2S1/1K1Q4/p2p1P2/Rs2k2p/2p2p2/2Pp1B2/4sBpS/4R1q1 w
+Subtext: #2
+Moves: f3d5 * d7e6 < e5d5 d7f5 < b5c7 h2f3 < b5d4 c3d4 < g1f2 H f3e4 * d7f5 < e5e4 d7e6 < e2d4 c3d4 < e2g3 h2f3
+
+Finally, a study
+--------------------------------
+Title: Vladimir Bulanov
+FEN: 7b/6Bk/4PK2/7B/8/8/p7/8
+Subtext: Win
+Moves: h5g6 h7g8 g6f7 g8h7 f7g8 h7g8 f6g6 * h8g7 e6e7 a2a1q e7e8q  < a2a1q g7a1 h8g7 e6e7 g7f8 * e7e8q < e7e8s f8a3 a1g7 a3e7 e8c7 e7f8 g7e5 f8g7 < e7e8b f8g7 e8f7 g8h8 a1g7
+
+A load of random fairy pieces
+------------------------------
+Title: A mess
+FEN: .roG=pC.ma.mo.giZ/=e.ka.le.LIN.pa.VA.na/gG.RH.bh.EQoO=o/8/8/8/8/8
+Subtext: Pieces available (you can add more)
