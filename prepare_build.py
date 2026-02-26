@@ -21,7 +21,9 @@ files = [
     "THIRD_PARTY_LICENSES.txt",
     "InstallerCreatorScript_v2.iss",
     "Welcome.txt",
-    "PostInstall.txt"
+    "PostInstall.txt",
+    "license-python.txt",
+    "cheatsheet.html"
 ]
 
 # Folders to include (copy recursively)

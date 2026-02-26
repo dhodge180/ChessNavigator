@@ -53,7 +53,7 @@ Source: "{#MyFilesDir}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\Sample_PROBLEM_LIST.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\fairy_piece_blocks.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\license-python.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\THIRD-PARTY-LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyFilesDir}\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\cheatsheet.html"; DestDir: "{app}"; Flags: ignoreversion
 
 
