@@ -17,7 +17,11 @@ files = [
     "config.json",
     "custom_pieces.yml",
     "fairy_piece_blocks.json",
-    "PROBLEM_LIST.txt"
+    "PROBLEM_LIST.txt",
+    "THIRD_PARTY_LICENSES.txt",
+    "InstallerCreatorScript_v2.iss",
+    "Welcome.txt",
+    "PostInstall.txt"
 ]
 
 # Folders to include (copy recursively)

@@ -5,7 +5,7 @@
 #define MyAppVersion "3.1"
 #define MyAppPublisher "David Hodge"
 #define MyAppExeName "ChessNavigator.exe"
-#define MyFilesDir "F:\TempChessNav"
+#define MyFilesDir "F:\ChessNavigator-WindowsCompiler"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -31,7 +31,7 @@ InfoBeforeFile={#MyFilesDir}\Welcome.txt
 InfoAfterFile={#MyFilesDir}\PostInstall.txt
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputDir={#MyFilesDir}\CompiledImstaller
+OutputDir={#MyFilesDir}\CompiledInstaller
 OutputBaseFilename=chess_navigator_setup
 SetupIconFile={#MyFilesDir}\images\icon.ico
 SolidCompression=yes
