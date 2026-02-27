@@ -14,11 +14,13 @@ if is_windows:
     exe_extension = ".exe"  # Windows executable extension
     icon_path = "images/icon.ico"
     output_dir = os.path.join("dist_windows")
+    version_file = "version_info.txt"
 else:
     add_data_option = "--add-data=images:images"  # Linux/macOS uses `:`
     exe_extension = ""  # No extension needed for Linux/macOS
     icon_path = "images/icon.png"
     output_dir = os.path.join("dist_linux")
+    version_file = None
 
 def build_executable():
     cmd = [
@@ -32,6 +34,10 @@ def build_executable():
         add_data_option,
         SCRIPT_NAME
     ]
+    
+    # Only include version file on Windows (Linux doesnt use it)
+    if version_file:
+        cmd.insert(-1, f"--version-file={version_file}")
 
     subprocess.run(cmd, check=True)
 
