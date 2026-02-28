@@ -23,7 +23,8 @@ files = [
     "Welcome.txt",
     "PostInstall.txt",
     "license-python.txt",
-    "cheatsheet.html"
+    "cheatsheet.html",
+    "version_info.txt"
 ]
 
 # Folders to include (copy recursively)
