@@ -21,7 +21,8 @@ from pyperclip import copy
 # For config file management
 import json
 
-from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, validate_all_fens
+from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, validate_all_fens, \
+    expand_multiple_blank_rows
 # from djhchess.fen_test import print_mapping
 
 # No longer needed
@@ -374,8 +375,10 @@ def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
                 print("Resetting for next problem...")
                 temp_fen_data = blank_non_required.copy()
             
-            # Now if we had a fen or didn't, we need to insert the new fen    
+            # Now if we had a fen or didn't, we need to insert the new fen
             temp_fen_data["fen"] = line[len("FEN:"):].strip().strip('"')
+            # And check if we need to expand any long numbers in the FEN like 32 becoming 8/8/8/8
+            temp_fen_data["fen"] = expand_multiple_blank_rows(temp_fen_data["fen"])
 
         # We encounter a non-fen (one of "these")
         elif line.startswith("Subtext:"):
@@ -2350,6 +2353,7 @@ if __name__ == "__main__":
     # Read all the fens passed and find fairy pieces
     if passed_fen:
         # Case 1: Passed a single FEN directly
+        passed_fen = expand_multiple_blank_rows(passed_fen)
         all_fens = [passed_fen]
         # Passing a fen via --fen should override PROBLEM_LIST
         comp = problem_container.add_composition(

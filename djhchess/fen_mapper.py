@@ -175,6 +175,33 @@ def split_epd_from_fen(fen):
 
     return fields[0], fields[1:]
 
+def expand_multiple_blank_rows(board_part):
+    """
+       Expand numbers that are multiples of 8 (>=16) in the board part into
+       repeated '8' ranks separated by '/'.
+       E.g. '24' -> '8/8/8', 'rnbqkbnr/24/8' -> 'rnbqkbnr/8/8/8/8'
+    """
+    result = []
+    i = 0
+    while i < len(board_part):
+        ch = board_part[i]
+        if '0' <= ch <= '9':
+            # Consume full multi-digit number
+            j = i
+            while j < len(board_part) and '0' <= board_part[j] <= '9':
+                j += 1
+            n = int(board_part[i:j])
+            if n % 8 == 0 and n >= 16:
+                result.append('/'.join(['8'] * (n // 8)))
+            else:
+                result.append(board_part[i:j])
+            i = j
+        else:
+            result.append(ch)
+            i += 1
+    return ''.join(result)
+
+
 def validate_all_fens(all_fens, permitted_internals, user_chars, u_to_i_dict, i_to_u_dict):
     """
     Validate the board part of every FEN in all_fens.
@@ -196,14 +223,23 @@ def validate_all_fens(all_fens, permitted_internals, user_chars, u_to_i_dict, i_
         board_part = parts[0]
         # Convert user-facing chars to internal engine chars
         board_part_converted = convert_fen_board_section(board_part, u_to_i_dict)
+        board_part_converted = expand_multiple_blank_rows(board_part_converted) # Check for numbers like 24 in FEN
+        # and replace with 8/8/8
         ranks = board_part_converted.split('/')
 
         # Check rank count
         if len(ranks) != 8:
             errors.append(f"[ERROR] FEN #{idx+1}: '{fen}'")
-            errors.append(f"        The board portion '{board_part}' must have exactly 8 ranks separated by '/'.")
+            errors.append("")
+            errors.append(f"The board portion '{board_part}' must have exactly 8 ranks separated by '/'.")
+            errors.append("")
             errors.append(f"You provided {len(ranks)} ranks.")
-            errors.append("        Example valid board: '8/8/8/8/8/8/8/8'")
+            errors.append("")
+            errors.append("Tip:")
+            errors.append("You can use multiples of 8 to represent empty ranks, e.g. '32' instead of '8/8/8/8'")
+            errors.append("but you are not allowed non-multiples of 8, like 20, use 4/16.")
+            errors.append("Example valid boards: '8/8/8/8/8/8/8/8' is the same as '64'")
+            errors.append("or this complex example '24/k6K/16/pPpP4/8'")
             valid = False
             continue
 
