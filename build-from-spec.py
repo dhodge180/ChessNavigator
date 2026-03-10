@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import shutil
 import getpass
 
 EXE_NAME = "ChessNavigator"
@@ -11,6 +12,14 @@ is_windows = sys.platform.startswith("win")
 exe_extension = ".exe" if is_windows else ""
 output_dir = "dist_windows" if is_windows else "dist_linux"
 
+# Files to copy alongside the executable after the build
+RUNTIME_FILES = [
+    'config.json',
+    'custom_pieces.yml',
+    'fairy_piece_blocks.json',
+    'cheatsheet.html',
+]
+
 
 def build_executable():
     cmd = [
@@ -20,6 +29,13 @@ def build_executable():
         "ChessNavigator.spec",
     ]
     subprocess.run(cmd, check=True)
+
+
+def copy_runtime_files():
+    dest = os.path.join(output_dir, EXE_NAME)
+    for f in RUNTIME_FILES:
+        shutil.copy2(f, dest)
+        print(f"Copied {f} -> {dest}")
 
 
 def sign_executable():
@@ -60,6 +76,7 @@ def sign_executable():
 
 if __name__ == "__main__":
     build_executable()
+    copy_runtime_files()
     sign_executable()
     output_file = os.path.join(output_dir, EXE_NAME, EXE_NAME + exe_extension)
     print(f"\nBuild complete! Executable at: {output_file}")
