@@ -18,6 +18,7 @@ RUNTIME_FILES = [
     'custom_pieces.yml',
     'fairy_piece_blocks.json',
     'cheatsheet.html',
+    'cheatsheet.pdf'
 ]
 
 

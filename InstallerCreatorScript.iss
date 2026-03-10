@@ -2,10 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Chess Navigator"
-#define MyAppVersion "3.1"
+#define MyAppVersion "3.5"
 #define MyAppPublisher "David Hodge"
 #define MyAppExeName "ChessNavigator.exe"
-#define MyFilesDir "F:\ChessNavigator-WindowsCompiler"
+#define MyFilesDir "F:\ChessNavigator"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
