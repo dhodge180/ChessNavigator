@@ -1,6 +1,7 @@
 piece_map.json
 chessnavigator.pfx
 my_install_steps.txt
+output.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

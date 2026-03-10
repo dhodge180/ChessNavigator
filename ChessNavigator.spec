@@ -33,6 +33,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    version='version_info.txt',
     icon=['images/icon.ico'] if sys.platform == 'win32' else ['images/icon.png'],
 )
 coll = COLLECT(
