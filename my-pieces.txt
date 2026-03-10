@@ -1,11 +1,45 @@
-My implemented list:
+My implemented piece types:
+All pieces come in white (uppercase), black (lowercase), and neutral (=prefix) variants.
 
-	b       bishop
-	g       grasshopper
-	k       king
-	ma	mao
-	p       pawn
-	q       queen   
-	r       rook   
-	ro      rose   
-	s       knight   
+STANDARD
+--------
+b       bishop
+k       king
+p       pawn
+q       queen
+r       rook
+s       knight
+
+LEAPERS
+-------
+c       camel
+e       elephant
+z       zebra
+.gi     giraffe
+
+HOPPERS
+-------
+g       grasshopper
+.rh     rookhopper
+.bh     bishophopper
+.eq     equihopper
+
+RIDERS
+------
+n       nightrider
+.ro     rose
+
+CHINESE PIECES
+--------------
+.pa     pao
+.va     vao
+.na     nao
+.ma     mao
+.mo     moa
+
+FAIRY
+-----
+.ka     kangaroo
+.le     leo
+.li     lion
+o       circle
