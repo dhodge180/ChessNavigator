@@ -6,7 +6,8 @@
 #define MyAppPublisher "David Hodge"
 #define MyAppExeName "ChessNavigator.exe"
 #define MyFilesDir "F:\ChessNavigator"
-#define MyDistDir "{#MyFilesDir}\dist_windows\ChessNavigator"
+#define MyDistDir "F:\ChessNavigator\dist_windows\ChessNavigator"
+#define MyAssetsDir "F:\ChessNavigator\installer-assets"
 
 [Setup]
 AppId={{8ED0A465-7214-4280-8806-BEDBEDB6FA25}
@@ -18,9 +19,9 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DefaultGroupName={#MyAppName}
-LicenseFile={#MyFilesDir}\LICENSES.txt
-InfoBeforeFile={#MyFilesDir}\Welcome.txt
-InfoAfterFile={#MyFilesDir}\PostInstall.txt
+LicenseFile={#MyAssetsDir}\LICENSES.txt
+InfoBeforeFile={#MyAssetsDir}\Welcome.txt
+InfoAfterFile={#MyAssetsDir}\PostInstall.txt
 PrivilegesRequired=lowest
 OutputDir={#MyFilesDir}\windows_installer
 OutputBaseFilename=chess_navigator_setup
@@ -43,13 +44,16 @@ Source: "{#MyDistDir}\_internal\*"; DestDir: "{app}\_internal"; Flags: ignorever
 Source: "{#MyDistDir}\config.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyDistDir}\custom_pieces.yml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyDistDir}\fairy_piece_blocks.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyDistDir}\cheatsheet.html"; DestDir: "{app}"; Flags: ignoreversion
+
+; Installer assets
+Source: "{#MyAssetsDir}\cheatsheet.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAssetsDir}\cheatsheet.pdf"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAssetsDir}\license-python.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAssetsDir}\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Distribution files from project root
 Source: "{#MyFilesDir}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\Sample_PROBLEM_LIST.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\license-python.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

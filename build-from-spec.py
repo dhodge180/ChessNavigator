@@ -13,12 +13,16 @@ exe_extension = ".exe" if is_windows else ""
 output_dir = "dist_windows" if is_windows else "dist_linux"
 
 # Files to copy alongside the executable after the build
-RUNTIME_FILES = [
+# On Windows, cheatsheet files are handled by Inno Setup from installer-assets/
+RUNTIME_FILES_COMMON = [
     'config.json',
     'custom_pieces.yml',
     'fairy_piece_blocks.json',
-    'cheatsheet.html',
-    'cheatsheet.pdf'
+]
+
+RUNTIME_FILES_LINUX_ONLY = [
+    'installer-assets/cheatsheet.html',
+    'installer-assets/cheatsheet.pdf',
 ]
 
 
@@ -34,7 +38,8 @@ def build_executable():
 
 def copy_runtime_files():
     dest = os.path.join(output_dir, EXE_NAME)
-    for f in RUNTIME_FILES:
+    files = RUNTIME_FILES_COMMON if is_windows else RUNTIME_FILES_COMMON + RUNTIME_FILES_LINUX_ONLY
+    for f in files:
         shutil.copy2(f, dest)
         print(f"Copied {f} -> {dest}")
 
