@@ -23,6 +23,7 @@ RUNTIME_FILES_COMMON = [
 RUNTIME_FILES_LINUX_ONLY = [
     'installer-assets/cheatsheet.html',
     'installer-assets/cheatsheet.pdf',
+    'Sample_PROBLEM_LIST.txt'
 ]
 
 
