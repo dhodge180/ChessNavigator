@@ -265,3 +265,4 @@ fabric.properties
 /my-build-prep/
 /TestLISTS/
 /.Rhistory
+.idea/
