@@ -17,6 +17,7 @@ develop-eggs/
 dist/
 dist_windows/
 dist_linux/
+windows_installer/
 downloads/
 eggs/
 .eggs/

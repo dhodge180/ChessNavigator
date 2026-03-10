@@ -2,36 +2,27 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Chess Navigator"
-#define MyAppVersion "3.5"
+#define MyAppVersion "3.4"
 #define MyAppPublisher "David Hodge"
 #define MyAppExeName "ChessNavigator.exe"
 #define MyFilesDir "F:\ChessNavigator"
+#define MyDistDir "{#MyFilesDir}\dist_windows\ChessNavigator"
 
 [Setup]
-; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{8ED0A465-7214-4280-8806-BEDBEDB6FA25}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName=C:\ChessNavigator
 UninstallDisplayIcon={app}\{#MyAppExeName}
-; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
-; on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
-; "ArchitecturesInstallIn64BitMode=x64compatible" requests that the
-; install be done in "64-bit mode" on x64 or Windows 11 on Arm,
-; meaning it should use the native 64-bit Program Files directory and
-; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
 DefaultGroupName={#MyAppName}
 LicenseFile={#MyFilesDir}\LICENSES.txt
 InfoBeforeFile={#MyFilesDir}\Welcome.txt
 InfoAfterFile={#MyFilesDir}\PostInstall.txt
-; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputDir={#MyFilesDir}\CompiledInstaller
+OutputDir={#MyFilesDir}\windows_installer
 OutputBaseFilename=chess_navigator_setup
 SetupIconFile={#MyFilesDir}\images\icon.ico
 SolidCompression=yes
@@ -44,18 +35,21 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#MyFilesDir}\dist_windows\ChessNavigator\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\dist_windows\ChessNavigator\_internal\*"; DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "{#MyFilesDir}\config.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\custom_pieces.yml"; DestDir: "{app}"; Flags: ignoreversion
+; Executable and bundled internals
+Source: "{#MyDistDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyDistDir}\_internal\*"; DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Runtime files copied alongside exe by build-from-spec.py
+Source: "{#MyDistDir}\config.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyDistDir}\custom_pieces.yml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyDistDir}\fairy_piece_blocks.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyDistDir}\cheatsheet.html"; DestDir: "{app}"; Flags: ignoreversion
+
+; Distribution files from project root
 Source: "{#MyFilesDir}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\Sample_PROBLEM_LIST.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\fairy_piece_blocks.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\license-python.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyFilesDir}\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyFilesDir}\cheatsheet.html"; DestDir: "{app}"; Flags: ignoreversion
-
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -63,4 +57,3 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-
