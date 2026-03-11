@@ -1,6 +1,9 @@
 ****************************************************************
-**   ChessNavigator is developed by David Hodge.                                           **
-**   All Rights are Reserved, July 2025. As usual you use it at your own risk.  **
+**   ChessNavigator is developed by David Hodge.              **
+**   Copyright (c) 2025 David Hodge.                          **
+**   Licensed under GNU GPL v2 - non-commercial use only.     **
+**   See LICENSE file for full details.                       **
+**   Use at your own risk - no warranty provided.             **
 ****************************************************************
 
 ----------------------------------------------------------------------------------
