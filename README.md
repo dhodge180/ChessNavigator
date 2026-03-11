@@ -7,8 +7,9 @@ The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with 
 ## Screenshots
 
 ![Standard board](screenshots/Standard_Window.png)
-![Fairy pieces](screenshots/Standard_Window_Fairy.png)
 ![Move window](screenshots/Move_Window.png)
+![Fairy pieces](screenshots/Standard_Window_Fairy.png)
+
 
 *See bottom of page for additional screenshots.*
 
