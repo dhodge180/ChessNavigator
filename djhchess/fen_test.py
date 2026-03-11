@@ -1,3 +1,9 @@
+# ChessNavigator - Copyright (c) 2025 David Hodge
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License v2 as published
+# by the Free Software Foundation.
+# Non-commercial use only. See LICENSE file for full details.
+
 from djhchess.fen_mapper import (
     load_and_update_mapping,
     convert_fen_board_section,

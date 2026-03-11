@@ -1,3 +1,9 @@
+# ChessNavigator - Copyright (c) 2025 David Hodge
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License v2 as published
+# by the Free Software Foundation.
+# Non-commercial use only. See LICENSE file for full details.
+
 from djhchess.square import Square
 from djhchess.mychess import ChessPosition, print_board_matrix
 from djhchess.fen_mapper import (
