@@ -1,6 +1,43 @@
-My Chess Navigator program for showing chess problems.
+My Chess Navigator program for showing chess problems. It's a chess board only (no engine and not even move logic).
 
-The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation).
+It allows very quick position setup, and can navigate a complex defined move tree, saved in a text file.
+
+The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation), and possible move trees.
+
+## Screenshots
+
+![Standard board](screenshots/Standard_Window.png)
+![Fairy pieces](screenshots/Standard_Window_Fairy.png)
+![Move window](screenshots/Move_Window.png)
+
+*See bottom of page for additional screenshots.*
+
+## Getting started
+
++ The releases section has a Windows Installer.
++ It works in Linux and Windows, I've not tested on MacOSX.
++ It works in Python 3.13 (and 3.12)
+
+This is a python project, with `uv` support included. So you can just use uv for easy running from source.
+
+### With `uv` installed (from source)
+
+Requires Python 3.12 or 3.13 (recommended) NOT 3.14
+
+Just run
+
+```
+uv sync
+uv run python ChessNavigator.py
+```
+
+### With your own virtual environment (from source)
+
+Create the virtual environment (see pyproject.toml file for required packages).
+
+```
+python3.13 ChessNavigator.py
+```
 
 ## Method of move entry
 
@@ -124,3 +161,16 @@ You may add additional families if you wish to this file. This is generally unne
 So the Grasshoppers group in fairy_piece_blocks.json is actually totally unnecessary, but provided to show the syntax for adding new groups.
 
 Do not attempt to add existing standard pieces, else weird things may happen. If you do, you may wish to delete your piece_map.json file before trying again.
+
+## Licence
+
+Licensed under GNU GPL v2 — non-commercial use only. See [LICENSE](LICENSE) for details.
+
+Piece images for camel, zebra and giraffe are based on originals from Wikimedia Commons, used under CC BY-SA.
+
+## Additional Screenshots
+
+![Neutral pieces](screenshots/Standard_Window_Neutrals.png)
+![Help popup](screenshots/Help_Popup.png)
+
+
