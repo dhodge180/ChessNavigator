@@ -122,11 +122,11 @@ Edit a file with this name in the executable's folder and it will be used instea
 
 {
     "white_squares": [238, 238, 210],
-    "black_squares": [118, 150, 86],
-    "panel_colour": [20, 60, 60],
-    "square_size": 70,
-    "title_font_size": 28,
-    "stip_font_size": 28
+    "black_squares": [118, 150, 86],  
+    "panel_colour": [20, 60, 60],  
+    "square_size": 70,  
+    "title_font_size": 28,  
+    "stip_font_size": 28  
 }
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
