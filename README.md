@@ -4,6 +4,8 @@ It allows very quick position setup, and can navigate a complex defined move tre
 
 The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation), and possible move trees.
 
+I am not a software developer so apologies in advance for any bugs or bad implementation.
+
 ## Screenshots
 
 ![Standard board](screenshots/Standard_Window.png)
@@ -47,7 +49,9 @@ New move entry is by dragging the mouse.
 If you desire to use separate clicks to move pieces then press CAPS LOCK. 
 Trying to drag pieces while caps lock is on won't behave as usual. As clicks are processed first.
 
-Various shortcuts are currently implemented but not documented.
+Various shortcuts are currently implemented but not always fully documented.
+
+**Press H inside the program to bring up the help menu.**
 
 | Key       | Action                                                     |
 |-----------|------------------------------------------------------------|
@@ -108,7 +112,7 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 | -e4    | Remove whatever piece is on e4              |
 | &      | Separator for multiple simultaneous moves   |
 
-When using the `--movewindow` additional moves window, you can also navigate the position tree by clicking the moves in that window.
+When using the moves window additional moves window, you can also navigate the position tree by clicking the moves in that window. (By default the moves window opens, it can be disabled below)
 
 ## For customized board colours and start-up window size
 
@@ -131,10 +135,13 @@ Also note, squares and colour triples above are RGB values.
 ## Command line options: examples
 
 --window "New title"     : Specifies window title (used for screen capture)
+
 --nomoves                : Disables loading of the 'moves' navigation pop-up window
 
 --fen "8/7R/2K4k/..."    : Passes a single FEN position
+
 --title "My Problem"     : Forces a title for the single FEN passed
+
 --stip "h#2"             : Forces a stipulation for the single FEN passed
 
 --fenlist problems.txt   : Specifies a file with multiple FENs (default is PROBLEM_LIST.txt)
