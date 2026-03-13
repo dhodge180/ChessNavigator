@@ -120,7 +120,7 @@ When using the moves window additional moves window, you can also navigate the p
 
 Edit a file with this name in the executable's folder and it will be used instead.
 
-{
+{  
     "white_squares": [238, 238, 210],
     "black_squares": [118, 150, 86],  
     "panel_colour": [20, 60, 60],  
