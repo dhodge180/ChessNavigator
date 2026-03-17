@@ -565,9 +565,11 @@ class ChessPosition:
                     continue  # Skip the moving piece
 
                 other_piece = self.get_piece(other_sq)
-                if other_piece == moving_piece and self.can_reach(true_piece, other_sq, to_square):
-                    ambiguous = True
-                    break
+                if other_piece == moving_piece:
+                    result = self.can_reach(true_piece, other_sq, to_square)
+                    if result:
+                        ambiguous = True
+                        break
             if ambiguous:
                 break
 
@@ -663,10 +665,14 @@ class ChessPosition:
             if piece.is_bishop and abs(delta_row) != abs(delta_col):
                 return False  # Bishop must move diagonally
 
+            # Check Queen is trying to move straight or diagonally: else return False
+            if piece.is_queen and (delta_row != 0 and delta_col != 0) and abs(delta_row) != abs(delta_col):
+                return False
+
             # Path clearance
             path_squares = self.squares_in_path(from_square, to_square)
             for sq in path_squares:
-                if self.get_piece(sq) != '1':  # '1' means empty square
+                if self.get_piece(sq) is not None:  # None means empty square
                     return False  # blocked path
 
             return True
