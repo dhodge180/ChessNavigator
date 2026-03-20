@@ -998,8 +998,8 @@ class ChessGUI:
                         #self.game.legal_moves_enabled = not self.game.legal_moves_enabled  # Toggle legality mode
                         self.position.toggle_legality()
                     elif event.key == pygame.K_u:
-                        self.position.undo() # Press u move backwards in the board history
-                        self.info_box.update("undo")
+                        if self.position.undo(): # Press u move backwards in the board history
+                            self.info_box.update("undo") # Update InfoBox if something was undone
                     elif event.key == pygame.K_i:
                         self.position.redo()  # Press i move forwards in board history
                     elif event.key == pygame.K_z:
@@ -1915,6 +1915,8 @@ def generate_fen_path(beginning, moves):
 
     # Create dictionary to store text labels for each FEN
     move_id_to_label = {}
+    checkpoint_labels = {0: None} # checkpoint labels to store move/string that led to it
+    last_label = ""
 
     checkpoint_data = [1]
     #checkpoint_data.append(1)
@@ -1950,8 +1952,8 @@ def generate_fen_path(beginning, moves):
         loc_button_label, loc_button_fen, loc_move_id = temp_game.process_move(move)
         if loc_button_label == "back":
             print("Back button")
-            move_id_to_label[loc_move_id] = move + " Back" # will be "<" or "<<" or "<<<" etc..
             loc_checkpoint = loc_button_fen
+            move_id_to_label[loc_move_id] = move + " " + checkpoint_labels.get(loc_checkpoint)
             # Jump back to column of checkpoint we're going to
             next_j = checkpoint_data[loc_checkpoint] # Should be stored column number for this checkpoint
             # Drop down one row for next move
@@ -1969,12 +1971,14 @@ def generate_fen_path(beginning, moves):
             # loc_button_fen will contain index of checkpoint
             loc_checkpoint = loc_button_fen
             checkpoint_data.insert(loc_checkpoint, next_j) # Should store current column for this checkpoint number
+            checkpoint_labels[loc_checkpoint] = last_label  # store the label for when we jump back
 
         else: # Only create button if not back or * or H
             if special_label_append: # if we're about to overwrite the first move in an and statement
                 loc_button_label = grid_data[next_i][next_j][0] + "\n" + loc_button_label
                 special_label_append = False
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
+            last_label = loc_button_label
             move_id_to_label[loc_move_id] = loc_button_label
             # Update next box
             next_j += 1

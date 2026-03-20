@@ -238,10 +238,15 @@ class ChessPosition:
         print("-" * 40)
 
     def undo(self):
+        """
+        Returns False if there was nothing to undo (to prevent InfoBox updates)
+        """
         if self.move_index > 0:
             self.move_index -= 1
             self.fen = self.move_history[self.move_index]
             self.set_fen(self.fen)
+            return True
+        return False
 
     def redo(self):
         if self.move_index < len(self.move_history) - 1:
