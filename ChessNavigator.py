@@ -78,7 +78,8 @@ class Config:
         "panel_colour": (20, 60, 60),
         "square_size": 70,
         "title_font_size": 28,
-        "stip_font_size": 28
+        "stip_font_size": 28,
+        "info_font_size": 20
     }
 
     # Customizable
@@ -193,10 +194,13 @@ class Config:
         """For title font size validation"""
         Config.STIP_FONT_SIZE = Config.validate_font_size(local_config.get("stip_font_size"), min_size=10, max_size=45, font_type="stip")
         """For stip font size validation (example if you have stip_font_size in your config)"""
+        Config.INFO_FONT_SIZE = Config.validate_font_size(local_config.get("info_font_size"), min_size=8, max_size=45, font_type="info")
+        """For text box font size validation"""
 
         Config.original_size = Config.SQUARE_SIZE
         Config.original_font = Config.TITLE_FONT_SIZE
         Config.original_stip = Config.STIP_FONT_SIZE
+        Config.original_info = Config.INFO_FONT_SIZE
 
         # STAGE 1B: load custom pieces
 
@@ -286,6 +290,8 @@ class Config:
                                                            max_size=45, font_type="title")
         cls.STIP_FONT_SIZE = Config.validate_font_size(cls.original_stip * multiplier, min_size=10, max_size=45,
                                                           font_type="stip")
+        cls.INFO_FONT_SIZE = Config.validate_font_size(cls.original_info * multiplier, min_size=8, max_size=45,
+                                                       font_type="info")
 
     @classmethod
     def check_and_notify_defaults(cls):
@@ -831,6 +837,11 @@ class ChessGUI:
         self.custom_stip = stip # Text below diagram
         self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
 
+        # Info text box
+        self.info_text = ""
+        self.info_surfaces = []
+        self.info_font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+
         # Load all the piece singletons
         create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES)  # This needs to be run again later after a Windows spawn
         self.pieces = load_images()
@@ -890,6 +901,7 @@ class ChessGUI:
                 self.draw_panel()
                 #self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
+                self.draw_info_box()
                 # self.draw_pgn_panel()
                 
                 #self.draw_custom_title()
@@ -926,6 +938,7 @@ class ChessGUI:
                     elif event.key in (pygame.K_HOME, pygame.K_r):
                         self.position.reset_board() # Press HOME to return to root position
                         self.composition.tree_position = 0
+                        self.blank_info_text()
                     elif event.key == pygame.K_t:
                         self.position.change_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
@@ -942,12 +955,15 @@ class ChessGUI:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
                             self.composition.advance_tree_step(+1, callback_queue=self.moves_window_queue)
+                            self.update_last_move_text()
                     elif event.key == pygame.K_LEFT:
                         if self.fenlist:
                             self.composition.advance_tree_step(-1, callback_queue=self.moves_window_queue)
+                            self.update_last_move_text()
                     elif event.key == pygame.K_END:
                         if self.fenlist:
                             self.composition.advance_tree_step(None, callback_queue=self.moves_window_queue)
+                            self.update_last_move_text()
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if Config.SQUARE_SIZE > 40:
                             Config.set_square_size(Config.SQUARE_SIZE - 10)
@@ -1069,10 +1085,12 @@ class ChessGUI:
         self.setup_spare_pieces()
         self.title_font = pygame.font.SysFont("Arial", Config.TITLE_FONT_SIZE)  # Change font and size here
         self.stip_font = pygame.font.SysFont("Arial", Config.STIP_FONT_SIZE)  # Change font and size here
+        self.info_font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE) # Change font and size here
         #self.draw_custom_stip()
         #self.draw_custom_title()
         self.set_custom_text(self.custom_title, self.custom_stip)
         self.draw_custom_text()
+        self.set_info_box_text(self.info_text)
         self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
 
     def draw_pgn_panel(self): #Unused
@@ -1135,6 +1153,38 @@ class ChessGUI:
 
         # Draw the circle representing the current turn
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
+
+    def set_info_box_text(self, text: str) -> None:
+        self.info_text = text
+        self.info_surfaces = []
+        for line in text.split("\n"):
+            surface = self.info_font.render(line, True, (200, 200, 200))
+            self.info_surfaces.append(surface)
+
+    def draw_info_box(self):
+        line_height = self.info_font.get_linesize()
+
+        # Copied from draw_turn_indicator, to ensure text is to the right of the turn indicator
+        circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
+        circle_x = Config.MAIN_WIDTH + circle_radius + 5 #- circle_radius # Half-way through panel
+        circle_y = Config.HEIGHT - circle_radius - Config.SQUARE_SIZE / 10  # 10px margin from the border
+        move_to_right = circle_radius
+        y = int(circle_y - line_height)
+        x = int(circle_x + circle_radius + move_to_right) # To right of turn indicator
+        for i, info_surface in enumerate(self.info_surfaces):
+            self.screen.blit(info_surface, (x, y + i * line_height))
+
+    def update_last_move_text(self):
+        # Find the label for the current tree position and show it
+        for row in self.composition.move_tree:
+            for cell in row:
+                if cell is not None and cell[2] == self.composition.tree_position:
+                    self.set_info_box_text("Last\nMove: " + cell[0])
+                    return
+
+
+    def blank_info_text(self):
+        self.set_info_box_text("")
 
     def check_turn_toggle_click(self, pos):
         # Code copied from draw_turn_indicator
@@ -1617,6 +1667,7 @@ class ChessGUI:
         #self.custom_title = self.composition.title
         #self.custom_stip = self.composition.stipulation
         self.set_custom_text(title_text=self.composition.title, stip_text=self.composition.stipulation)
+        self.blank_info_text()
 
         #self.draw_custom_stip()
         #self.draw_custom_title()
