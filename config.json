@@ -4,5 +4,6 @@
     "panel_colour": [20, 60, 60], 
     "square_size": 70,
     "title_font_size": 28,
-    "stip_font_size": 28
+    "stip_font_size": 28,
+    "info_font_size": 20
 }
