@@ -336,6 +336,8 @@ class ChessPosition:
         self.board[end_row][end_col] = piece  # Move piece to end square
 
     def move_piece(self, start: Square, end: Square, promotion_callback=None):
+        # Make first attempt as san
+        san = self.to_san(start, end)
         start_row, start_col = start.coord
         end_row, end_col = end.coord
         piece = self.board[start_row][start_col]
@@ -352,7 +354,7 @@ class ChessPosition:
 
         if piece == '1':
             # Start square empty, no move
-            return
+            return None # Nothing happened the starting square was empty
 
         # Castling (execute as two moves)
         if internal_piece.is_king and self.is_castling_move(start, end):
@@ -360,9 +362,11 @@ class ChessPosition:
                 if end == self.G1 and self.can_castle('w', True):
                     self.move_piece_internal(self.E1, self.G1)
                     self.move_piece_internal(self.H1, self.F1)
+                    san = "O-O"
                 elif end == self.C1 and self.can_castle('w', False):
                     self.move_piece_internal(self.E1, self.C1)
                     self.move_piece_internal(self.A1, self.D1)
+                    san = "O-O-O"
                 else:
                     self.move_piece_internal(start, end)  # move just e1 to c1/g1 but not the rook
                     #return  # Invalid castling
@@ -370,9 +374,11 @@ class ChessPosition:
                 if end == self.G8 and self.can_castle('b', True):
                     self.move_piece_internal(self.E8, self.G8)
                     self.move_piece_internal(self.H8, self.F8)
+                    san = "O-O"
                 elif end == self.C8 and self.can_castle('b', False):
                     self.move_piece_internal(self.E8, self.C8)
                     self.move_piece_internal(self.A8, self.D8)
+                    san = "O-O-O"
                 else:
                     self.move_piece_internal(start, end) # move just e8 to g8/c8 but not the rook
                     #return  # Invalid castling
@@ -380,7 +386,7 @@ class ChessPosition:
             self.change_turn()
             self.en_passant = None
             self.update_fen()
-            return
+            return san
 
         # En passant capture
         if internal_piece.is_pawn and end == self.en_passant and abs(start_col - end_col) == 1:
@@ -407,7 +413,7 @@ class ChessPosition:
                     #self.change_turn()
                     #self.en_passant = None
                     #self.update_fen()
-                    return
+                    return san + promotion_piece # append the piece to the already "e8"
 
 
             # Normal move
@@ -426,6 +432,7 @@ class ChessPosition:
 
         self.change_turn()
         self.update_fen()
+        return san
 
     def promote_pawn(self, start: Square, end: Square, new_piece: str):
         """
