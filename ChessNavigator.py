@@ -113,6 +113,7 @@ class Config:
     original_size = None # Used to record what original size upon opening was
     original_font = None
     original_stip = None
+    original_info = None
 
     # Genuine fixed
     HEIGHT_PADDING = 10
@@ -772,6 +773,65 @@ def parse_arguments():
 #     def toggle_legality(self):
 #         self.legal_moves_enabled = not self.legal_moves_enabled  # Toggle legality mode
 
+class InfoBox:
+    """
+    New class which understands what's going into the info box. Includes rendering, and history and logic
+    to decide what to print based on what it has been told has happened.
+    """
+    def __init__(self):
+        # Called from inside GUI to initialize
+        self.current_text = ""
+        self.surfaces = []
+        self.history = []
+        self.font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+    def _render(self, text):
+        self.current_text = text
+        self.surfaces = []
+        for line in text.split("\n"):
+            surface = self.font.render(line, True, (232, 232, 232))
+            self.surfaces.append(surface)
+    def resize(self):
+        self.font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+        self._render(self.current_text)
+    def update(self, event, data=None):
+        if event == "move":
+            self.history.append(data)
+            self._render("Last\Move:" + data)
+        elif event == "undo":
+            if self.history:
+                self.history.pop()
+            text = "Last\nMove:" + self.history[-1] if self.history else ""
+            self._render(text)
+        elif event == "home":
+            self.history.clear()
+            self._render("Home")
+        elif event == "tree":
+            self._render("Last\nMove:" + data)
+        elif event == "clear":
+            self.history.clear()
+            self._render("")
+        elif event == "new":
+            self.history.clear()
+            self._render("New Load")
+        elif event == "save":
+            # Pressed insert to save current position
+            self.history.clear()
+            self._render("Set New Home")
+
+    def draw(self, screen):
+        if not self.surfaces:
+            return
+        # Copied from draw_turn_indicator, to ensure text is to the right of the turn indicator
+        line_height = self.font.get_linesize()
+        circle_radius = 2 * (Config.SQUARE_SIZE + 20) / 10
+        circle_x = Config.MAIN_WIDTH + circle_radius + 5  # - circle_radius # Half-way through panel
+        circle_y = Config.HEIGHT - circle_radius - Config.SQUARE_SIZE / 10  # 10px margin from the border
+        move_to_right = circle_radius
+        y = int(circle_y - line_height)
+        x = int(circle_x + circle_radius + move_to_right)  # To right of turn indicator
+        for i, surface in enumerate(self.surfaces):
+            screen.blit(surface, (x, y + i * line_height))
+
 class ChessGUI:
     def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "Chess Navigator", 
                  title='', 
@@ -837,10 +897,8 @@ class ChessGUI:
         self.custom_stip = stip # Text below diagram
         self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
 
-        # Info text box
-        self.info_text = ""
-        self.info_surfaces = []
-        self.info_font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+        # Initialize the InfoBox
+        self.info_box = InfoBox()
 
         # Load all the piece singletons
         create_extra_pieces(self.problem_container.u_to_i_dict, EXTRA_PIECES)  # This needs to be run again later after a Windows spawn
@@ -885,6 +943,7 @@ class ChessGUI:
                             # The passed message is the number of which entry of the fen_tree we want
                             #moveid_fen = PROBLEM_LIST[-1]['fen_tree'][int(message)-1]
                             self.composition.jump_tree_step(int(message), callback_queue=self.moves_window_queue)
+                            self.update_info_for_tree_position()
 
                             #where_fen = PROBLEM_LIST[-1]["ids"][int(message)]
                             #which_fen = PROBLEM_LIST[-1]["fen_tree"][where_fen]
@@ -901,7 +960,7 @@ class ChessGUI:
                 self.draw_panel()
                 #self.draw_legality_mode()  # Show legality mode status
                 self.draw_turn_indicator()
-                self.draw_info_box()
+                self.info_box.draw(self.screen)
                 # self.draw_pgn_panel()
                 
                 #self.draw_custom_title()
@@ -928,17 +987,20 @@ class ChessGUI:
                         self.position.toggle_legality()
                     elif event.key == pygame.K_u:
                         self.position.undo() # Press u move backwards in the board history
+                        self.info_box.update("undo")
                     elif event.key == pygame.K_i:
                         self.position.redo()  # Press i move forwards in board history
                     elif event.key == pygame.K_z:
                         self.position.clear() # Press z to zero/clear the board
+                        self.info_box.update("clear")
                         self.position.legal_moves_enabled = False # Turn legality to false to allow placement
                     elif event.key == pygame.K_INSERT:
                         self.position.redefine_start() # Press INSERT to redefine root position
+                        self.info_box.update("save")
                     elif event.key in (pygame.K_HOME, pygame.K_r):
                         self.position.reset_board() # Press HOME to return to root position
                         self.composition.tree_position = 0
-                        self.blank_info_text()
+                        self.info_box.update("home")
                     elif event.key == pygame.K_t:
                         self.position.change_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
@@ -955,15 +1017,15 @@ class ChessGUI:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
                             self.composition.advance_tree_step(+1, callback_queue=self.moves_window_queue)
-                            self.update_last_move_text()
+                            self.update_info_for_tree_position()
                     elif event.key == pygame.K_LEFT:
                         if self.fenlist:
                             self.composition.advance_tree_step(-1, callback_queue=self.moves_window_queue)
-                            self.update_last_move_text()
+                            self.update_info_for_tree_position()
                     elif event.key == pygame.K_END:
                         if self.fenlist:
                             self.composition.advance_tree_step(None, callback_queue=self.moves_window_queue)
-                            self.update_last_move_text()
+                            self.update_info_for_tree_position()
                     elif event.key in (pygame.K_KP_MINUS, pygame.K_MINUS):
                         if Config.SQUARE_SIZE > 40:
                             Config.set_square_size(Config.SQUARE_SIZE - 10)
@@ -1090,7 +1152,7 @@ class ChessGUI:
         #self.draw_custom_title()
         self.set_custom_text(self.custom_title, self.custom_stip)
         self.draw_custom_text()
-        self.set_info_box_text(self.info_text)
+        self.info_box.resize()
         self.clickable_objects = self.build_clickable_objects(self.spare_pieces)
 
     def draw_pgn_panel(self): #Unused
@@ -1154,37 +1216,13 @@ class ChessGUI:
         # Draw the circle representing the current turn
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
 
-    def set_info_box_text(self, text: str) -> None:
-        self.info_text = text
-        self.info_surfaces = []
-        for line in text.split("\n"):
-            surface = self.info_font.render(line, True, (200, 200, 200))
-            self.info_surfaces.append(surface)
-
-    def draw_info_box(self):
-        line_height = self.info_font.get_linesize()
-
-        # Copied from draw_turn_indicator, to ensure text is to the right of the turn indicator
-        circle_radius = 2 * (Config.SQUARE_SIZE+20) / 10
-        circle_x = Config.MAIN_WIDTH + circle_radius + 5 #- circle_radius # Half-way through panel
-        circle_y = Config.HEIGHT - circle_radius - Config.SQUARE_SIZE / 10  # 10px margin from the border
-        move_to_right = circle_radius
-        y = int(circle_y - line_height)
-        x = int(circle_x + circle_radius + move_to_right) # To right of turn indicator
-        for i, info_surface in enumerate(self.info_surfaces):
-            self.screen.blit(info_surface, (x, y + i * line_height))
-
-    def update_last_move_text(self):
+    def update_info_for_tree_position(self):
         # Find the label for the current tree position and show it
         for row in self.composition.move_tree:
             for cell in row:
                 if cell is not None and cell[2] == self.composition.tree_position:
-                    self.set_info_box_text("Last\nMove: " + cell[0])
+                    self.info_box.update("tree", cell[0])
                     return
-
-
-    def blank_info_text(self):
-        self.set_info_box_text("")
 
     def check_turn_toggle_click(self, pos):
         # Code copied from draw_turn_indicator
@@ -1542,7 +1580,10 @@ class ChessGUI:
         if self.piece_source == "board" and destination.type == "board":
             new_square = destination.target
             if new_square is not self.dragging_square: # i.e. new square release
-                self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
+                # New: move_piece now returns san
+                san = self.position.move_piece(self.dragging_square, new_square, promotion_callback=self.gui_ask_for_promotion)
+                if san: #If not None
+                    self.info_box.update("move", san)
         elif self.piece_source == "panel" and destination.type == "board":
             new_square = destination.target
             piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
@@ -1667,7 +1708,7 @@ class ChessGUI:
         #self.custom_title = self.composition.title
         #self.custom_stip = self.composition.stipulation
         self.set_custom_text(title_text=self.composition.title, stip_text=self.composition.stipulation)
-        self.blank_info_text()
+        self.info_box.update("new")
 
         #self.draw_custom_stip()
         #self.draw_custom_title()
