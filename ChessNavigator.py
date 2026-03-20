@@ -1064,15 +1064,6 @@ class ChessGUI:
         self.screen.blit(stip_surface, stip_rect)
         #print("Did it work?")
 
-    def old2_draw_custom_title(self):
-        for surface, rect in self.title_surfaces:
-            self.screen.blit(surface, rect)
-
-    def old2_draw_custom_stip(self):
-        for surface, rect in self.stip_surfaces:
-            self.screen.blit(surface, rect)
-
-
     def resize_elements_after_resize(self):
         self.pieces = load_images()
         self.setup_spare_pieces()
