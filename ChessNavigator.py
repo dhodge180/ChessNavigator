@@ -782,40 +782,52 @@ class InfoBox:
         # Called from inside GUI to initialize
         self.current_text = ""
         self.surfaces = []
-        self.history = []
+        self.text_history = []
         self.font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+
+    def _build_surfaces(self, text):
+        # Helper function, so that _render can save history, but that during undo the render of the history doesn't
+        # trigger adding to the history
+        return [self.font.render(line, True, (232, 232, 232)) for line in text.split("\n")]
+
     def _render(self, text):
         self.current_text = text
+        self.text_history.append(text)
         self.surfaces = []
-        for line in text.split("\n"):
-            surface = self.font.render(line, True, (232, 232, 232))
-            self.surfaces.append(surface)
+        self.surfaces = self._build_surfaces(text)
+
     def resize(self):
         self.font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
-        self._render(self.current_text)
+        self.surfaces = self._build_surfaces(self.current_text)
+
     def update(self, event, data=None):
         if event == "move":
-            self.history.append(data)
-            self._render("Last\Move:" + data)
+            self._render("Last Move:\n" + data)
+        elif event == "add":
+            self._render("Add\n" + data)
+        elif event == "remove":
+            self._render("Delete\n" + data)
         elif event == "undo":
-            if self.history:
-                self.history.pop()
-            text = "Last\nMove:" + self.history[-1] if self.history else ""
-            self._render(text)
+            if self.text_history:
+                self.text_history.pop() #Delete current
+            if self.text_history:
+                self.surfaces = self._build_surfaces(self.text_history[-1])
+            else:
+                self.surfaces = []
         elif event == "home":
-            self.history.clear()
+            self.text_history.clear()
             self._render("Home")
         elif event == "tree":
-            self._render("Last\nMove:" + data)
+            self._render("Last Move:\n" + data)
         elif event == "clear":
-            self.history.clear()
+            self.text_history.clear()
             self._render("")
         elif event == "new":
-            self.history.clear()
+            self.text_history.clear()
             self._render("New Load")
         elif event == "save":
             # Pressed insert to save current position
-            self.history.clear()
+            self.text_history.clear()
             self._render("Set New Home")
 
     def draw(self, screen):
@@ -1217,12 +1229,12 @@ class ChessGUI:
         pygame.draw.circle(self.screen, turn_color, (circle_x, circle_y), circle_radius)
 
     def update_info_for_tree_position(self):
-        # Find the label for the current tree position and show it
-        for row in self.composition.move_tree:
-            for cell in row:
-                if cell is not None and cell[2] == self.composition.tree_position:
-                    self.info_box.update("tree", cell[0])
-                    return
+        label = self.composition.move_id_to_label.get(self.composition.tree_position)
+        if label:
+            self.info_box.update("tree", label)
+        return
+
+        # DOn't reach here any more
 
     def check_turn_toggle_click(self, pos):
         # Code copied from draw_turn_indicator
@@ -1588,8 +1600,10 @@ class ChessGUI:
             new_square = destination.target
             piece_symbol = self.dragging_piece_symbol  # This is the symbol of the piece being dragged
             self.position.add_piece(new_square, piece_symbol)
+            self.info_box.update("add", piece_symbol + new_square.alg)
             added_a_piece_from_panel_with_right_click = (button == 3)  # If using secondary mouse button keep piece in hand
         elif self.piece_source == "board" and destination.type != "board":
+            self.info_box.update("remove", self.dragging_square.alg)
             self.position.remove_piece(self.dragging_square)
 
         # new_square = self.get_square_under_mouse(pos)
@@ -1899,6 +1913,9 @@ def generate_fen_path(beginning, moves):
     next_i = 0
     next_j = 0
 
+    # Create dictionary to store text labels for each FEN
+    move_id_to_label = {}
+
     checkpoint_data = [1]
     #checkpoint_data.append(1)
 
@@ -1933,12 +1950,14 @@ def generate_fen_path(beginning, moves):
         loc_button_label, loc_button_fen, loc_move_id = temp_game.process_move(move)
         if loc_button_label == "back":
             print("Back button")
+            move_id_to_label[loc_move_id] = move + " Back" # will be "<" or "<<" or "<<<" etc..
             loc_checkpoint = loc_button_fen
             # Jump back to column of checkpoint we're going to
             next_j = checkpoint_data[loc_checkpoint] # Should be stored column number for this checkpoint
             # Drop down one row for next move
             next_i += 1
         elif loc_button_label == "H":
+            move_id_to_label[loc_move_id] = "Home"
             next_j = 0
             next_i += 1
         elif loc_button_label == "&":
@@ -1956,6 +1975,7 @@ def generate_fen_path(beginning, moves):
                 loc_button_label = grid_data[next_i][next_j][0] + "\n" + loc_button_label
                 special_label_append = False
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
+            move_id_to_label[loc_move_id] = loc_button_label
             # Update next box
             next_j += 1
             if next_j >= max_columns:
@@ -1974,7 +1994,7 @@ def generate_fen_path(beginning, moves):
                 print(f"[{id}]", end=" ")
         print()  # Newline after each row
 
-    return temp_game.result(), grid_data
+    return temp_game.result(), grid_data, move_id_to_label
 
 def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
 
@@ -2257,12 +2277,13 @@ if __name__ == "__main__":
             
             # Generate trees (using new internal fen)
             move_list = comp.moves.split()
-            fen_tree, move_tree = generate_fen_path(comp.fen, move_list)
+            fen_tree, move_tree, move_id_to_label = generate_fen_path(comp.fen, move_list)
 
             # Store in Composition
             comp.fen_tree = fen_tree[0]
             comp.ids = fen_tree[1]
             comp.move_tree = move_tree
+            comp.move_id_to_label = move_id_to_label
 
 
 
