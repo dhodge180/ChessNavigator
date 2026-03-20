@@ -57,6 +57,14 @@ class Composition:
 
         # Move to next position (might be same position if at an end already)
         self.position.set_fen(current_fen_tree[self.tree_position])
+
+        # If there are no manual history moves (just starting FEN) then
+        # move current fen into history so that undo button never
+        # goes back further than current FEN in tree
+        if len(self.position.move_history) == 1:
+            self.position.move_history = [self.position.fen]
+            self.position.move_index = 0
+
         # Could now send news to move window to move highlight marker
         if callback_queue:
             callback_queue.put(('state', self.tree_position))
