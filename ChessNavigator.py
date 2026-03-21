@@ -780,10 +780,14 @@ class InfoBox:
     """
     def __init__(self):
         # Called from inside GUI to initialize
-        self.current_text = ""
+        self.current_text = "Press H\nfor help"
         self.surfaces = []
         self.text_history = []
+        self.text_history_index = 0
         self.font = pygame.font.SysFont("Arial", Config.INFO_FONT_SIZE)
+
+        # Start InfoBox with Help advice (ephemeral)
+        self._render(self.current_text)
 
     def _build_surfaces(self, text):
         # Helper function, so that _render can save history, but that during undo the render of the history doesn't
@@ -792,8 +796,10 @@ class InfoBox:
 
     def _render(self, text):
         self.current_text = text
+        # Remove future if not currently at the end
+        self.text_history = self.text_history[:self.text_history_index + 1]
         self.text_history.append(text)
-        self.surfaces = []
+        self.text_history_index = len(self.text_history) - 1
         self.surfaces = self._build_surfaces(text)
 
     def resize(self):
@@ -808,12 +814,13 @@ class InfoBox:
         elif event == "remove":
             self._render("Delete\n" + data)
         elif event == "undo":
-            if self.text_history:
-                self.text_history.pop() #Delete current
-            if self.text_history:
-                self.surfaces = self._build_surfaces(self.text_history[-1])
-            else:
-                self.surfaces = []
+            if self.text_history_index > 0:
+                self.text_history_index -= 1
+                self.surfaces = self._build_surfaces(self.text_history[self.text_history_index])
+        elif event == "redo":
+            if self.text_history_index < len(self.text_history) - 1:
+                self.text_history_index += 1
+                self.surfaces = self._build_surfaces(self.text_history[self.text_history_index])
         elif event == "home":
             self.text_history.clear()
             self._render("Home")
@@ -824,7 +831,7 @@ class InfoBox:
             self._render("")
         elif event == "new":
             self.text_history.clear()
-            self._render("New Load")
+            self._render("New Load\nPress H for Help")
         elif event == "save":
             # Pressed insert to save current position
             self.text_history.clear()
@@ -846,7 +853,7 @@ class InfoBox:
 
 class ChessGUI:
     def __init__(self, PROB_LIST, MV_WIN_TRUE, fen=None, window_title_bar = "Chess Navigator", 
-                 title='', 
+                 title="",
                  stip = "", 
                  fenlist = False, #problem_list_loaded
                  main_window_queue = None,
@@ -1002,6 +1009,7 @@ class ChessGUI:
                             self.info_box.update("undo") # Update InfoBox if something was undone
                     elif event.key == pygame.K_i:
                         self.position.redo()  # Press i move forwards in board history
+                        self.info_box.update("redo")
                     elif event.key == pygame.K_z:
                         self.position.clear() # Press z to zero/clear the board
                         self.info_box.update("clear")
@@ -2166,10 +2174,10 @@ if __name__ == "__main__":
         if not problem_list_loaded:
             # No passed_fen and no passed_fen: need to set a default board
             comp = problem_container.add_composition(
-                title=None,
+                title="", # This is never actually applies since update_after_cycle() never fires
                 fen='rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR',
                 moves=None,
-                stipulation=None
+                stipulation="" # This is never actually applies since update_after_cycle() never fires
             )
             all_fens = ['rsbqkbsr/pppppppp/8/8/8/8/PPPPPPPP/RSBQKBSR']
         else: # Here we have filled PROBLEM_LIST will all passed fens from file.
