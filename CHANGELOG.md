@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.6.2]
+
+- Last move correctly clears upon reaching start of problem (when reversing)
+- Last move text now render compound moves from PROBLEM_LIST on one line with a -> symbol
+- move window uses improved san (algebraic notation)
+- compound and compound reverse tree navigation animations work
+- Add animation routine for tree forward. new helper functions also used in draw_pieces and draw_board
+
 ## [v3.6.1]
 
 ## Added

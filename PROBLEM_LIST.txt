@@ -13,6 +13,10 @@ FEN: r5S1/pP2p1P1/1BR1k3/1BR1S3/8/4pP2/1PP5/K3s2Q
 Subtext: S#9 AntiCirce Calvet
 Moves: h1h5 e6d6 a1b1 d6d7 b1c1 d7d8 c1d1 d8e8 b7b8r a8b8 & b8h8 d1e1 h8h5 & h5a8 c6c7 e8d8 c7e7 & e7a1 a7b6 & b6b7 e1c1 a8a1
 
+Title: Retractor
+FEN: 32/3pP3/24 b
+Moves: d4e5 & +Pd4
+
 Title: Promotions!
 FEN: 8/PPPPPPPP/8/8/8/8/pppppppp/8
 Moves: a7a8q b7b8r c7c8s d7d8n e7e8B f7f8.MO g7g8.mo h7h8.ro a2a1q b2b1r c2c1=s d2d1=b e2e1=r f2f1=q g2g1G h2h1=k
