@@ -1,6 +1,8 @@
 # Changelog
 
-## [no version name yet - latest]
+## [latest]
+
+## [v.3.6.3]
 
 - Number of frames per move animation is now called "animation_frames" and in the config.json file
 	1 = instant move
