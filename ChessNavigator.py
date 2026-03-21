@@ -1247,7 +1247,7 @@ class ChessGUI:
     def update_info_for_tree_position(self):
         label = self.composition.move_id_to_label.get(self.composition.tree_position)
         if label:
-            self.info_box.update("tree", label)
+            self.info_box.update("tree", label.replace("\n", "->")) # Don't use multiple lines
         return
 
         # DOn't reach here any more
@@ -2036,6 +2036,9 @@ def generate_fen_path(beginning, moves):
     loc_checkpoint = None
     # noinspection PyUnusedLocal
     loc_move_id = None
+
+    # initialize to make safe
+    intermediate_fen = None
     
     special_label_append = False
 
