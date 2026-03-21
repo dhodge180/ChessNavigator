@@ -1036,6 +1036,11 @@ class ChessGUI:
                     elif event.key == pygame.K_RIGHT:
                         # Recall that PROBLEM_LIST[-1] is always the FEN we're working on
                         if self.fenlist: # Don't try if no fenlist
+                            next_pos = self.composition.tree_position + 1
+                            if next_pos < len(self.composition.fen_tree): # Check we're not at end already
+                                anim_data = self.composition.move_id_to_anim.get(next_pos)
+                                if anim_data:
+                                    self.animate_tree_move(anim_data)
                             self.composition.advance_tree_step(+1, callback_queue=self.moves_window_queue)
                             self.update_info_for_tree_position()
                     elif event.key == pygame.K_LEFT:
@@ -1286,51 +1291,108 @@ class ChessGUI:
             for col in range(Config.BOARD_SIZE):
                 # color = WHITE if (row + col) % 2 == 0 else BLACK
                 color = self.square_colors[row][col]
-                pygame.draw.rect(
-                    self.screen, color,
-                    (_border_size + col * _square_size,
-                     _border_size + _height_padding + row * _square_size,
-                     _square_size,
-                     _square_size)
-                )
+                x, y = self.square_to_xy(row, col)
+                pygame.draw.rect(self.screen, color, (x, y, Config.SQUARE_SIZE, Config.SQUARE_SIZE))
+
         if self.chosen_square:
             highlight_color = (255, 0, 0)  # bright red border
             row, col = self.chosen_square.coord
-            x = _border_size + col * _square_size
-            y = _border_size + _height_padding + row * _square_size
-
-            pygame.draw.rect(
-                self.screen,
-                highlight_color,
-                (x, y, _square_size, _square_size),
-                width=4  # thickness of the border
-            )
+            x, y = self.square_to_xy(row, col)
+            pygame.draw.rect(self.screen, highlight_color, (x, y, Config.SQUARE_SIZE, Config.SQUARE_SIZE), width=4)
 
     def draw_pieces(self):
         """Draws pieces inside the board with border offset."""
-        _border_size = Config.BORDER_SIZE
-        _height_padding = Config.HEIGHT_PADDING
-        for row in range(Config.BOARD_SIZE):
-            for col in range(Config.BOARD_SIZE):
-                #square = chess.square(col, 7 - row)
-                square = (7 - row) * 8 + col
-                sq = Square.get(coord=(row, col))
-                #piece = self.position.get_piece(square)
-                piece = self.position.get_piece(sq)
-                if piece and (self.dragging_square is not sq):
-                    #img = self.pieces[piece.symbol()]
-                    user_piece = self.composition.position.convert_i_to_u(piece)
-                    if user_piece == "=":
-                        print("ERROR! Piece called = detected in internal fen, need to use internals")
-                    #print(f"Being asked to draw a {user_piece} known internally as {piece}")
-                    img = self.pieces[piece]
-                    self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
-                                           _border_size + _height_padding + row * Config.SQUARE_SIZE))
-
-        # Draw dragged piece on top
+        ## This function could be updates to use the new except function ie. this....
+        #def draw_pieces(self):
+        self.draw_pieces_except(None)
         if self.dragging_piece:
             self.screen.blit(self.dragging_piece, self.dragging_pos)
 
+        # Old version below here will be deleted in due course
+        # _border_size = Config.BORDER_SIZE
+        # _height_padding = Config.HEIGHT_PADDING
+        # for row in range(Config.BOARD_SIZE):
+        #     for col in range(Config.BOARD_SIZE):
+        #         #square = chess.square(col, 7 - row)
+        #         square = (7 - row) * 8 + col
+        #         sq = Square.get(coord=(row, col))
+        #         #piece = self.position.get_piece(square)
+        #         piece = self.position.get_piece(sq)
+        #         if piece and (self.dragging_square is not sq):
+        #             #img = self.pieces[piece.symbol()]
+        #             user_piece = self.composition.position.convert_i_to_u(piece)
+        #             if user_piece == "=":
+        #                 print("ERROR! Piece called = detected in internal fen, need to use internals")
+        #             #print(f"Being asked to draw a {user_piece} known internally as {piece}")
+        #             img = self.pieces[piece]
+        #             self.screen.blit(img, (_border_size + col * Config.SQUARE_SIZE,
+        #                                    _border_size + _height_padding + row * Config.SQUARE_SIZE))
+        #
+        # # Draw dragged piece on top
+        # if self.dragging_piece:
+        #     self.screen.blit(self.dragging_piece, self.dragging_pos)
+
+    # Find coordinates in (x,y) pixels of a square
+    def square_to_xy(self, row, col):
+        x = Config.BORDER_SIZE + col * Config.SQUARE_SIZE
+        y = Config.BORDER_SIZE + Config.HEIGHT_PADDING + row * Config.SQUARE_SIZE
+        return x, y
+
+    # New animation function for tree moves
+    def animate_tree_move(self, move_data_list):
+        """
+        This animates a move when we press forwards or backwards in the tree
+        """
+        ANIM_STEPS = 10 # How many frames
+
+        for move_data in move_data_list: # Allow for compound moves
+            if move_data['type'] not in ('move', 'promotion'):
+                continue # Most moves are just instant
+            from_square = Square.get(alg=move_data['from'])
+            to_square = Square.get(alg=move_data['to'])
+            from_row, from_col = from_square.coord
+            to_row, to_col = to_square.coord
+
+            piece = self.position.get_piece(from_square)
+            if piece is None:
+                continue
+
+            start_x, start_y = self.square_to_xy(from_row, from_col)
+            end_x, end_y = self.square_to_xy(to_row, to_col)
+
+            x_change = end_x - start_x
+            y_change = end_y - start_y
+            captured_piece = self.position.get_piece(to_square)
+            for step in range(ANIM_STEPS + 1):
+                t = step / ANIM_STEPS
+                x = int(start_x + t * x_change)
+                y = int(start_y + t * y_change)
+
+                pygame.draw.rect(self.screen, (0, 0, 0),
+                                 (Config.BORDER_SIZE, Config.BORDER_SIZE + Config.HEIGHT_PADDING,
+                                  Config.BOARD_WIDTH, Config.BOARD_WIDTH))
+                self.draw_board()
+                self.draw_pieces_except(from_square)
+                if t < 0.95: # Close to end, delete captured piece
+                    if captured_piece:
+                        self.screen.blit(self.pieces[captured_piece], (end_x, end_y))
+                # Draw moving piece
+                self.screen.blit(self.pieces[piece], (x,y))
+                pygame.display.flip()
+                self.clock.tick(60)
+
+    # For animation need a helper function to not draw the moving piece
+    def draw_pieces_except(self, skip_square):
+        """Do usual drawing but not piece on skip_square"""
+        for row in range(Config.BOARD_SIZE):
+            for col in range(Config.BOARD_SIZE):
+                sq = Square.get(coord=(row, col))
+                if sq is skip_square:
+                    continue
+                piece = self.position.get_piece(sq)
+                if piece and (self.dragging_square is not sq):
+                    x, y = self.square_to_xy(row, col)
+                    self.screen.blit(self.pieces[piece], (x, y))
 
     def old_setup_spare_pieces(self):
         """Defines positions for the spare pieces on the panel."""
@@ -1926,6 +1988,10 @@ def generate_fen_path(beginning, moves):
     checkpoint_labels = {0: None} # checkpoint labels to store move/string that led to it
     last_label = ""
 
+    # Create dictionary to store actual a1d4 moves for each tree step to allow later animation
+    move_id_to_anim = {}
+
+
     checkpoint_data = [1]
     #checkpoint_data.append(1)
 
@@ -1957,17 +2023,21 @@ def generate_fen_path(beginning, moves):
         # Save values in (next_i,next_j)
         # temp_game.process_move returns button_label and button_fen
         # process_move also appends the next fen to the self.generated list
-        loc_button_label, loc_button_fen, loc_move_id = temp_game.process_move(move)
+        loc_button_label, loc_button_fen, loc_move_id, loc_converted_move = temp_game.process_move(move)
         if loc_button_label == "back":
             print("Back button")
             loc_checkpoint = loc_button_fen
+            # Update dictionaries for 'Last move' and animations
             move_id_to_label[loc_move_id] = move + " " + checkpoint_labels.get(loc_checkpoint)
+            move_id_to_anim[loc_move_id] = [loc_converted_move]
             # Jump back to column of checkpoint we're going to
             next_j = checkpoint_data[loc_checkpoint] # Should be stored column number for this checkpoint
             # Drop down one row for next move
             next_i += 1
         elif loc_button_label == "H":
+            # Update dictionaries for 'Last move' and animations
             move_id_to_label[loc_move_id] = "Home"
+            move_id_to_anim[loc_move_id] = [loc_converted_move]
             next_j = 0
             next_i += 1
         elif loc_button_label == "&":
@@ -1979,15 +2049,22 @@ def generate_fen_path(beginning, moves):
             # loc_button_fen will contain index of checkpoint
             loc_checkpoint = loc_button_fen
             checkpoint_data.insert(loc_checkpoint, next_j) # Should store current column for this checkpoint number
+            # Update dictionaries for 'Last move' and animations
             checkpoint_labels[loc_checkpoint] = last_label  # store the label for when we jump back
 
         else: # Only create button if not back or * or H
             if special_label_append: # if we're about to overwrite the first move in an and statement
                 loc_button_label = grid_data[next_i][next_j][0] + "\n" + loc_button_label
                 special_label_append = False
+                # Want to keep the converted_move for compound animations
+                move_id_to_anim[loc_move_id].append(loc_converted_move)
+            else:
+                move_id_to_anim[loc_move_id] = [loc_converted_move]
             grid_data[next_i][next_j] = (loc_button_label, loc_button_fen, loc_move_id)
             last_label = loc_button_label
+            # Update dictionaries for 'Last move' and animations
             move_id_to_label[loc_move_id] = loc_button_label
+
             # Update next box
             next_j += 1
             if next_j >= max_columns:
@@ -2006,7 +2083,7 @@ def generate_fen_path(beginning, moves):
                 print(f"[{id}]", end=" ")
         print()  # Newline after each row
 
-    return temp_game.result(), grid_data, move_id_to_label
+    return temp_game.result(), grid_data, move_id_to_label, move_id_to_anim
 
 def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
 
@@ -2289,13 +2366,14 @@ if __name__ == "__main__":
             
             # Generate trees (using new internal fen)
             move_list = comp.moves.split()
-            fen_tree, move_tree, move_id_to_label = generate_fen_path(comp.fen, move_list)
+            fen_tree, move_tree, move_id_to_label, move_id_to_anim = generate_fen_path(comp.fen, move_list)
 
             # Store in Composition
             comp.fen_tree = fen_tree[0]
             comp.ids = fen_tree[1]
             comp.move_tree = move_tree
             comp.move_id_to_label = move_id_to_label
+            comp.move_id_to_anim = move_id_to_anim
 
 
 

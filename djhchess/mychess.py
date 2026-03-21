@@ -756,7 +756,7 @@ class TempChessPosition(ChessPosition):
         else:
             print(f"Unknown move type: {move_type}")
 
-        return button_label, button_fen, self.move_id
+        return button_label, button_fen, self.move_id, converted_move
 
     def handle_move(self, move):
         """e.g. {'type': 'move', 'from': 'a1', 'to': 'e5'}
