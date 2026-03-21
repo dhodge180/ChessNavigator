@@ -2,8 +2,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(3, 6, 0, 0),
-    prodvers=(3, 6, 0, 0),
+    filevers=(3, 6, 1, 0),
+    prodvers=(3, 6, 1, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x4,
@@ -16,12 +16,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'David Hodge'),
         StringStruct('FileDescription', 'ChessNavigator - Chess Problem Demonstration Tool'),
-        StringStruct('FileVersion', '3.6.0'),
+        StringStruct('FileVersion', '3.6.1'),
         StringStruct('InternalName', 'ChessNavigator'),
         StringStruct('LegalCopyright', '© 2026 David Hodge. All rights reserved.'),
         StringStruct('OriginalFilename', 'ChessNavigator.exe'),
         StringStruct('ProductName', 'ChessNavigator'),
-        StringStruct('ProductVersion', '3.6.0'),
+        StringStruct('ProductVersion', '3.6.1'),
         StringStruct('Comments', 'Built using Python and PyInstaller')
       ])
     ]),

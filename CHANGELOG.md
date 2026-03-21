@@ -1,6 +1,12 @@
 # Changelog
 
-## [v3.6] - 2025
+## [v3.6.1]
+
+## Added
+- Redo (via key I) now updates Last Move window (so actually a full history is kept, until it gets overwritten for any reason)
+- Last move window begins with Press H for help instruction
+
+## [v3.6]
 
 ### Added
 - New `InfoBox` class displaying context-sensitive game updates in the bottom-right panel
