@@ -1045,7 +1045,10 @@ class ChessGUI:
                             self.update_info_for_tree_position()
                     elif event.key == pygame.K_LEFT:
                         if self.fenlist:
+                            anim_data = self.composition.move_id_to_anim.get(self.composition.tree_position)
                             self.composition.advance_tree_step(-1, callback_queue=self.moves_window_queue)
+                            if anim_data:
+                                self.animate_tree_move(anim_data, reverse=True)
                             self.update_info_for_tree_position()
                     elif event.key == pygame.K_END:
                         if self.fenlist:
@@ -1339,13 +1342,23 @@ class ChessGUI:
         return x, y
 
     # New animation function for tree moves
-    def animate_tree_move(self, move_data_list):
+    def animate_tree_move(self, move_data_list, reverse=False):
         """
         This animates a move when we press forwards or backwards in the tree
         """
-        ANIM_STEPS = 10 # How many frames
+        ANIM_STEPS = 15 # How many frames
 
-        for move_data in move_data_list: # Allow for compound moves
+        # Will it be a compound move
+        compound = len(move_data_list) > 1
+
+        moves_to_animate = list(reversed(move_data_list)) if reverse else move_data_list
+        do_not_render_square = None
+
+        if reverse and compound:
+            last_move = list(moves_to_animate)[-1]
+            do_not_render_square = Square.get(alg=last_move['from'])
+
+        for move_data in moves_to_animate: # Allow for compound moves
             if move_data['type'] not in ('move', 'promotion'):
                 continue # Most moves are just instant
             from_square = Square.get(alg=move_data['from'])
@@ -1353,16 +1366,26 @@ class ChessGUI:
             from_row, from_col = from_square.coord
             to_row, to_col = to_square.coord
 
-            piece = self.position.get_piece(from_square)
+            if reverse:
+                start_x, start_y = self.square_to_xy(to_row, to_col)
+                end_x, end_y = self.square_to_xy(from_row, from_col)
+            else:
+                start_x, start_y = self.square_to_xy(from_row, from_col)
+                end_x, end_y = self.square_to_xy(to_row, to_col)
+
+            if compound and 'intermediate_fen' in move_data:
+                temp_pos = TempChessPosition(fen=move_data['intermediate_fen'])
+                piece = temp_pos.get_piece(from_square)
+                captured_piece = temp_pos.get_piece(to_square)
+            else:
+                piece = self.position.get_piece(from_square)
+                captured_piece = self.position.get_piece(to_square)
+
             if piece is None:
                 continue
 
-            start_x, start_y = self.square_to_xy(from_row, from_col)
-            end_x, end_y = self.square_to_xy(to_row, to_col)
-
             x_change = end_x - start_x
             y_change = end_y - start_y
-            captured_piece = self.position.get_piece(to_square)
             for step in range(ANIM_STEPS + 1):
                 t = step / ANIM_STEPS
                 x = int(start_x + t * x_change)
@@ -1372,22 +1395,24 @@ class ChessGUI:
                                  (Config.BORDER_SIZE, Config.BORDER_SIZE + Config.HEIGHT_PADDING,
                                   Config.BOARD_WIDTH, Config.BOARD_WIDTH))
                 self.draw_board()
-                self.draw_pieces_except(from_square)
-                if t < 0.95: # Close to end, delete captured piece
+                self.draw_pieces_except(from_square, also_skip=do_not_render_square)
+                if not reverse and t < 0.95: # Close to end, delete captured piece
                     if captured_piece:
                         self.screen.blit(self.pieces[captured_piece], (end_x, end_y))
                 # Draw moving piece
                 self.screen.blit(self.pieces[piece], (x,y))
                 pygame.display.flip()
                 self.clock.tick(60)
+            if not reverse:
+                do_not_render_square = from_square # Save to_square so that we don't redraw on it in compound
 
     # For animation need a helper function to not draw the moving piece
-    def draw_pieces_except(self, skip_square):
+    def draw_pieces_except(self, skip_square, also_skip=None):
         """Do usual drawing but not piece on skip_square"""
         for row in range(Config.BOARD_SIZE):
             for col in range(Config.BOARD_SIZE):
                 sq = Square.get(coord=(row, col))
-                if sq is skip_square:
+                if sq is skip_square or sq is also_skip:
                     continue
                 piece = self.position.get_piece(sq)
                 if piece and (self.dragging_square is not sq):
@@ -2043,6 +2068,7 @@ def generate_fen_path(beginning, moves):
         elif loc_button_label == "&":
             # We are reading an & let's try skipping back two?
             next_j -= 1 # Perfect, except we lose record of text on button, can we append?
+            intermediate_fen = temp_game.fen # Save the fen for animation purposes below
             special_label_append = True
         elif loc_button_label == "*":
             print("Save action")
@@ -2057,6 +2083,8 @@ def generate_fen_path(beginning, moves):
                 loc_button_label = grid_data[next_i][next_j][0] + "\n" + loc_button_label
                 special_label_append = False
                 # Want to keep the converted_move for compound animations
+                # But first we append to the loc_converted_move the FEN for it for animation later
+                loc_converted_move['intermediate_fen'] = intermediate_fen
                 move_id_to_anim[loc_move_id].append(loc_converted_move)
             else:
                 move_id_to_anim[loc_move_id] = [loc_converted_move]

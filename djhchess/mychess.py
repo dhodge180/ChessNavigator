@@ -812,10 +812,10 @@ class TempChessPosition(ChessPosition):
         #self.board.push(mv)
 
         # prefix = piece.upper() if piece not in self.pawn_pieces else ""
-        prefix = self.to_san(from_square, to_square)
-        fake_san_version = prefix
+        #prefix = self.to_san(from_square, to_square)
+        #fake_san_version = prefix
 
-        self.move_piece(from_square, to_square)
+        fake_san_version = self.move_piece(from_square, to_square)
         self.add_this_fen()
 
         #fake_san_version = prefix+move['from']+move['to']
