@@ -1248,6 +1248,8 @@ class ChessGUI:
         label = self.composition.move_id_to_label.get(self.composition.tree_position)
         if label:
             self.info_box.update("tree", label.replace("\n", "->")) # Don't use multiple lines
+        else:
+            self.info_box.update("clear")
         return
 
         # DOn't reach here any more
