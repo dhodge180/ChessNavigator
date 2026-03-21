@@ -79,7 +79,8 @@ class Config:
         "square_size": 70,
         "title_font_size": 28,
         "stip_font_size": 28,
-        "info_font_size": 20
+        "info_font_size": 20,
+        "move_animation_frames": 15
     }
 
     # Customizable
@@ -114,6 +115,7 @@ class Config:
     original_font = None
     original_stip = None
     original_info = None
+    MOVE_ANIMATION_FRAMES = 15
 
     # Genuine fixed
     HEIGHT_PADDING = 10
@@ -197,15 +199,13 @@ class Config:
         """For stip font size validation (example if you have stip_font_size in your config)"""
         Config.INFO_FONT_SIZE = Config.validate_font_size(local_config.get("info_font_size"), min_size=8, max_size=45, font_type="info")
         """For text box font size validation"""
+        Config.MOVE_ANIMATION_FRAMES = Config.validate_move_animation_frames(local_config.get("move_animation_frames"))
 
+        # Used for scaling purposes later
         Config.original_size = Config.SQUARE_SIZE
         Config.original_font = Config.TITLE_FONT_SIZE
         Config.original_stip = Config.STIP_FONT_SIZE
         Config.original_info = Config.INFO_FONT_SIZE
-
-        # STAGE 1B: load custom pieces
-
-
 
         # STAGE 2
 
@@ -259,6 +259,23 @@ class Config:
         # If invalid or not in the valid range, fall back to default
         print(f"Warning: Invalid {font_type} font size '{size}'. Using default ({cls.DEFAULTS[f'{font_type}_font_size']}).")
         return cls.DEFAULTS[f"{font_type}_font_size"]
+
+    @classmethod
+    def validate_move_animation_frames(cls, value):
+        """
+        Validate user specified number of frames per move animation.
+        At 60fps, 60 will mean one second per move.
+        At 60fps, 1 will mean immediate (1/60 of second).
+        """
+        try:
+            val = int(float(value))
+            if 1 <= val <= 240:
+                return val
+        except (ValueError, TypeError):
+            pass
+        print(f"Warning: Invalid move_animation_frames value. Using default ({cls.DEFAULTS['move_animation_frames']}).")
+        return cls.DEFAULTS["move_animation_frames"]
+
 
     @classmethod
     def update_derived_sizes(cls):
@@ -1348,7 +1365,7 @@ class ChessGUI:
         """
         This animates a move when we press forwards or backwards in the tree
         """
-        ANIM_STEPS = 15 # How many frames
+        ANIM_STEPS = Config.MOVE_ANIMATION_FRAMES # How many frames per move. Default from Config.json (15?)
 
         # Will it be a compound move
         compound = len(move_data_list) > 1

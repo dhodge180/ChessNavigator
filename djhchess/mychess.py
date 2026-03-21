@@ -405,7 +405,7 @@ class ChessPosition:
         if internal_piece.is_pawn and end == self.en_passant and abs(start_col - end_col) == 1:
             # Could actually have got here is a neutral pawn moves a2 to a4 then a4 to a3!
             # Third condition: Only allow e.p. if from an adjacent column!
-            san = f"{start.alg[0]}x{end.alg} e.p."
+            san = f"{start.alg[0]}x{end.alg}\ne.p."
             self.capture_en_passant(start, end)
         else:
             # Check here if it's a promotion attempt

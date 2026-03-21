@@ -126,11 +126,22 @@ Edit a file with this name in the executable's folder and it will be used instea
     "panel_colour": [20, 60, 60],  
     "square_size": 70,  
     "title_font_size": 28,  
-    "stip_font_size": 28  
+    "stip_font_size": 28,
+    "info_font_size": 20,
+    "animation_frames": 15
 }
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
 Also note, squares and colour triples above are RGB values.
+
+For clarification:
+
+`stip_font_size` is the font size below the board
+
+`info_font_size` is the size of the text in the lower right "Last move:" area.
+
+`animation_frames` is the number of frames to use to show each move. 
+So 1 would mean moves are instant, and 15 means around half-a-second with 15 images to show the piece sliding.  
 
 ## Command line options: examples
 

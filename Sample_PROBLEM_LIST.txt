@@ -30,7 +30,7 @@ A neutral piece problem by Dirk Borst.
 Title: Dirk Borst
 FEN: 2K3b1/r2=p=pk=p1/2p2p2/2P2p2/8/1P1p4/8/2=r=b4 b
 Subtext: H#3 (2 solutions)
-Moves: d7d5 c8d8 -b3 & d1b3 c1g1 e7e5 -e5 & d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 -d5 & e5d6
+Moves: d7d5 c8d8 d1b3 c1g1 e7e5 d5e6 H e7e5 d1h5 f7e7 c1e1 d7d5 e5d6
 
 An anti-circe problem
 -----------------------------------
@@ -44,7 +44,7 @@ A #2 with lines to show
 Title: Barnes 1st Prize ea Die Schwalbe 1957
 FEN: 3b2S1/1K1Q4/p2p1P2/Rs2k2p/2p2p2/2Pp1B2/4sBpS/4R1q1 w
 Subtext: #2
-Moves: f3d5 * d7e6 < e5d5 d7f5 < b5c7 h2f3 < b5d4 c3d4 < g1f2 H f3e4 * d7f5 < e5e4 d7e6 < e2d4 c3d4 < e2g3 h2f3
+Moves: f3d5 * d7e6 < e5d5 d7f5 < b5c7 h2f3 < b5d4 c3d4 < f4f3 H f3e4 * d7f5 < e5e4 d7e6 < e2d4 c3d4 < e2g3 h2f3
 
 Finally, a study
 --------------------------------
@@ -55,7 +55,7 @@ Moves: h5g6 h7g8 g6f7 g8h7 f7g8 h7g8 f6g6 * h8g7 e6e7 a2a1q e7e8q  < a2a1q g7a1 
 
 A load of random fairy pieces
 ------------------------------
-Title: A mess
+Title: Here are some of the included images
 FEN: .roG=pC.ma.mo.giZ/=e.ka.le.LIN.pa.VA.na/gG.RH.bh.EQoO=o/8/8/8/8/8
 =======
 # This is a sample database of problems. 

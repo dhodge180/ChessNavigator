@@ -1,5 +1,14 @@
 # Changelog
 
+## [no version name yet - latest]
+
+- Number of frames per move animation is now called "animation_frames" and in the config.json file
+	1 = instant move
+	60 = 60 frames (so approx 1 second, since rendering at 60fps)
+	30 = half a second per move of piece sliding
+- e.p renders on two rows in the move window
+- small tidying up of Sample_PROBLEM_LIST.txt
+
 ## [v3.6.2]
 
 - Last move correctly clears upon reaching start of problem (when reversing)
