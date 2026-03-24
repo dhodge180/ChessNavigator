@@ -128,7 +128,7 @@ Edit a file with this name in the executable's folder and it will be used instea
     "title_font_size": 28,  
     "stip_font_size": 28,  
     "info_font_size": 20,  
-    "animation_frames": 15. 
+    "animation_frames": 15   
 }
 
 Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
