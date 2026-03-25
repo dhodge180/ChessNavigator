@@ -1366,6 +1366,7 @@ class ChessGUI:
         This animates a move when we press forwards or backwards in the tree
         """
         ANIM_STEPS = Config.MOVE_ANIMATION_FRAMES # How many frames per move. Default from Config.json (15?)
+        fade_start = 0.4
 
         # Will it be a compound move
         compound = len(move_data_list) > 1
@@ -1384,6 +1385,10 @@ class ChessGUI:
             to_square = Square.get(alg=move_data['to'])
             from_row, from_col = from_square.coord
             to_row, to_col = to_square.coord
+            dx = abs(to_col - from_col)
+            dy = abs(to_row - from_row)
+
+            is_hopper = (dx != 0 and dy != 0 and dx != dy)
 
             if reverse:
                 start_x, start_y = self.square_to_xy(to_row, to_col)
@@ -1407,8 +1412,17 @@ class ChessGUI:
             y_change = end_y - start_y
             for step in range(ANIM_STEPS + 1):
                 t = step / ANIM_STEPS
-                x = int(start_x + t * x_change)
-                y = int(start_y + t * y_change)
+                if is_hopper:
+                    x, y = knight_moves(
+                        (start_x, start_y),
+                        (end_x, end_y),
+                        t,
+                        arc_height=80
+                    )
+                else:
+                    t_eased = ease_out_soft_overshoot(t)
+                    x = int(start_x + t_eased * x_change)
+                    y = int(start_y + t_eased * y_change)
 
                 pygame.draw.rect(self.screen, (0, 0, 0),
                                  (Config.BORDER_SIZE, Config.BORDER_SIZE + Config.HEIGHT_PADDING,
@@ -1418,6 +1432,19 @@ class ChessGUI:
                 if not reverse and t < 0.95: # Close to end, delete captured piece
                     if captured_piece:
                         self.screen.blit(self.pieces[captured_piece], (end_x, end_y))
+
+                # Draw ghost piece
+                if t < fade_start:
+                    ghost_alpha = 180
+                else:
+                    fade_t = (t - fade_start) / (1 - fade_start)
+                    fade_eased = 1 - (1 - fade_t) ** 3  # ease-out fade
+                    ghost_alpha = int(180 * (1 - fade_eased))
+                if ghost_alpha > 0:
+                    ghost = self.pieces[piece].copy()
+                    ghost.set_alpha(ghost_alpha)
+                    self.screen.blit(ghost, (start_x, start_y))
+
                 # Draw moving piece
                 self.screen.blit(self.pieces[piece], (x,y))
                 pygame.display.flip()
@@ -2008,6 +2035,60 @@ def load_images():
 
     return pieces_images
 
+def ease_in_out(t: float) -> float:
+    """
+    Smooth easing for animated pieces
+    Slow start, fast middle, slow end.
+    t must go from 0.0 to 1.0
+    """
+    return t * t * (3-2*t)
+
+def ease_out_cubic(t: float) -> float:
+    """Starts fast, decelerates to a gentle landing."""
+    return 1 - (1 - t) ** 3
+
+def ease_out_soft_overshoot(t: float) -> float:
+    """Single, tiny overshoot and settle."""
+    return 1 + (-2 * (1 - t)**3 + (1 - t)**2)
+
+def knight_moves(start, end, t, arc_height=80):
+    """
+        Generic hopper animation (knight, camel, zebra, etc.)
+
+        start, end: (x, y) pixel positions
+        t:          progress 0.0 → 1.0
+        arc_height: base lift strength
+        """
+
+    # Smooth motion along the path
+    ease_t = ease_in_out(t)
+
+    x = start[0] + (end[0] - start[0]) * ease_t
+    y = start[1] + (end[1] - start[1]) * ease_t
+
+    # Direction vector
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+
+    length = (dx * dx + dy * dy) ** 0.5
+    if length == 0:
+        return int(x), int(y)
+
+    # Perpendicular unit vector
+    px = -dy / length
+    py = dx / length
+
+    # Distance-based scaling (handles 2,3 / 3,1 / etc.)
+    distance_scale = length / (length + 300)  # stable, smooth scaling
+
+    # Parabolic arc (peak at t = 0.5)
+    arc = arc_height * distance_scale *  t * (1 - t)
+
+    # Apply arc
+    x += px * arc
+    y += py * arc
+
+    return int(x), int(y)
 
 def generate_fen_path(beginning, moves):
     """Create a sequence of FENs from an initial fen and the list of moves already"""
