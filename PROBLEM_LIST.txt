@@ -3,9 +3,6 @@
 # As long as a FEN is present a diagram will be created titles and subtext are optional
 # If you mess up, unused titles and subtexts may get overwritten
 
-FEN:rR6/56
-Moves: a8b8 & b8h8
-
 An anti-circe problem
 -----------------------------------
 Title: K. Wenda & D. Werner, Die Schwalbe 2022
