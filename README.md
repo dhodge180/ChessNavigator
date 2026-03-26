@@ -114,7 +114,7 @@ e2e4 e7e5 g1f3 b8c6 * f1b5 a7a6 < f1c4 f8c5 * b2b4 c5b4 < c2c3 d7d5 << d2d4 e5d4
 
 When using the moves window additional moves window, you can also navigate the position tree by clicking the moves in that window. (By default the moves window opens, it can be disabled below)
 
-## For customized board colours and start-up window size
+## For customized board colours, start-up window size and piece animations
 
 ### config.json file format - default values
 
@@ -128,20 +128,40 @@ Edit a file with this name in the executable's folder and it will be used instea
     "title_font_size": 28,  
     "stip_font_size": 28,  
     "info_font_size": 20,  
-    "animation_frames": 15   
+    "animation_frames": 30,
+    "animation_type": "overshoot",
+    "animation_ghost": true,
+    "animate_knight_hops": true
 }
 
-Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
-Also note, squares and colour triples above are RGB values.
+The first two refer to colours of squares, the third to the right-hand-side panel background.
 
-For clarification:
+Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
+Also note, colours are all RGB triples (r,g,b).
+
+Font clarifications:
+
+`title_font_size` is the font size above the board
 
 `stip_font_size` is the font size below the board
 
 `info_font_size` is the size of the text in the lower right "Last move:" area.
 
+The `animation` and `animate` options refer to animations of pieces when navigating a pre-programmed set of moves (see above).
+
 `animation_frames` is the number of frames to use to show each move. 
 So 1 would mean moves are instant, and 15 means around half-a-second with 15 images to show the piece sliding.  
+
+`animation_type` controls the movement style of animated pieces. Options are:
+- `"overshoot"` — piece slides with a subtle overshoot and then settles (default)
+- `"smooth"` — piece eases in and out symmetrically
+- `"none"` — piece moves at a constant speed with no easing (if you desire ZERO animations, set `animation_frames` to 1 above)
+
+`animation_ghost` shows a fading copy of the piece at its origin square while it travels.
+Set to `true` to enable (default) or `false` to disable.
+
+`animate_knight_hops` gives hopping pieces (knights, camels, zebras, etc.) an arcing path
+rather than a straight slide. Set to `true` to enable (default) or `false` to disable.
 
 ## Command line options: examples
 

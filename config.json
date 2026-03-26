@@ -6,5 +6,8 @@
     "title_font_size": 28,
     "stip_font_size": 28,
     "info_font_size": 20,
-    "move_animation_frames": 30
+    "move_animation_frames": 30,
+    "animation_type": "overshoot",
+    "animation_ghost": true,
+    "animate_knight_hops": true
 }

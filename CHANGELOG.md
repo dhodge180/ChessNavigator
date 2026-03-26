@@ -2,6 +2,13 @@
 
 ## [latest]
 
+## [v3.6.4]
+
+- Three new animation options available in config.json
+- animation_type controls the easing style of moving pieces (overshoot, ease_out, none)
+- animation_ghost toggles the fading ghost piece shown at the origin square during a move
+- animate_knight_hops toggles the arcing path for hopper pieces (knights, camels, etc.)
+
 ## [v.3.6.3]
 
 - Number of frames per move animation is now called "animation_frames" and in the config.json file

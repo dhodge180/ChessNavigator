@@ -80,7 +80,10 @@ class Config:
         "title_font_size": 28,
         "stip_font_size": 28,
         "info_font_size": 20,
-        "move_animation_frames": 15
+        "move_animation_frames": 30,
+        "animation_type": "overshoot",
+        "animation_ghost": True,
+        "animate_knight_hops": True
     }
 
     # Customizable
@@ -115,7 +118,11 @@ class Config:
     original_font = None
     original_stip = None
     original_info = None
-    MOVE_ANIMATION_FRAMES = 15
+    # Customizabe animation options
+    MOVE_ANIMATION_FRAMES = 30
+    ANIMATION_TYPE = "overshoot" # Other options, "smooth" and "none"
+    ANIMATION_GHOST = True # When animation occurs, leave a ghost on starting square?
+    ANIMATE_KNIGHT_HOPS = True # Knights and non-linear pieces have arc-shaped paths?
 
     # Genuine fixed
     HEIGHT_PADDING = 10
@@ -199,7 +206,17 @@ class Config:
         """For stip font size validation (example if you have stip_font_size in your config)"""
         Config.INFO_FONT_SIZE = Config.validate_font_size(local_config.get("info_font_size"), min_size=8, max_size=45, font_type="info")
         """For text box font size validation"""
+
+        # New settings for fancy piece animations
         Config.MOVE_ANIMATION_FRAMES = Config.validate_move_animation_frames(local_config.get("move_animation_frames"))
+        """Number of frames, i.e. time taken to move"""
+        Config.ANIMATION_TYPE = Config.validate_animation_type(local_config.get("animation_type"))
+        """Animation type: overshoot(default), smooth, none"""
+        Config.ANIMATION_GHOST = bool(local_config.get("animation_ghost", True))
+        """Leave behind ghost?"""
+        Config.ANIMATE_KNIGHT_HOPS = bool(local_config.get("animate_knight_hops", True))
+        """Arc-shaped non-linear moves?"""
+
 
         # Used for scaling purposes later
         Config.original_size = Config.SQUARE_SIZE
@@ -276,6 +293,13 @@ class Config:
         print(f"Warning: Invalid move_animation_frames value. Using default ({cls.DEFAULTS['move_animation_frames']}).")
         return cls.DEFAULTS["move_animation_frames"]
 
+    @classmethod
+    def validate_animation_type(cls, value):
+        valid = {"overshoot", "smooth", "none"}
+        if isinstance(value, str) and value.lower() in valid:
+            return value.lower()
+        print(f"Warning: Invalid animation_type '{value}'. Using 'overshoot'.")
+        return cls.DEFAULTS["animation_type"]
 
     @classmethod
     def update_derived_sizes(cls):
@@ -1365,8 +1389,19 @@ class ChessGUI:
         """
         This animates a move when we press forwards or backwards in the tree
         """
+        # Load config settings
         ANIM_STEPS = Config.MOVE_ANIMATION_FRAMES # How many frames per move. Default from Config.json (15?)
-        fade_start = 0.4
+        fade_start = 0.4 # How long before ghost starts fading out?
+        use_ghost = Config.ANIMATION_GHOST
+        use_hopper_arc = Config.ANIMATE_KNIGHT_HOPS
+
+        # Load animation type
+        if Config.ANIMATION_TYPE == "smooth":
+            easing_fn = ease_in_out
+        elif Config.ANIMATION_TYPE == "none":
+            easing_fn = lambda t: t
+        else:  # "overshoot"
+            easing_fn = ease_out_soft_overshoot
 
         # Will it be a compound move
         compound = len(move_data_list) > 1
@@ -1412,15 +1447,11 @@ class ChessGUI:
             y_change = end_y - start_y
             for step in range(ANIM_STEPS + 1):
                 t = step / ANIM_STEPS
-                if is_hopper:
-                    x, y = knight_moves(
-                        (start_x, start_y),
-                        (end_x, end_y),
-                        t,
-                        arc_height=80
-                    )
+                t_eased = easing_fn(t)
+
+                if is_hopper and use_hopper_arc:
+                    x, y = knight_moves((start_x, start_y),(end_x, end_y), t, arc_height=80)
                 else:
-                    t_eased = ease_out_soft_overshoot(t)
                     x = int(start_x + t_eased * x_change)
                     y = int(start_y + t_eased * y_change)
 
@@ -1434,16 +1465,17 @@ class ChessGUI:
                         self.screen.blit(self.pieces[captured_piece], (end_x, end_y))
 
                 # Draw ghost piece
-                if t < fade_start:
-                    ghost_alpha = 180
-                else:
-                    fade_t = (t - fade_start) / (1 - fade_start)
-                    fade_eased = 1 - (1 - fade_t) ** 3  # ease-out fade
-                    ghost_alpha = int(180 * (1 - fade_eased))
-                if ghost_alpha > 0:
-                    ghost = self.pieces[piece].copy()
-                    ghost.set_alpha(ghost_alpha)
-                    self.screen.blit(ghost, (start_x, start_y))
+                if use_ghost:
+                    if t < fade_start:
+                        ghost_alpha = 180
+                    else:
+                        fade_t = (t - fade_start) / (1 - fade_start)
+                        fade_eased = 1 - (1 - fade_t) ** 3  # ease-out fade
+                        ghost_alpha = int(180 * (1 - fade_eased))
+                    if ghost_alpha > 0:
+                        ghost = self.pieces[piece].copy()
+                        ghost.set_alpha(ghost_alpha)
+                        self.screen.blit(ghost, (start_x, start_y))
 
                 # Draw moving piece
                 self.screen.blit(self.pieces[piece], (x,y))
