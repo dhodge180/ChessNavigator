@@ -16,7 +16,7 @@
     h1 {
         text-align: center;
         color: #2c3e50;
-        margin-bottom: 25px;
+        margin-bottom: 5px;
     }
 
     .container {
@@ -130,7 +130,7 @@
             padding-bottom: 0;
         }
         details.advanced-user > *:not(summary) {
-            display: none;
+            display: block;
         }
         footer {
             display: block;
@@ -196,18 +196,72 @@
                 <div class="shortcut"><i class="fas fa-flag-checkered"></i><div class="desc"><span class="key">END</span> Jump to end of predefined move tree</div></div>
             </div>
         </div>
-    </div>
-
-    <!-- Column 2 -->
-    <div class="column">
         <div class="section board">
             <h2><i class="fas fa-chess-board"></i> Adding / Removing Pieces</h2>
             <p>Drag pieces from the extra pieces panel to place them on the board.  
             Using the <strong>right mouse button</strong> allows you to drop multiple identical pieces.  
             To remove pieces, drag them off the board.</p>
         </div>
+    </div>
+
+    <!-- Column 2 -->
+    <div class="column">
+        
 
         <div class="section analysis">
+            <h2><i class="fas fa-cog"></i> Customizations</h2>
+            <p>Edit <strong>config.json</strong> in the executable folder to override default RGB board colors and start-up window size:</p>
+            <pre>
+{
+    "white_squares": [238, 238, 210],
+    "black_squares": [118, 150, 86],
+    "panel_colour": [20, 60, 60],
+    "square_size": 70,
+    "title_font_size": 28,
+    "stip_font_size": 28,
+    "info_font_size": 20,
+    "animation_frames": 30,
+    "animation_type": "overshoot",
+    "animation_ghost": true,
+    "animate_knight_hops": true
+}
+            </pre>
+            <p><strong>Note:</strong> Square sizes must be one of 40,50,60,70,80,90,100, as only these have anti-aliased piece images.</p>
+            <p><code>animation_type</code> accepts "overshoot", "smooth" or "none". Set <code>animation_frames</code> to 1 for instant moves.</p>
+        </div>
+        <div class="section nav">
+            <h2><i class="fas fa-terminal"></i> Command Line Options</h2>
+
+            <div class="subsection">
+                <h3><i class="fas fa-window-restore"></i> Window / Interface</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--window "New title"</span> Specifies window title</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--nomoves</span> Disables the 'moves' navigation pop-up</div></div>
+            </div>
+
+            <div class="subsection">
+                <h3><i class="fas fa-list"></i> Multiple FEN Files</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i>
+                    <div class="desc">
+                        <span class="key">--fenlist problems.txt</span>
+                        Specifies a file containing multiple FEN positions (default is <code>PROBLEM_LIST.txt</code>).
+                    </div>
+                </div>
+                <p>You can use this file to define a small <strong>database of problems</strong>.  
+                Each line follows the <code>PROBLEM_LIST.txt</code> syntax, allowing pre-load then navigation in sequence.</p>
+            </div>
+
+            <div class="subsection">
+                <h3><i class="fas fa-chess-king"></i> Single FEN and Meta Info</h3>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--fen "8/7R/2K4k/..."</span> Pass a single FEN position</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--title "My Problem"</span> Force a title for the single FEN</div></div>
+                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--stip "h#2"</span> Force a stipulation for the single FEN</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3 -->
+    <div class="column">
+        <div class="section highlight">
             <h2><i class="fas fa-chess-rook fairy-sideways"></i>Fairy Pieces</h2>
             <p><strong>Standard pieces:</strong> <code>K Q R B S P</code> for King, Queen, Rook, Bishop, Knight, Pawn.</p>
             <p>Run the program once to generate a default <code>custom_pieces.yml</code> file, then edit it to add or modify available fairy pieces.</p>
@@ -234,58 +288,10 @@
               <p>Rotation and mirroring specified in the piece definition are applied to the base image. Ensure your image filenames match the convention for the program to locate them correctly.</p>
             </details>
         </div>
-    </div>
-
-    <!-- Column 3 -->
-    <div class="column">
-        <div class="section nav">
-            <h2><i class="fas fa-terminal"></i> Command Line Options</h2>
-
-            <div class="subsection">
-                <h3><i class="fas fa-window-restore"></i> Window / Interface</h3>
-                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--window "New title"</span> Specifies window title</div></div>
-                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--nomoves</span> Disables the 'moves' navigation pop-up</div></div>
-            </div>
-
-            <div class="subsection">
-                <h3><i class="fas fa-list"></i> Multiple FEN Files</h3>
-                <div class="shortcut"><i class="fas fa-angle-right"></i>
-                    <div class="desc">
-                        <span class="key">--fenlist problems.txt</span>
-                        Specifies a file containing multiple FEN positions (default is <code>PROBLEM_LIST.txt</code>).
-                    </div>
-                </div>
-                <p>You can use this file to define a small <strong>database of problems</strong>.  
-                Each line follows the <code>PROBLEM_LIST.txt</code> syntax, allowing you to pre-load multiple studies or compositions for navigation in sequence.</p>
-            </div>
-
-            <div class="subsection">
-                <h3><i class="fas fa-chess-king"></i> Single FEN and Meta Info</h3>
-                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--fen "8/7R/2K4k/..."</span> Pass a single FEN position</div></div>
-                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--title "My Problem"</span> Force a title for the single FEN</div></div>
-                <div class="shortcut"><i class="fas fa-angle-right"></i><div class="desc"><span class="key">--stip "h#2"</span> Force a stipulation for the single FEN</div></div>
-            </div>
-        </div>
-
-        <div class="section highlight">
-            <h2><i class="fas fa-cog"></i> Customizations</h2>
-            <p>Edit <strong>config.json</strong> in the executable folder to override default RGB board colors and start-up window size:</p>
-            <pre>
-{
-    "white_squares": [238, 238, 210],
-    "black_squares": [118, 150, 86],
-    "panel_colour": [20, 60, 60],
-    "square_size": 70,
-    "title_font_size": 28,
-    "stip_font_size": 28
-}
-            </pre>
-            <p><strong>Note:</strong> Square sizes must be one of 40,50,60,70,80,90,100, as only these have anti-aliased piece images.</p>
-        </div>
 
         <!-- Footer inside column 3 -->
         <footer>
-            ChessNavigator v1.0 — Created by David Hodge
+            ChessNavigator v3.6.4 — Created by David Hodge
         </footer>
     </div>
 
