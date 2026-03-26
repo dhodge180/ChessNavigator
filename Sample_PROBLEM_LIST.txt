@@ -13,7 +13,7 @@ A mate in 3
 Title: Loshinski, 1946
 FEN: 5B1K/6Q1/4p3/RS1P1b2/1Sq1kp2/1r1s1p2/B2R2P1/8
 Subtext: #3
-Moves: b4c2 * b5d6 < * b3b5 g2f3 * e4f3 g7g2 < e4d5 c2b4 << c4c5 b5d6 * c5d6 g7d4 < e4d5 c2b4 << e4d5 g7b7 * d5e5 f8g7 < c4c6 b5d6
+Moves: b4c2 * b5d6 < b3b5 g2f3 * e4f3 g7g2 < e4d5 c2b4 << c4c5 b5d6 * c5d6 g7d4 < e4d5 c2b4 << e4d5 g7b7 * d5e5 f8g7 < c4c6 b5d6
 
 
 A helpmate with two solutions
