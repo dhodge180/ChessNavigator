@@ -128,7 +128,7 @@ Edit a file with this name in the executable's folder and it will be used instea
     "title_font_size": 28,  
     "stip_font_size": 28,  
     "info_font_size": 20,  
-    "animation_frames": 30,  
+    "move_animation_frames": 30,  
     "animation_type": "overshoot",  
     "animation_ghost": true,  
     "animate_knight_hops": true  
@@ -149,13 +149,13 @@ Font clarifications:
 
 The `animation` and `animate` options refer to animations of pieces when navigating a pre-programmed set of moves (see above).
 
-`animation_frames` is the number of frames to use to show each move. 
+`move_animation_frames` is the number of frames to use to show each move. 
 So 1 would mean moves are instant, and 15 means around half-a-second with 15 images to show the piece sliding.  
 
 `animation_type` controls the movement style of animated pieces. Options are:
 - `"overshoot"` — piece slides with a subtle overshoot and then settles (default)
 - `"smooth"` — piece eases in and out symmetrically
-- `"none"` — piece moves at a constant speed with no easing (if you desire ZERO animations, set `animation_frames` to 1 above)
+- `"none"` — piece moves at a constant speed with no easing (if you desire ZERO animations, set `move_animation_frames` to 1 above)
 
 `animation_ghost` shows a fading copy of the piece at its origin square while it travels.
 Set to `true` to enable (default) or `false` to disable.
