@@ -4,7 +4,7 @@ It allows very quick position setup, and can navigate a complex defined move tre
 
 The PROBLEM_LIST.txt file shows the template for autoloading lots of FENs (with optional title and subtext/stipulation), and possible move trees.
 
-I am not a software developer so apologies in advance for any bugs or bad implementation.
+I am not a software developer so apologies in advance for any bugs or bad implementation. Please do let me know, however, as I will happily fix things if I can.
 
 ## Screenshots
 
@@ -128,7 +128,7 @@ Edit a file with this name in the executable's folder and it will be used instea
     "title_font_size": 28,  
     "stip_font_size": 28,  
     "info_font_size": 20,  
-    "animation_frames": 30,
+    "animation_frames": 30,  
     "animation_type": "overshoot",  
     "animation_ghost": true,  
     "animate_knight_hops": true  
