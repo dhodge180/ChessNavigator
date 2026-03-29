@@ -89,10 +89,10 @@ Default file is PROBLEM_LIST.txt, can be overridden with `--fenlist` command-lin
 Blank lines and lines not beginning "Title:", "FEN:", "Subtext:" or "Moves:" are ignored.
 Sensible to separate problems with blank lines.
 
-Title: Text above the diagram
-FEN: FEN of the diagram
-Subtext: Text to appear below the diagram
-Moves: e2e4 g8f6 e4e5 f6e5 etc.. (see below)
+Title: Text above the diagram  
+FEN: FEN of the diagram  
+Subtext: Text to appear below the diagram  
+Moves: e2e4 g8f6 e4e5 f6e5 etc.. (see below)  
 
 Sample move syntax is as follows:
 
@@ -121,7 +121,7 @@ When using the moves window additional moves window, you can also navigate the p
 Edit a file with this name in the executable's folder and it will be used instead.
 
 {  
-    "white_squares": [238, 238, 210],
+    "white_squares": [238, 238, 210],  
     "black_squares": [118, 150, 86],  
     "panel_colour": [20, 60, 60],  
     "square_size": 70,  
@@ -129,14 +129,14 @@ Edit a file with this name in the executable's folder and it will be used instea
     "stip_font_size": 28,  
     "info_font_size": 20,  
     "animation_frames": 30,
-    "animation_type": "overshoot",
-    "animation_ghost": true,
-    "animate_knight_hops": true
-}
+    "animation_type": "overshoot",  
+    "animation_ghost": true,  
+    "animate_knight_hops": true  
+}  
 
-The first two refer to colours of squares, the third to the right-hand-side panel background.
+The first two refer to colours of squares, the third to the right-hand-side panel background.  
 
-Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.
+Note, square sizes must be drawn from 40,50,60,70,80,90,100. As anti-aliased piece images exist of these sizes.  
 Also note, colours are all RGB triples (r,g,b).
 
 Font clarifications:
@@ -186,13 +186,15 @@ Custom pieces can be created in the file **custom_pieces.yml**
 You are recommended to run the program once, which will create a default version of this file for you. You can then edit that file to add your own pieces. Only if no custom_pieces.yml file is present will a new one be automatically created.
 
 You must specify a name for use in the FEN according to the Popeye rules:
-    + Either a single letter;
-    + Or a dot followed by two letters or numbers;
-    + Optionally a = on the front indicates neutral
+
++ Either a single letter;
++ Or a dot followed by two letters or numbers;
++ Optionally a = on the front indicates neutral
 
 e.g. 's', 'N', '.ab', '.L1', '.l1' the first letter's case typically determines colour
 
-Fairy pieces identified in the fen of a composition will appear in the panel for position editing. However this means that pieces that only appear during the play will not appear. The optional file fairy_piece_blocks.json allow specification of pieces that always come together.
+Fairy pieces identified in the fen of a composition will appear in the panel for position editing. However this means that pieces that only appear during the play will not appear. The optional file fairy_piece_blocks.json allow specification of pieces that always come together.  
+
 The default version contains all standard neutral pieces, thus if a FEN contains any such piece then they are all loaded into the panel.
 
 You may add additional families if you wish to this file. This is generally unnecessary as by default all white and black variants are always automatically added. It would only be necessary, for example, should the inclusion of one piece mean you also wish for another. e.g. one Chinese piece loading other Chinese pieces.
