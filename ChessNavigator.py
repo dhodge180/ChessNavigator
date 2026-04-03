@@ -956,6 +956,7 @@ class ChessGUI:
         self.custom_title = title  # Or any other dynamic title based on your logic
         self.custom_stip = stip # Text below diagram
         self.text_surfaces = [] # Pre-rendered text for title and stipulation -- rerendered only upon change
+        self.set_custom_text(title, stip)
 
         # Initialize the InfoBox
         self.info_box = InfoBox()
