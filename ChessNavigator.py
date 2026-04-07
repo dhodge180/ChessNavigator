@@ -362,30 +362,6 @@ class Config:
         if not overridden_settings:
             print("All configuration settings were successfully loaded and validated with default values.\n")
 
-## Calculate screen sizes
-# Position calculation
-pygame_width, pygame_height = 960, 690
-tk_width, tk_height = 1100, 150
-
-# Get screen size once
-root_temp = tk.Tk()
-screen_w = root_temp.winfo_screenwidth()
-screen_h = root_temp.winfo_screenheight()
-root_temp.destroy()
-
-center_x = (screen_w - pygame_width) // 2
-pygame_x = center_x
-pygame_y = 50
-tk_x = center_x
-tk_y = pygame_y + pygame_height + 50
-
-# Export values so the rest of your code can use them
-PYGAME_POS = f"{pygame_x},{pygame_y}"
-TK_GEOMETRY = f"{tk_width}x{tk_height}+{tk_x}+{tk_y}"
-
-# Initialize before loading pygame
-os.environ['SDL_VIDEO_WINDOW_POS'] = PYGAME_POS
-
 def load_problem_list_from_file(PROBLEM_LIST_inload, filename=None):
     """Load FENs, their titles and stipulations from an external file.
     lots of case handling, only FEN is strictly necessary"""
@@ -1124,7 +1100,7 @@ class ChessGUI:
                         # Get FEN from the board and copy it to clipboard
                         try:
                             fen = self.position.fen  # Call the board.fen() method from the LiveGame instance
-                            user_fen = convert_fen_board_section(fen, problem_container.i_to_u_dict)
+                            user_fen = convert_fen_board_section(fen, self.problem_container.i_to_u_dict)
                             copy(user_fen)  # Copy the FEN to clipboard
                             print("FEN copied to clipboard:", user_fen)  # Optional: print to console for confirmation
                         except Exception as e:
@@ -2249,7 +2225,7 @@ def generate_fen_path(beginning, moves):
 
     return temp_game.result(), grid_data, move_id_to_label, move_id_to_anim
 
-def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
+def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger, tk_geometry):
 
     #Config.startup("config.json")
 
@@ -2289,7 +2265,7 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger):
                     tk.Label(frame, text="").grid(row=i, column=j)
 
     root = tk.Tk()
-    root.geometry(TK_GEOMETRY)
+    root.geometry(tk_geometry)
     #moves_window = root
     root.title("Moves")
 
@@ -2385,6 +2361,33 @@ def start_processes(MWV, PL):
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+
+    ## tkinter setup
+    ## Calculate screen sizes
+    # Position calculation
+    pygame_width, pygame_height = 960, 690
+    tk_width, tk_height = 1100, 150
+
+    # Get screen size once
+    root_temp = tk.Tk()
+    screen_w = root_temp.winfo_screenwidth()
+    screen_h = root_temp.winfo_screenheight()
+    root_temp.destroy()
+
+    center_x = (screen_w - pygame_width) // 2
+    pygame_x = center_x
+    pygame_y = 50
+    tk_x = center_x
+    tk_y = pygame_y + pygame_height + 50
+
+    # Export values so the rest of your code can use them
+    PYGAME_POS = f"{pygame_x},{pygame_y}"
+    TK_GEOMETRY = f"{tk_width}x{tk_height}+{tk_x}+{tk_y}"
+
+    # Initialize before loading pygame
+    os.environ['SDL_VIDEO_WINDOW_POS'] = PYGAME_POS
+
+
     PROBLEM_LIST = []
 
     args = parse_arguments()  # Get arguments from command line
@@ -2563,7 +2566,7 @@ if __name__ == "__main__":
         #    passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
         gui_process = multiprocessing.Process(target=run_gui, args=(PL, MWV,
             passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
-        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event))
+        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event, TK_GEOMETRY))
 
         gui_process.start()  # Start the Pygame GUI process
         tk_process.start()  # Start the Tkinter window process

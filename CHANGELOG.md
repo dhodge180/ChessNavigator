@@ -2,6 +2,13 @@
 
 ## [latest]
 
+- want to look into antialiasing and single image per piece
+
+## [v3.6.5]
+
+- moving tkinter global loading to find screen size into __main__ [large change]
+- adding self to the Ctrl+C user dictionary looked, possible scoping bug
+
 ## [v3.6.4]
 
 - Three new animation options available in config.json

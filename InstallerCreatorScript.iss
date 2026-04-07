@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Chess Navigator"
-#define MyAppVersion "3.6.4"
+#define MyAppVersion "3.6.5"
 #define MyAppPublisher "David Hodge"
 #define MyAppExeName "ChessNavigator.exe"
 #define MyFilesDir "F:\ChessNavigator"
