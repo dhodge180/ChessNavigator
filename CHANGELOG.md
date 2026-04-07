@@ -8,6 +8,8 @@
 
 - moving tkinter global loading to find screen size into __main__ [large change]
 - adding self to the Ctrl+C user dictionary looked, possible scoping bug
+- migrate to pygame-ce from pygame (now works with Python3.14)
+- add delay to launch game window until after moves window (was causing initial focus theft)
 
 ## [v3.6.4]
 

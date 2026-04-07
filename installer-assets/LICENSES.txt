@@ -14,7 +14,7 @@ The giraffe image was drawn by Francois-Pier. https://creativecommons.org/licens
 ----------------------------------------------------------------------------------
 
 It makes use of four python packages who licences are copied below.
-PyYaml, pygame, pyperclip, and pyinstaller.
+PyYaml, pygame-ce, pyperclip, and pyinstaller.
 
 PyYAML
 6.0.2
@@ -42,12 +42,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-pygame
-2.6.1
+pygame-ce
+[2.5.7]
 LGPL
-https://www.pygame.org/docs/LGPL.txt
-		  GNU LESSER GENERAL PUBLIC LICENSE
-		       Version 2.1, February 1999
+https://github.com/pygame-community/pygame-ce/blob/main/docs/LGPL.txt
+          GNU LESSER GENERAL PUBLIC LICENSE
+               Version 2.1, February 1999
 
  Copyright (C) 1991, 1999 Free Software Foundation, Inc.
      59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
