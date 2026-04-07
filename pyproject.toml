@@ -3,9 +3,9 @@ name = "chessnavigator"
 version = "3.5"
 description = "Chess Problem Demonstration Software"
 readme = "README.md"
-requires-python = ">=3.11, <3.14"
+requires-python = ">=3.11, <=3.14.3"
 dependencies = [
-    "pygame==2.6.1",
+    "pygame-ce>=2.5.7",
     "pyperclip==1.11.0",
     "pyyaml==6.0.3",
 ]

@@ -2225,7 +2225,7 @@ def generate_fen_path(beginning, moves):
 
     return temp_game.result(), grid_data, move_id_to_label, move_id_to_anim
 
-def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger, tk_geometry):
+def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger, tk_geometry, tk_ready_event):
 
     #Config.startup("config.json")
 
@@ -2312,6 +2312,10 @@ def build_button_grid(main_window_queue, moves_window_queue, shutdown_trigger, t
 
     # Start checking for updates every 100ms
     root.after(200, check_for_updates, 0)
+
+    root.update() 
+    if tk_ready_event:
+        tk_ready_event.set()
 
     root.mainloop()
 
@@ -2561,15 +2565,21 @@ if __name__ == "__main__":
         main_window_queue = multiprocessing.Queue()
         moves_window_queue = multiprocessing.Queue()
 
+        # Create sync event (to ensure move window drawn first, then game window gets focus)
+        tk_ready_event = multiprocessing.Event()
+
         # Start both processes
         #gui_process = multiprocessing.Process(target=run_gui, args=(PL.copy(), MWV,
         #    passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
         gui_process = multiprocessing.Process(target=run_gui, args=(PL, MWV,
             passed_fen, window_title, args.title, args.stip, problem_list_loaded, main_window_queue, moves_window_queue, shutdown_event))
-        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event, TK_GEOMETRY))
+        tk_process = multiprocessing.Process(target=build_button_grid, args=(main_window_queue, moves_window_queue, shutdown_event, TK_GEOMETRY, tk_ready_event))
+
+        tk_process.start()  # Start the Tkinter window process
+        
+        tk_ready_event.wait(timeout=5.0) # Wait for moves window to draw before drawing chess window
 
         gui_process.start()  # Start the Pygame GUI process
-        tk_process.start()  # Start the Tkinter window process
 
         # Background process to listen for news from pygame window
         #listening_process = multiprocessing.Process(target=queue_listener, args=(queue, ))
