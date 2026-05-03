@@ -3,7 +3,7 @@ name = "chessnavigator"
 version = "3.5"
 description = "Chess Problem Demonstration Software"
 readme = "README.md"
-requires-python = ">=3.11, <=3.14.3"
+requires-python = ">=3.11, <3.14"
 dependencies = [
     "pygame-ce>=2.5.7",
     "pyperclip==1.11.0",
@@ -12,5 +12,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pyinstaller==6.18.0",
+    "pyinstaller==6.20.0",
 ]

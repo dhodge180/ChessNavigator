@@ -7,7 +7,15 @@
 
 
 # -*- mode: python ; coding: utf-8 -*-
+import os
 import sys
+
+# Force PyInstaller to find uv's Tcl/Tk libs before the system ones
+# Resolve symlink from .venv/bin/python to actual uv Python, then find its lib/
+_uv_python = os.path.realpath(sys.executable)
+_uv_lib = os.path.normpath(os.path.join(os.path.dirname(_uv_python), '..', 'lib'))
+os.environ['LD_LIBRARY_PATH'] = _uv_lib + ':' + os.environ.get('LD_LIBRARY_PATH', '')
+print(f"Tcl lib path: {_uv_lib}")  # temporary - confirm it resolves correctly
 
 a = Analysis(
     ['ChessNavigator.py'],
@@ -16,7 +24,7 @@ a = Analysis(
     datas=[
         ('images', 'images'),
     ],
-    hiddenimports=[],
+    hiddenimports=['multiprocessing', 'multiprocessing.synchronize', 'multiprocessing.heap'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
