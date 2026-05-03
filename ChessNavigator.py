@@ -56,9 +56,6 @@ class ClickResult:
 # from djhchess.mychess import ChessPosition, print_board_matrix
 # from djhchess.fen_mapper import load_and_update_mapping, convert_fen_board_section, load_existing_map
 
-# Define the shutdown event (to allow one window to close another)
-shutdown_event = multiprocessing.Event()
-
 # Passable references to windows
 #main_window = None
 #moves_windows = None
@@ -2364,7 +2361,10 @@ def start_processes(MWV, PL):
             moves_window_queue, shutdown_event).run()
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
+    multiprocessing.freeze_support()  # Fixes load library issue in Windows
+
+    # Define the shutdown event (to allow one window to close another)
+    shutdown_event = multiprocessing.Event()
 
     ## tkinter setup
     ## Calculate screen sizes
