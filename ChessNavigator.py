@@ -1384,14 +1384,27 @@ class ChessGUI:
         do_not_render_square = None
 
         if reverse and compound:
-            last_move = list(moves_to_animate)[-1]
-            do_not_render_square = Square.get(alg=last_move['from'])
+            last_move_with_from = None
+            for m in reversed(moves_to_animate):
+                if m.get('type') in ('move', 'promotion') and 'from' in m:
+                    last_move_with_from = m
+                    break
+            if last_move_with_from:
+                do_not_render_square = Square.get(alg=last_move_with_from['from'])
+            else:
+                do_not_render_square = None
+            #last_move = list(moves_to_animate)[-1]
+
 
         for move_data in moves_to_animate: # Allow for compound moves
             if move_data['type'] not in ('move', 'promotion'):
                 continue # Most moves are just instant
-            from_square = Square.get(alg=move_data['from'])
-            to_square = Square.get(alg=move_data['to'])
+            from_alg = move_data.get('from')
+            to_alg = move_data.get('to')
+            if not from_alg or not to_alg:
+                continue
+            from_square = Square.get(alg=from_alg)
+            to_square = Square.get(alg=to_alg)
             from_row, from_col = from_square.coord
             to_row, to_col = to_square.coord
             dx = abs(to_col - from_col)
