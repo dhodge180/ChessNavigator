@@ -4,6 +4,10 @@
 
 - want to look into antialiasing and single image per piece
 
+## [v.3.6.6]
+
+- Fix bug where new animate function would crash when taking back a compound move. Caused by a lack of 'from' field.
+
 ## [v3.6.5]
 
 - moving tkinter global loading to find screen size into __main__ [large change]
