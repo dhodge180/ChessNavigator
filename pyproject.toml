@@ -6,11 +6,13 @@ readme = "README.md"
 requires-python = ">=3.11, <3.14"
 dependencies = [
     "pygame-ce>=2.5.7",
+    "pyinstaller>=6.20.0",
     "pyperclip==1.11.0",
     "pyyaml==6.0.3",
 ]
 
 [dependency-groups]
-dev = [
-    "pyinstaller==6.20.0",
-]
+dev = []
+
+[tool.uv]
+constraint-dependencies = ["setuptools>=83.0.0"]
