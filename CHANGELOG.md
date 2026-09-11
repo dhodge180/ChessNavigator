@@ -4,6 +4,18 @@
 
 - want to look into antialiasing and single image per piece
 
+
+## [v.3.7.0] - September 2026
+
+### Added
+- **Keyboard Navigation**: Added PageUp/PageDown as alternatives to F1/F3 for cycling through problems
+  - F1 / PageDown: Load next problem
+  - F3 / PageUp: Load previous problem
+- **Fourth Highlight Color**: Added BLUE highlight (Ctrl+4) alongside RED (Ctrl+1), YELLOW (Ctrl+2), and GREEN (Ctrl+3)
+- **Color Toggle**: Pressing the same highlight key twice now toggles the color off, reverting to the default square color
+  - Pressing a different color automatically replaces the previous highlight
+- **Version Display**: Application version (3.7.0) now displayed in the window title bar
+
 ## [v.3.6.6]
 
 - Fix bug where new animate function would crash when taking back a compound move. Caused by a lack of 'from' field.
