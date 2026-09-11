@@ -8,6 +8,8 @@
 This is the main Chess Navigator program
 """
 
+VERSION = "3.7.0"
+
 import pygame
 import argparse
 
@@ -143,11 +145,14 @@ class Config:
     """Colour of yellow square highlight"""
     GREEN_HIGHLIGHT = (144, 238, 144)  # Light Green (muted)
     """Colour of green square highlight"""
+    BLUE_HIGHLIGHT = (135,206,250) # Light sky blue
+	"""Colour of blue square highlight"""
 
     KEY_COLOR_MAP = {
         pygame.K_1: RED_HIGHLIGHT,
         pygame.K_2: YELLOW_HIGHLIGHT,
         pygame.K_3: GREEN_HIGHLIGHT,
+        pygame.K_4: BLUE_HIGHLIGHT,
         pygame.K_0: None
     }
     """Key press / square colour associations"""
@@ -1040,12 +1045,12 @@ class ChessGUI:
                         self.position.change_turn()  # Toggle the turn on pressing 'T'
                     elif event.key == pygame.K_h:
                         self.show_help_popup() # Press H to pop-up shortcuts
-                    elif event.key == pygame.K_F1:  # Press F1 to load next fen from PROBLEM_LIST
+                    elif event.key in (pygame.K_F1, pygame.K_PAGEDOWN):  # Press F1 to load next fen from PROBLEM_LIST
                         #print("F1 pressed!")
                         if self.fenlist:
                             self.cycle_fen()
                             self.redraw = True
-                    elif event.key == pygame.K_F3:
+                    elif event.key == in (pygame.K_F3, pygame.K_PAGEUP):
                         if self.fenlist:
                             self.reverse_cycle_fen()
                     elif event.key == pygame.K_RIGHT:
@@ -1932,7 +1937,7 @@ class ChessGUI:
             ("F1/F3", "Cycle to next/previous FEN in the loaded file"),
             ("U", "Undo last action/move"),
             ("T", "Toggle whose turn it is"),
-            ("1/2/3", "Highlight square RED/YELLOW/GREEN"),
+            ("1/2/3/4", "Highlight square RED/YELLOW/GREEN/BLUE"),
             ("0", "Remove hovered square's highlighting"),
             ("DELETE", "Clear all highlighting"),
             ("Ctrl + C", "Copies current position to clipboard as FEN"),
@@ -2409,7 +2414,7 @@ if __name__ == "__main__":
 
     args = parse_arguments()  # Get arguments from command line
     MOVES_WINDOW_VERSION = not args.nomoves # Changed to make --nowindow required to disable
-    window_title = args.window if args.window else "Chess Navigator" # Allow window name override
+    window_title = args.window if args.window else f"Chess Navigator v{VERSION}" # Allow window name override
     passed_fen = args.fen if args.fen else None  # Use FEN if provided, otherwise default
     passed_fenlist = args.fenlist if args.fenlist else None
     problem_container = ProblemListContainer()
