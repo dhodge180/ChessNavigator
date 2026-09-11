@@ -1636,15 +1636,21 @@ class ChessGUI:
 
         return None  # If outside the board
 
-    def change_square_color(self, square, new_color):
-        """Receives the square under the mouse (0 to 63) and changes colour in the colour vector"""
+    def change_square_color(self, square, new_color):	
+        """Receives the square under the mouse and toggles/changes colour"""
         row, col = square.coord
-
-        if new_color is not None:
-            self.square_colors[row][col] = new_color
+        current_color = self.square_colors[row][col]
+        default_color = self.get_default_color(row, col)
+        
+        if new_color is None:  # User pressed 0 (clear)
+            # Reset to default
+            self.square_colors[row][col] = default_color
+        elif current_color == new_color:
+            # Same color pressed again = turn it off
+            self.square_colors[row][col] = default_color
         else:
-            # Reset to original
-            self.square_colors[row][col] = self.get_default_color(row, col)
+            # Apply new color (overwrites any previous)
+            self.square_colors[row][col] = new_color
 
     def get_piece_from_panel(self, pos):
         """Check if user clicks on a spare piece."""
@@ -1893,6 +1899,9 @@ class ChessGUI:
         #self.draw_custom_title()
         self.draw_custom_text()
         self.composition.tree_position = 0
+        
+        # Clear highlights
+        self.square_colors = [row [:] for row in self.TRUE_COLORS]
 
         # Fairy piece panel
         # WE MAY WANT TO RECALC THE CLICKABLE PIECES AND REDO THE setup_panel_pieces here
