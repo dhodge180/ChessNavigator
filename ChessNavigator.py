@@ -146,7 +146,7 @@ class Config:
     GREEN_HIGHLIGHT = (144, 238, 144)  # Light Green (muted)
     """Colour of green square highlight"""
     BLUE_HIGHLIGHT = (135,206,250) # Light sky blue
-	"""Colour of blue square highlight"""
+    """Colour of blue square highlight"""
 
     KEY_COLOR_MAP = {
         pygame.K_1: RED_HIGHLIGHT,
@@ -1050,7 +1050,7 @@ class ChessGUI:
                         if self.fenlist:
                             self.cycle_fen()
                             self.redraw = True
-                    elif event.key == in (pygame.K_F3, pygame.K_PAGEUP):
+                    elif event.key in (pygame.K_F3, pygame.K_PAGEUP):
                         if self.fenlist:
                             self.reverse_cycle_fen()
                     elif event.key == pygame.K_RIGHT:
