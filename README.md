@@ -58,10 +58,11 @@ Various shortcuts are currently implemented but not always fully documented.
 | HOME or R | Return to home position                                    |
 | INSERT    | Save current position as home position                     |
 | Z         | Zero the board                                             |
-| F1/F3     | Cycle to next/previous FEN in the loaded file              |
+| F1/PgDown | Cycle to next FEN in the loaded file                       |
+| F3/PgUp   | Cycle to previous FEN in the loaded file                   |
 | U         | Undo last move (cannot currently undo after add/remove)    |
 | T         | Toggle whose turn it is (also clickable)                   |
-| (1,2,3,0) | Highlight hovered square: RED, YELLOW, GREEN, NO-HIGHLIGHT |
+| 1/2/3/4/0 | Toggle hovered square color: RED, YELLOW, GREEN, BLUE, NO  |
 | Ctrl + C  | Copy current position to clipboard as FEN                  |
 | +/-       | Decrease/Increase window size                              |
 | DELETE    | Clear all highlighting                                     |
